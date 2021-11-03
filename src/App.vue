@@ -1,11 +1,10 @@
 <template>
   <div>
-    <!-- <p>{{ responseData ? responseData.byteLength : 0 }}</p> -->
-    <img :src="src" alt="" />
-    <!-- <canvas ref="canvas" @load="initCanvas"></canvas> -->
+    <Player :src="src"/>
   </div>
 </template>
 <script setup lang="ts">
+import Player from './Player.vue'
 import { IMGS, GIFS } from './net_imgs'
 const src = GIFS[1]
 </script>
