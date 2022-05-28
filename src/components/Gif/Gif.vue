@@ -9,6 +9,7 @@ import { defineProps, reactive, onBeforeMount, onMounted, ref } from 'vue'
 import { download } from './download'
 import { Stream } from '@/lib/libgif/Stream'
 import { GifFrame, GifParser } from './gifParser'
+import libgif from '@/lib/libgif/libgif'
 import { Player } from './player'
 
 const prop = defineProps({
@@ -37,6 +38,7 @@ onMounted(async () => {
       if (e.lengthComputable) {
         state.loaded = e.loaded
         state.total = e.total
+        console.log(`下载完成${src}`)
       }
     }
   })
