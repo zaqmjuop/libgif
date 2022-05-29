@@ -5,7 +5,7 @@ export const bitsToNum = (ba: boolean[]) =>
 
   export const byteToBitArr = (bite: number) => {
   const arr: boolean[] = []
-  for (var i = 7; i >= 0; i--) {
+  for (let i = 7; i >= 0; i--) {
     arr.push(!!(bite & (1 << i)))
   }
   return arr
