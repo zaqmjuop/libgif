@@ -1,6 +1,4 @@
-import { CHECKINDEX } from "@/metaData"
 
-let imgIndex = 0
 // Generic functions
 const bitsToNum = (ba: boolean[]) =>
   ba.reduce((total, current) => total * 2 + Number(current), 0)
