@@ -332,7 +332,7 @@ const parseGIF = (st: Stream, handler) => {
       img.pixels = deinterlace(img.pixels, img.width)
     }
     handler.img && handler.img(img)
-    imgIndex++
+    
   }
 
   const parseBlock = () => {

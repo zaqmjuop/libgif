@@ -1,7 +1,7 @@
-import { bitsToNum, byteToBitArr } from '@/lib/libgif/utils'
-import { Stream } from '@/lib/libgif/Stream'
+import { bitsToNum, byteToBitArr } from '@/lib/back/utils'
+import { Stream } from '@/lib/back/Stream'
 import { isKeyof } from '@/utils'
-import { lzwDecode } from '@/lib/libgif/lzwDecode'
+import { lzwDecode } from '@/lib/back/lzwDecode'
 import { CHECKINDEX } from '@/metaData'
 type rgb = [number, number, number]
 

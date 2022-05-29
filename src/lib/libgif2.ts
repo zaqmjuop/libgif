@@ -1,6 +1,4 @@
-import { CHECKINDEX } from "@/metaData"
 
-let imgIndex = 0
 // Generic functions
 const bitsToNum = (ba: boolean[]) =>
   ba.reduce((total, current) => total * 2 + Number(current), 0)
@@ -127,7 +125,6 @@ const lzwDecode = (minCodeSize, data) => {
 
 // The actual parsing; returns an object with properties.
 const parseGIF = (st: Stream, handler) => {
-
   handler || (handler = {})
 
   // LZW (GIF-specific)
@@ -332,7 +329,7 @@ const parseGIF = (st: Stream, handler) => {
       img.pixels = deinterlace(img.pixels, img.width)
     }
     handler.img && handler.img(img)
-    imgIndex++
+    
   }
 
   const parseBlock = () => {
@@ -458,12 +455,7 @@ const SuperGif = (opts) => {
     }
   }
 
-  var doText = function (text) {
-    toolbar.innerHTML = text // innerText? Escaping? Whatever.
-    toolbar.style.visibility = 'visible'
-  }
-
-  var setSizes = function (w, h) {
+  const setSizes = (w: number, h: number) => {
     canvas.width = w * get_canvas_scale()
     canvas.height = h * get_canvas_scale()
     toolbar.style.minWidth = w * get_canvas_scale() + 'px'
@@ -488,7 +480,7 @@ const SuperGif = (opts) => {
     }
   }
 
-  var doShowProgress = function (pos, length, draw) {
+  const doShowProgress = (pos, length, draw) => {
     if (draw && showProgressBar) {
       var height = progressBarHeight
       var left, mid, top, width
@@ -744,7 +736,7 @@ const SuperGif = (opts) => {
       }
     })()
 
-    const putFrame =  ()=> {
+    const putFrame = () => {
       i = parseInt(i, 10)
 
       if (i > frames.length - 1) {
@@ -810,20 +802,20 @@ const SuperGif = (opts) => {
     doShowProgress(stream.pos, stream.data.length, draw)
   }
 
-  var doNothing = function () {}
+  const doNothing = function () {}
   /**
    * @param{boolean=} draw Whether to draw progress bar or not; this is not idempotent because of translucency.
    *                       Note that this means that the text will be unsynchronized with the progress bar on non-frames;
    *                       but those are typically so small (GCE etc.) that it doesn't really matter. TODO: Do this properly.
    */
-  const withProgress = (fn, draw) => {
-    return function (block) {
+  const withProgress =
+    (fn: Function, draw = false) =>
+    (block) => {
       fn(block)
       doDecodeProgress(draw)
     }
-  }
 
-  var handler = {
+  const handler = {
     hdr: withProgress(doHdr),
     gce: withProgress(doGCE),
     com: withProgress(doNothing),
@@ -849,10 +841,10 @@ const SuperGif = (opts) => {
     }
   }
 
-  var init = function () {
-    var parent = gif.parentNode
+  const init = () => {
+    const parent = gif.parentNode
 
-    var div = document.createElement('div')
+    const div = document.createElement('div')
     canvas = document.createElement('canvas')
     ctx = canvas.getContext('2d')
     toolbar = document.createElement('div')
@@ -875,7 +867,7 @@ const SuperGif = (opts) => {
     initialized = true
   }
 
-  var get_canvas_scale = function () {
+  const get_canvas_scale = () => {
     var scale
     if (options.max_width && hdr && hdr.width > options.max_width) {
       scale = options.max_width / hdr.width
@@ -887,12 +879,13 @@ const SuperGif = (opts) => {
 
   var canvas, ctx, toolbar, tmpCanvas
   var initialized = false
-  var load_callback = false
+  let load_callback: Function | undefined
 
-  var load_setup = function (callback) {
-    if (loading) return false
-    if (callback) load_callback = callback
-    else load_callback = false
+  const load_setup = (callback?: Function) => {
+    if (loading) {
+      return false
+    }
+    load_callback = callback
 
     loading = true
     frames = []
@@ -914,27 +907,13 @@ const SuperGif = (opts) => {
     move_to: player.move_to,
 
     // getters for instance vars
-    get_playing: function () {
-      return playing
-    },
-    get_canvas: function () {
-      return canvas
-    },
-    get_canvas_scale: function () {
-      return get_canvas_scale()
-    },
-    get_loading: function () {
-      return loading
-    },
-    get_auto_play: function () {
-      return options.auto_play
-    },
-    get_length: function () {
-      return player.length()
-    },
-    get_current_frame: function () {
-      return player.current_frame()
-    },
+    get_playing: () => playing,
+    get_canvas: () => canvas,
+    get_canvas_scale: () => get_canvas_scale(),
+    get_loading: () => loading,
+    get_auto_play: () => options,
+    get_length: () => player.length(),
+    get_current_frame: () => player.current_frame(),
     load_url: function (src, callback) {
       if (!load_setup(callback)) return
 
@@ -987,7 +966,7 @@ const SuperGif = (opts) => {
       }
       h.send()
     },
-    load: function (callback) {
+    load: function (callback:Function) {
       this.load_url(gif.getAttribute('rel:animated_src') || gif.src, callback)
     },
     load_raw: function (arr, callback) {
