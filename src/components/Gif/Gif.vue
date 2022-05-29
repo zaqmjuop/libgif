@@ -1,15 +1,20 @@
 <template>
-  <div style="height: 400px">
-    <span>{{ state.loaded }} / {{ state.total }}</span>
-    <canvas :width="state.width" :height="state.height" ref="canvas"></canvas>
-  </div>
+  <img
+    :src="src"
+    :rel:animated_src="src"
+    width="360"
+    height="360"
+    rel:auto_play="1"
+    rel:rubbable="1"
+    ref="img"
+  />
 </template>
 <script lang="ts" setup>
-import { defineProps, reactive, onBeforeMount, onMounted, ref } from 'vue'
+import { defineProps, reactive, onMounted, ref } from 'vue'
+import libgif2 from '@/lib/libgif/libgif2'
 import { download } from './download'
 import { Stream } from '@/lib/libgif/Stream'
 import { GifFrame, GifParser } from './gifParser'
-import libgif from '@/lib/libgif/libgif'
 import { Player } from './player'
 
 const prop = defineProps({
@@ -17,43 +22,12 @@ const prop = defineProps({
     type: String
   }
 })
-const defaultState = () => ({
-  total: 0,
-  loaded: 0,
-  width: 0,
-  height: 0
-})
-const state = reactive(defaultState())
-const canvas = ref<HTMLCanvasElement | null>(null)
-
-window.s = state
-
-onMounted(async () => {
-  const { src } = prop
-  if (!src) {
-    return
-  }
-  const res = await download(src, {
-    onprogress: (e) => {
-      if (e.lengthComputable) {
-        state.loaded = e.loaded
-        state.total = e.total
-        console.log(`下载完成${src}`)
-      }
-    }
-  })
-  const st = new Stream(res)
-  const parser = await GifParser.of(st)
-  if (parser.header) {
-    state.width = parser.header.width
-    state.height = parser.header.height
-  }
-  const el = canvas.value
-  if (el instanceof HTMLCanvasElement && parser) {
-    const player = new Player(el, parser.frames)
-    player.play()
-    console.log(player)
-  }
+const rub = ref<ReturnType<typeof libgif2> | null>(null)
+const img = ref<HTMLImageElement | null>(null)
+onMounted(() => {
+  rub.value = libgif2({ gif: img.value })
+  rub.value.load(() => {})
+  console.log({rub})
 })
 </script>
 <style lang="scss" scoped></style>

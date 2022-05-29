@@ -20,8 +20,11 @@ import libgif from '@/lib/libgif/libgif'
 import { onMounted, ref } from 'vue'
 const src = GIFS[3]
 const img = ref<HTMLImageElement | null>(null)
+const rub = ref<ReturnType<typeof libgif> | null>(null)
 onMounted(() => {
-  const rub = libgif({ gif: img.value })
-  rub.load(() => {})
+  // rub.value = libgif({ gif: img.value })
+  // rub.value.load(() => {})
+  // console.log({rub})
+  // window.rub = rub.value
 })
 </script>

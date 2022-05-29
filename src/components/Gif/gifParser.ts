@@ -2,6 +2,7 @@ import { bitsToNum, byteToBitArr } from '@/lib/libgif/utils'
 import { Stream } from '@/lib/libgif/Stream'
 import { isKeyof } from '@/utils'
 import { lzwDecode } from '@/lib/libgif/lzwDecode'
+import { CHECKINDEX } from '@/metaData'
 type rgb = [number, number, number]
 
 export interface GifHeader {
@@ -107,6 +108,12 @@ const EXT_TYPE_MAP = {
   0xff: 'appExt'
 } as const
 
+const BLOCK_MAP = {
+  '!': 'ext',
+  ',': 'img',
+  ';': 'eof'
+} as const
+
 export class GifParser {
   st: Stream
   header: GifHeader | null = null
@@ -119,6 +126,7 @@ export class GifParser {
   frames: GifFrame[] = []
   start: number
   promise: null | Promise<GifParser> = null
+  blocks: any[] = []
   constructor(st: Stream) {
     this.start = Date.now()
     this.st = st
@@ -169,34 +177,30 @@ export class GifParser {
       gct
     }
     this.header = header
+    this.blocks.push(header)
     return header
   }
   private async parseBlock() {
     const { st } = this
     const sentinel = st.readByte()
     const sentinelChar = String.fromCharCode(sentinel)
-    const CHAR_MAP = {
-      '!': 'ext',
-      ',': 'img',
-      ';': 'eof'
-    } as const
-    const type = isKeyof(sentinelChar, CHAR_MAP) ? CHAR_MAP[sentinelChar] : ''
-    if (!type) {
+    if (!isKeyof(sentinelChar, BLOCK_MAP)) {
       throw new Error('Unknown block: 0x' + sentinel.toString(16)) // TODO: Pad this with a 0.
     }
-
-    const MOVE_MAP = {
-      ext: () => this.parseExt(),
-      img: () => this.parseImg(),
-      eof: () => {
+    const type = BLOCK_MAP[sentinelChar]
+    let block
+    switch (type) {
+      case 'ext':
+        block = await this.parseExt()
+        this.blocks.push({ type, block })
+        return this.parseBlock()
+      case 'img':
+        block = await this.parseImg()
+        this.blocks.push({ type, block })
+        return this.parseBlock()
+      case 'eof':
         console.log('解析完毕', Date.now() - this.start)
-      }
-    } as const
-    await MOVE_MAP[type]()
-    if (type !== 'eof') {
-      return this.parseBlock()
-    } else {
-      return this
+        return this
     }
   }
   parseExt() {
@@ -205,6 +209,7 @@ export class GifParser {
     const extType = isKeyof(label, EXT_TYPE_MAP)
       ? EXT_TYPE_MAP[label]
       : 'unknownExt'
+    let res
     const NEXT_MAP = {
       gcExt: () => this.parseGCExt(),
       comExt: () => this.parseComExt(),
@@ -212,7 +217,8 @@ export class GifParser {
       appExt: () => this.parseAppExt(),
       unknownExt: () => this.parseUnknownExt()
     } as const
-    NEXT_MAP[extType]()
+    res = NEXT_MAP[extType]()
+    return { extType: res }
   }
   parseImg() {
     const { st } = this
@@ -253,10 +259,10 @@ export class GifParser {
       lzwData,
       pixels
     }
-
     // throw new Error('img')
     this.imgs.push(img)
     this.pushFrame(img)
+    return img
   }
   pushFrame(img: GifImg) {
     if (!this.gcExt) {

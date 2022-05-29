@@ -20,3 +20,4 @@ export const GIFS = [
   'https://img.zcool.cn/community/0197d259ccc891a8012053f8cb26e3.gif',
   'https://upload.wikimedia.org/wikipedia/commons/2/2c/Rotating_earth_%28large%29.gif',
 ]
+export const CHECKINDEX = 0
