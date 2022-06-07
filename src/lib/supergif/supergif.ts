@@ -12,72 +12,72 @@ const SuperGif = (opts) => {
     c_w: null,
     c_h: null
   }
-  for (var i in opts) {
+  for (let i in opts) {
     options[i] = opts[i]
   }
   if (options.vp_w && options.vp_h) options.is_vp = true
 
-  var stream
-  var hdr
+  let stream
+  let hdr
 
-  var loadError = null
-  var loading = false
+  let loadError = null
+  let loading = false
 
-  var transparency = null
-  var delay = null
-  var disposalMethod = null
-  var disposalRestoreFromIdx: number | null = null
-  var lastDisposalMethod = null
-  var frame: CanvasRenderingContext2D | null = null
-  var lastImg: {
+  let transparency = null
+  let delay = null
+  let disposalMethod = null
+  let disposalRestoreFromIdx: number | null = null
+  let lastDisposalMethod = null
+  let frame: CanvasRenderingContext2D | null = null
+  let lastImg: {
     leftPos: number
     topPos: number
     width: number
     height: number
   } | null = null
 
-  var playing = true
-  var forward = true
+  let playing = true
+  let forward = true
 
-  var ctx_scaled = false
+  let ctx_scaled = false
 
-  var frames: any[] = []
-  var frameOffsets: any[] = [] // elements have .x and .y properties
+  let frames: any[] = []
+  let frameOffsets: any[] = [] // elements have .x and .y properties
 
-  var gif = options.gif
+  let gif = options.gif
   if (typeof options.auto_play == 'undefined')
     options.auto_play =
       !gif.getAttribute('rel:auto_play') ||
       gif.getAttribute('rel:auto_play') == '1'
 
-  var onEndListener = options.hasOwnProperty('on_end') ? options.on_end : null
-  var loopDelay = options.hasOwnProperty('loop_delay') ? options.loop_delay : 0
-  var overrideLoopMode = options.hasOwnProperty('loop_mode')
+  let onEndListener = options.hasOwnProperty('on_end') ? options.on_end : null
+  let loopDelay = options.hasOwnProperty('loop_delay') ? options.loop_delay : 0
+  const overrideLoopMode = options.hasOwnProperty('loop_mode')
     ? options.loop_mode
     : 'auto'
-  var drawWhileLoading = options.hasOwnProperty('draw_while_loading')
+  let drawWhileLoading = options.hasOwnProperty('draw_while_loading')
     ? options.draw_while_loading
     : true
-  var showProgressBar = drawWhileLoading
+  const showProgressBar = drawWhileLoading
     ? options.hasOwnProperty('show_progress_bar')
       ? options.show_progress_bar
       : true
     : false
-  var progressBarHeight = options.hasOwnProperty('progressbar_height')
+  const progressBarHeight = options.hasOwnProperty('progressbar_height')
     ? options.progressbar_height
     : 25
-  var progressBarBackgroundColor = options.hasOwnProperty(
+  const progressBarBackgroundColor = options.hasOwnProperty(
     'progressbar_background_color'
   )
     ? options.progressbar_background_color
     : 'rgba(255,255,255,0.4)'
-  var progressBarForegroundColor = options.hasOwnProperty(
+  const progressBarForegroundColor = options.hasOwnProperty(
     'progressbar_foreground_color'
   )
     ? options.progressbar_foreground_color
     : 'rgba(255,0,22,.8)'
 
-  var clear = function () {
+  const clear = () => {
     transparency = null
     delay = null
     lastDisposalMethod = disposalMethod
@@ -87,7 +87,7 @@ const SuperGif = (opts) => {
 
   // XXX: There's probably a better way to handle catching exceptions when
   // callbacks are involved.
-  var doParse = function () {
+  const doParse = () => {
     try {
       parseGIF(stream, handler)
     } catch (err) {
@@ -108,7 +108,7 @@ const SuperGif = (opts) => {
     }
   }
 
-  var setFrameOffset = function (frame, offset) {
+  const setFrameOffset = (frame, offset) => {
     if (!frameOffsets[frame]) {
       frameOffsets[frame] = offset
       return
@@ -123,8 +123,8 @@ const SuperGif = (opts) => {
 
   const doShowProgress = (pos, length, draw) => {
     if (draw && showProgressBar) {
-      var height = progressBarHeight
-      var left, mid, top, width
+      let height = progressBarHeight
+      let left, mid, top, width
       if (options.is_vp) {
         if (!ctx_scaled) {
           top = options.vp_t + options.vp_h - height
@@ -142,14 +142,14 @@ const SuperGif = (opts) => {
         //some debugging, draw rect around viewport
         if (false) {
           // if (!ctx_scaled) {
-          //   var l = options.vp_l,
+          //   let l = options.vp_l,
           //     t = options.vp_t
-          //   var w = options.vp_w,
+          //   let w = options.vp_w,
           //     h = options.vp_h
           // } else {
-          //   var l = options.vp_l / get_canvas_scale(),
+          //   let l = options.vp_l / get_canvas_scale(),
           //     t = options.vp_t / get_canvas_scale()
-          //   var w = options.vp_w / get_canvas_scale(),
+          //   let w = options.vp_w / get_canvas_scale(),
           //     h = options.vp_h / get_canvas_scale()
           // }
           // ctx.rect(l, t, w, h)
@@ -173,7 +173,7 @@ const SuperGif = (opts) => {
   }
 
   const doLoadError = (originOfError) => {
-    var drawError = function () {
+    const drawError = () => {
       ctx.fillStyle = 'black'
       ctx.fillRect(
         0,
@@ -202,12 +202,12 @@ const SuperGif = (opts) => {
     drawError()
   }
 
-  var doHdr = function (_hdr) {
+  const doHdr = (_hdr) => {
     hdr = _hdr
     setSizes(hdr.width, hdr.height)
   }
 
-  var doGCE = function (gce) {
+  const doGCE = (gce) => {
     pushFrame()
     clear()
     transparency = gce.transparencyGiven ? gce.transparencyIndex : null
@@ -216,7 +216,7 @@ const SuperGif = (opts) => {
     // We don't have much to do with the rest of GCE.
   }
 
-  var pushFrame = function () {
+  const pushFrame = () => {
     if (!frame) return
     frames.push({
       data: frame.getImageData(0, 0, hdr.width, hdr.height),
@@ -225,15 +225,15 @@ const SuperGif = (opts) => {
     frameOffsets.push({ x: 0, y: 0 })
   }
 
-  var doImg = function (img) {
+  const doImg = (img) => {
     if (!frame && tmpCanvas) {
       frame = tmpCanvas.getContext('2d')
     }
 
-    var currIdx = frames.length
+    let currIdx = frames.length
 
     //ct = color table, gct = global color table
-    var ct = img.lctFlag ? img.lct : hdr.gct // TODO: What if neither exists?
+    let ct = img.lctFlag ? img.lct : hdr.gct // TODO: What if neither exists?
 
     /*
               Disposal method indicates the way in which the graphic is to
@@ -290,13 +290,13 @@ const SuperGif = (opts) => {
 
     //Get existing pixels for img region after applying disposal method
     if (frame) {
-      var imgData = frame.getImageData(
+      let imgData = frame.getImageData(
         img.leftPos,
         img.topPos,
         img.width,
         img.height
       ) //apply color table colors
-      img.pixels.forEach(function (pixel, i) {
+      img.pixels.forEach((pixel, i) => {
         // imgData.data === [R,G,B,A,R,G,B,A,...]
         if (pixel !== transparency) {
           imgData.data[i * 4 + 0] = ct[pixel][0]
@@ -344,7 +344,7 @@ const SuperGif = (opts) => {
       putFrame()
     }
 
-    const step = (function () {
+    const step = (() => {
       let stepping = false
 
       const completeLoop = () => {
@@ -364,7 +364,7 @@ const SuperGif = (opts) => {
         if (!stepping) return
 
         stepFrame(1)
-        var delay = frames[i].delay * 10
+        let delay = frames[i].delay * 10
         if (!delay) delay = 100 // FIXME: Should this even default at all? What should it be?
 
         const nextFrameNo = getNextFrameNo()
@@ -376,7 +376,7 @@ const SuperGif = (opts) => {
         }
       }
 
-      return function () {
+      return () => {
         if (!stepping) setTimeout(doStep, 0)
       }
     })()
@@ -402,18 +402,18 @@ const SuperGif = (opts) => {
       ctx.drawImage(tmpCanvas, 0, 0)
     }
 
-    var play = function () {
+    const play = () => {
       playing = true
       step()
     }
 
-    var pause = function () {
+    const pause = () => {
       playing = false
     }
 
     return {
       getFrames,
-      init: function () {
+      init: () => {
         if (loadError) return
 
         if (!(options.c_w && options.c_h)) {
@@ -432,24 +432,20 @@ const SuperGif = (opts) => {
       pause: pause,
       playing: playing,
       move_relative: stepFrame,
-      current_frame: function () {
-        return i
-      },
-      length: function () {
-        return frames.length
-      },
-      move_to: function (frame_idx) {
+      current_frame: () => i,
+      length: () => frames.length,
+      move_to: (frame_idx) => {
         i = frame_idx
         putFrame()
       }
     }
   })()
 
-  var doDecodeProgress = function (draw) {
+  let doDecodeProgress = (draw) => {
     doShowProgress(stream.pos, stream.data.length, draw)
   }
 
-  const doNothing = function () {}
+  const doNothing = () => {}
   /**
    * @param{boolean=} draw Whether to draw progress bar or not; this is not idempotent because of translucency.
    *                       Note that this means that the text will be unsynchronized with the progress bar on non-frames;
@@ -472,7 +468,7 @@ const SuperGif = (opts) => {
       NETSCAPE: withProgress(doNothing)
     },
     img: withProgress(doImg, true),
-    eof: function (block) {
+    eof: (block) => {
       //toolbar.style.display = '';
       pushFrame()
       doDecodeProgress(false)
@@ -515,7 +511,7 @@ const SuperGif = (opts) => {
   }
 
   const get_canvas_scale = () => {
-    var scale
+    let scale
     if (options.max_width && hdr && hdr.width > options.max_width) {
       scale = options.max_width / hdr.width
     } else {
@@ -527,7 +523,7 @@ const SuperGif = (opts) => {
   let ctx
   let toolbar
   let tmpCanvas: HTMLCanvasElement | null
-  var initialized = false
+  let initialized = false
   let load_callback: Function | undefined
 
   const load_setup = (callback?: Function) => {
@@ -563,10 +559,10 @@ const SuperGif = (opts) => {
     get_auto_play: () => options,
     get_length: () => player.length(),
     get_current_frame: () => player.current_frame(),
-    load_url: function (src, callback) {
+    load_url: (src, callback) => {
       if (!load_setup(callback)) return
 
-      var h = new XMLHttpRequest()
+      let h = new XMLHttpRequest()
       // new browsers (XMLHttpRequest2-compliant)
       h.open('GET', src, true)
 
@@ -584,7 +580,7 @@ const SuperGif = (opts) => {
         h.setRequestHeader('Accept-Charset', 'x-user-defined')
       }
 
-      h.onloadstart = function () {
+      h.onloadstart = () => {
         // Wait until connection is opened to replace the gif element with a canvas to avoid a blank img
         if (!initialized) init()
       }
@@ -601,7 +597,7 @@ const SuperGif = (opts) => {
               .join('')
           })
         }
-        var data = this.response
+        let data = this.response
         if (data.toString().indexOf('ArrayBuffer') > 0) {
           data = new Uint8Array(data)
         }
@@ -609,10 +605,10 @@ const SuperGif = (opts) => {
         stream = new Stream(data)
         setTimeout(doParse, 0)
       }
-      h.onprogress = function (e) {
+      h.onprogress = (e) => {
         if (e.lengthComputable) doShowProgress(e.loaded, e.total, true)
       }
-      h.onerror = function () {
+      h.onerror = () => {
         doLoadError('xhr')
       }
       h.send()
@@ -620,7 +616,7 @@ const SuperGif = (opts) => {
     load: function (callback: Function) {
       this.load_url(gif.getAttribute('rel:animated_src') || gif.src, callback)
     },
-    load_raw: function (arr, callback) {
+    load_raw: (arr, callback) => {
       if (!load_setup(callback)) return
       if (!initialized) init()
       stream = new Stream(arr)
