@@ -1,14 +1,14 @@
 export interface Hander {
   readonly hdr: (block: Header) => void
-  readonly gce: (block: any) => void
-  readonly com: (block: any) => void
+  readonly gce: (block: GCExtBlock) => void
+  readonly com: (block: ComExtBlock) => void
   readonly app: {
-    readonly NETSCAPE: (block: any) => void
+    readonly NETSCAPE: (block: NetscapeExtBlock) => void
   }
   readonly img: (block: ImgBlock) => void
   readonly eof: (block: Block) => void
-  readonly pte: (block: any) => void
-  readonly unknown: (block: any) => void
+  readonly pte: (block: PTExtBlock) => void
+  readonly unknown: (block: UnknownExtBlock) => void
 }
 
 export interface Header {
@@ -63,4 +63,41 @@ export interface ImgBlock extends Block {
   lct: number[][] | undefined
   lzwMinCodeSize: number
   pixels: number[]
+}
+export interface ExtBlock extends Block {
+  readonly label: number
+  extType: 'gce' | 'com' | 'pte' | 'app' | 'unknown' | ''
+}
+export interface UnknownExtBlock extends ExtBlock {
+  data: string
+}
+export interface AppExtBlock extends ExtBlock {
+  identifier: string
+  authCode: string
+}
+export interface UnknownAppExtBlock extends AppExtBlock {
+  appData: string
+}
+export interface NetscapeExtBlock extends AppExtBlock {
+  unknown: number
+  iterations: number
+  terminator: number
+}
+export interface PTExtBlock extends ExtBlock {
+  ptHeader: number[]
+  ptData: string
+}
+
+export interface ComExtBlock extends ExtBlock {
+  comment: string
+}
+
+export interface GCExtBlock extends ExtBlock {
+  reserved: boolean[]
+  disposalMethod: number
+  userInput: boolean
+  transparencyGiven: boolean
+  delayTime: number
+  transparencyIndex: number
+  terminator: number
 }

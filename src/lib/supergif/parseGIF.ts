@@ -1,6 +1,15 @@
 import { lzwDecode } from './lzwDecode'
 import { bitsToNum, byteToBitArr, Stream } from './stream'
-import { Block, Hander, Header, ImgBlock } from './type'
+import {
+  AppExtBlock,
+  Block,
+  ExtBlock,
+  Hander,
+  Header,
+  ImgBlock,
+  PTExtBlock,
+  UnknownAppExtBlock
+} from './type'
 
 // The actual parsing; returns an object with properties.
 export const parseGIF = (st: Stream, handler: Hander) => {
@@ -58,92 +67,113 @@ export const parseGIF = (st: Stream, handler: Hander) => {
   }
 
   const parseExt = (block: Block) => {
-    const parseGCExt = (block) => {
+    const parseGCExt = (block: ExtBlock) => {
       const blockSize = st.readByte() // Always 4
       const bits = byteToBitArr(st.readByte())
-      block.reserved = bits.splice(0, 3) // Reserved; should be 000.
-      block.disposalMethod = bitsToNum(bits.splice(0, 3))
-      block.userInput = bits.shift()
-      block.transparencyGiven = bits.shift()
+      const reserved = bits.splice(0, 3) // Reserved; should be 000.
+      const disposalMethod = bitsToNum(bits.splice(0, 3))
+      const userInput = !!bits.shift()
+      const transparencyGiven = !!bits.shift()
 
-      block.delayTime = st.readUnsigned()
+      const delayTime = st.readUnsigned()
 
-      block.transparencyIndex = st.readByte()
+      const transparencyIndex = st.readByte()
 
-      block.terminator = st.readByte()
+      const terminator = st.readByte()
 
-      handler.gce && handler.gce(block)
+      handler.gce &&
+        handler.gce({
+          ...block,
+          reserved,
+          disposalMethod,
+          userInput,
+          transparencyGiven,
+          delayTime,
+          transparencyIndex,
+          terminator
+        })
     }
 
-    const parseComExt = function (block) {
-      block.comment = readSubBlocks()
-      handler.com && handler.com(block)
+    const parseComExt = function (block: ExtBlock) {
+      const comment = readSubBlocks()
+      handler.com && handler.com({ ...block, comment })
     }
 
-    const parsePTExt = function (block) {
+    const parsePTExt = function (block: ExtBlock) {
       // No one *ever* uses this. If you use it, deal with parsing it yourself.
       const blockSize = st.readByte() // Always 12
-      block.ptHeader = st.readBytes(12)
-      block.ptData = readSubBlocks()
-      handler.pte && handler.pte(block)
+      const ptHeader = st.readBytes(12)
+      const ptData = readSubBlocks()
+      const ptExtBlock: PTExtBlock = { ...block, ptHeader, ptData }
+      handler.pte && handler.pte(ptExtBlock)
     }
 
-    const parseAppExt = function (block) {
-      const parseNetscapeExt = function (block) {
+    const parseAppExt = function (block: ExtBlock) {
+      const parseNetscapeExt = function (block: AppExtBlock) {
         const blockSize = st.readByte() // Always 3
-        block.unknown = st.readByte() // ??? Always 1? What is this?
-        block.iterations = st.readUnsigned()
-        block.terminator = st.readByte()
-        handler.app && handler.app.NETSCAPE && handler.app.NETSCAPE(block)
+        const unknown = st.readByte() // ??? Always 1? What is this?
+        const iterations = st.readUnsigned()
+        const terminator = st.readByte()
+        handler.app &&
+          handler.app.NETSCAPE &&
+          handler.app.NETSCAPE({ ...block, unknown, iterations, terminator })
       }
 
-      const parseUnknownAppExt = function (block) {
-        block.appData = readSubBlocks()
+      const parseUnknownAppExt = function (block: AppExtBlock) {
+        const appData = readSubBlocks()
+        const unknownAppExtBlock: UnknownAppExtBlock = { ...block, appData }
         // FIXME: This won't work if a handler wants to match on any identifier.
         handler.app &&
           handler.app[block.identifier] &&
-          handler.app[block.identifier](block)
+          handler.app[block.identifier](unknownAppExtBlock)
       }
 
       const blockSize = st.readByte() // Always 11
-      block.identifier = st.read(8)
-      block.authCode = st.read(3)
-      switch (block.identifier) {
+      const identifier = st.read(8)
+      const authCode = st.read(3)
+      const appBlock: AppExtBlock = { ...block, identifier, authCode }
+      switch (appBlock.identifier) {
         case 'NETSCAPE':
-          parseNetscapeExt(block)
+          parseNetscapeExt(appBlock)
           break
         default:
-          parseUnknownAppExt(block)
+          parseUnknownAppExt(appBlock)
           break
       }
     }
 
-    const parseUnknownExt = function (block) {
-      block.data = readSubBlocks()
-      handler.unknown && handler.unknown(block)
+    const parseUnknownExt = (block: ExtBlock) => {
+      const data = readSubBlocks()
+      const unknownExtBlock = { ...block, data }
+      handler.unknown && handler.unknown(unknownExtBlock)
     }
 
-    block.label = st.readByte()
-    switch (block.label) {
+    const label = st.readByte()
+    const extBlock: ExtBlock = {
+      ...block,
+      label,
+      extType: ''
+    }
+    switch (extBlock.label) {
       case 0xf9:
-        block.extType = 'gce'
-        parseGCExt(block)
+        extBlock.extType = 'gce'
+        parseGCExt(extBlock)
         break
       case 0xfe:
-        block.extType = 'com'
-        parseComExt(block)
+        extBlock.extType = 'com'
+        parseComExt(extBlock)
         break
       case 0x01:
-        block.extType = 'pte'
-        parsePTExt(block)
+        extBlock.extType = 'pte'
+        parsePTExt(extBlock)
         break
       case 0xff:
-        block.extType = 'app'
-        parseAppExt(block)
+        extBlock.extType = 'app'
+        parseAppExt(extBlock)
         break
       default:
-        block.extType = 'unknown'
-        parseUnknownExt(block)
+        extBlock.extType = 'unknown'
+        parseUnknownExt(extBlock)
         break
     }
   }
