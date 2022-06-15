@@ -1,7 +1,6 @@
 <template>
   <div>
     <Gif :src="src" />
-    <hr />
     <img
       :src="src"
       :rel:animated_src="src"
@@ -16,15 +15,15 @@
 <script lang="ts" setup>
 import Gif from '@/components/Gif/Gif.vue'
 import { GIFS, SRCS } from './metaData'
-import libgif from '@/lib/libgif/libgif'
+import libgif from '@/lib/libgif'
 import { onMounted, ref } from 'vue'
 const src = GIFS[3]
 const img = ref<HTMLImageElement | null>(null)
 const rub = ref<ReturnType<typeof libgif> | null>(null)
 onMounted(() => {
-  // rub.value = libgif({ gif: img.value })
-  // rub.value.load(() => {})
-  // console.log({rub})
-  // window.rub = rub.value
+  rub.value = libgif({ gif: img.value })
+  rub.value.load(() => {})
+  console.log({rub})
+  window.rub = rub.value
 })
 </script>
