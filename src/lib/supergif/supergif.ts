@@ -1,11 +1,9 @@
 import { parseGIF } from './parseGIF'
 import { Stream } from './stream'
-import { Hander, Options } from './type'
-
-
+import { Hander, Options, VP } from './type'
 
 const SuperGif = (opts: Options) => {
-  const options: Options = Object.assign(
+  const options: Options & VP = Object.assign(
     {
       //viewport position
       vp_l: 0,

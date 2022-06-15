@@ -21,9 +21,11 @@ const prop = defineProps({
 const rub = ref<ReturnType<typeof supergif> | null>(null)
 const img = ref<HTMLImageElement | null>(null)
 onMounted(() => {
-  rub.value = supergif({ gif: img.value })
-  rub.value.load(() => {})
-  console.log({rub})
+  if (img.value) {
+    rub.value = supergif({ gif: img.value })
+    rub.value.load(() => {})
+    console.log({ rub })
+  }
 })
 </script>
 <style lang="scss" scoped></style>

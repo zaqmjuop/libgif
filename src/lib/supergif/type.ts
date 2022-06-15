@@ -25,14 +25,16 @@ export interface Header {
   readonly gct: number[][] | undefined
 }
 
-export interface Options {
+export interface VP {
   vp_w: number
   vp_h: number
-  is_vp?: boolean
   vp_l: number
   vp_t: number
   c_w: number
   c_h: number
+}
+export interface Options extends Partial<VP> {
+  is_vp?: boolean
   gif: HTMLImageElement
   auto_play?: boolean
   on_end?: (gif: HTMLImageElement) => void
