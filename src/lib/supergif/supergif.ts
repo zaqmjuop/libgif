@@ -1,4 +1,4 @@
-import { parseGIF } from './parseGIF'
+import { Hander, parseGIF } from './parseGIF'
 import { Stream } from './stream'
 
 interface Options {
@@ -41,7 +41,7 @@ const SuperGif = (opts: Options) => {
   }
   if (options.vp_w && options.vp_h) options.is_vp = true
 
-  let stream
+  let stream: Stream
   let hdr
 
   let loadError = null
@@ -484,7 +484,7 @@ const SuperGif = (opts: Options) => {
       doDecodeProgress(draw)
     }
 
-  const handler = {
+  const handler: Hander = {
     hdr: withProgress(doHdr),
     gce: withProgress(doGCE),
     com: withProgress(doNothing),
@@ -507,8 +507,14 @@ const SuperGif = (opts: Options) => {
       if (load_callback) {
         load_callback(gif)
       }
+    },
+    pte: (block) => {
+      console.log('pte', block)
+    },
+    unknown: (block) => {
+      console.log('unknown', block)
     }
-  }
+  } as const
 
   const init = () => {
     const parent = gif.parentNode

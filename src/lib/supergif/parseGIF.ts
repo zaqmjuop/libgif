@@ -1,9 +1,21 @@
 import { lzwDecode } from './lzwDecode'
 import { bitsToNum, byteToBitArr, Stream } from './stream'
 
+export interface Hander {
+  readonly hdr: (block: any) => void
+  readonly gce: (block: any) => void
+  readonly com: (block: any) => void
+  readonly app: {
+    readonly NETSCAPE: (block: any) => void
+  }
+  readonly img: (block: any) => void
+  readonly eof: (block: any) => void
+  readonly pte: (block: any) => void
+  readonly unknown: (block: any) => void
+}
+
 // The actual parsing; returns an object with properties.
-export const parseGIF = (st: Stream, handler) => {
-  handler || (handler = {})
+export const parseGIF = (st: Stream, handler: Hander) => {
 
   // LZW (GIF-specific)
   const parseCT = (entries) => {
@@ -152,12 +164,12 @@ export const parseGIF = (st: Stream, handler) => {
   }
 
   const parseImg = function (img) {
-    const deinterlace =  (pixels:number[], width:number)=> {
+    const deinterlace = (pixels: number[], width: number) => {
       // Of course this defeats the purpose of interlacing. And it's *probably*
       // the least efficient way it's ever been implemented. But nevertheless...
-      const newPixels:number[] = new Array(pixels.length)
+      const newPixels: number[] = new Array(pixels.length)
       const rows = pixels.length / width
-      const cpRow =  (toRow:number, fromRow:number) =>{
+      const cpRow = (toRow: number, fromRow: number) => {
         const fromPixels = pixels.slice(fromRow * width, (fromRow + 1) * width)
         newPixels.splice(toRow * width, width, ...fromPixels)
       }
