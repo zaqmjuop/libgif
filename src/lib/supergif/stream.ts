@@ -1,9 +1,8 @@
-
 // Generic functions
 export const bitsToNum = (ba: boolean[]) =>
   ba.reduce((total, current) => total * 2 + Number(current), 0)
 
-  export const byteToBitArr = (bite: number) => {
+export const byteToBitArr = (bite: number) => {
   const arr: boolean[] = []
   for (let i = 7; i >= 0; i--) {
     arr.push(!!(bite & (1 << i)))
@@ -16,12 +15,12 @@ export const bitsToNum = (ba: boolean[]) =>
  * @constructor
  */
 // Make compiler happy.
- export class Stream {
+export class Stream {
   data: any
   len: number
   pos: number
 
-  constructor(data) {
+  constructor(data: string | Uint8Array) {
     this.data = data
     this.len = this.data.length
     this.pos = 0
@@ -35,14 +34,14 @@ export const bitsToNum = (ba: boolean[]) =>
       ? this.data[this.pos++]
       : this.data.charCodeAt(this.pos++) & 0xff
   }
-  readBytes(n) {
+  readBytes(n: number) {
     const bytes: number[] = []
     for (let i = 0; i < n; i++) {
       bytes.push(this.readByte())
     }
     return bytes
   }
-  read(n) {
+  read(n: number) {
     let s = ''
     for (let i = 0; i < n; i++) {
       s += String.fromCharCode(this.readByte())
