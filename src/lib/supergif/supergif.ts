@@ -1,17 +1,41 @@
 import { parseGIF } from './parseGIF'
 import { Stream } from './stream'
 
-const SuperGif = (opts) => {
-  const options: Record<string, any> = {
-    //viewport position
-    vp_l: 0,
-    vp_t: 0,
-    vp_w: null,
-    vp_h: null,
-    //canvas sizes
-    c_w: null,
-    c_h: null
-  }
+interface Options {
+  vp_w: number
+  vp_h: number
+  is_vp?: boolean
+  vp_l: number
+  vp_t: number
+  c_w: number
+  c_h: number
+  gif: HTMLImageElement
+  auto_play?: boolean
+  on_end?: (gif: HTMLImageElement) => void
+  loop_delay?: number
+  loop_mode?: boolean
+  draw_while_loading?: boolean
+  show_progress_bar?: boolean
+  progressbar_height?: number
+  progressbar_background_color?: string
+  progressbar_foreground_color?: string
+  max_width?: number
+}
+
+const SuperGif = (opts: Options) => {
+  const options: Options = Object.assign(
+    {
+      //viewport position
+      vp_l: 0,
+      vp_t: 0,
+      vp_w: 0,
+      vp_h: 0,
+      //canvas sizes
+      c_w: 0,
+      c_h: 0
+    },
+    opts
+  )
   for (let i in opts) {
     options[i] = opts[i]
   }
@@ -50,11 +74,12 @@ const SuperGif = (opts) => {
       !gif.getAttribute('rel:auto_play') ||
       gif.getAttribute('rel:auto_play') == '1'
 
-  let onEndListener = options.hasOwnProperty('on_end') ? options.on_end : null
-  let loopDelay = options.hasOwnProperty('loop_delay') ? options.loop_delay : 0
-  const overrideLoopMode = options.hasOwnProperty('loop_mode')
-    ? options.loop_mode
-    : 'auto'
+  let onEndListener =
+    typeof options.on_end === 'function' ? options.on_end : null
+  let loopDelay =
+    typeof options.loop_delay === 'number' ? options.loop_delay : 0
+  const overrideLoopMode =
+    typeof options.loop_mode === 'boolean' ? options.loop_mode : 'auto'
   let drawWhileLoading = options.hasOwnProperty('draw_while_loading')
     ? options.draw_while_loading
     : true
@@ -63,9 +88,10 @@ const SuperGif = (opts) => {
       ? options.show_progress_bar
       : true
     : false
-  const progressBarHeight = options.hasOwnProperty('progressbar_height')
-    ? options.progressbar_height
-    : 25
+  const progressBarHeight =
+    typeof options.progressbar_height === 'number'
+      ? options.progressbar_height
+      : 25
   const progressBarBackgroundColor = options.hasOwnProperty(
     'progressbar_background_color'
   )
@@ -494,8 +520,8 @@ const SuperGif = (opts) => {
 
     tmpCanvas = document.createElement('canvas')
 
-    div.setAttribute('width', (canvas.width = gif.width))
-    div.setAttribute('height', (canvas.height = gif.height))
+    div.setAttribute('width', (canvas.width = gif.width.toString()))
+    div.setAttribute('height', (canvas.height = gif.height.toString()))
     toolbar.style.minWidth = gif.width + 'px'
 
     div.className = 'jsgif'
@@ -503,8 +529,10 @@ const SuperGif = (opts) => {
     div.appendChild(canvas)
     div.appendChild(toolbar)
 
-    parent.insertBefore(div, gif)
-    parent.removeChild(gif)
+    if (parent) {
+      parent.insertBefore(div, gif)
+      parent.removeChild(gif)
+    }
 
     if (options.c_w && options.c_h) setSizes(options.c_w, options.c_h)
     initialized = true
