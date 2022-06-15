@@ -1,24 +1,11 @@
 import { lzwDecode } from './lzwDecode'
 import { bitsToNum, byteToBitArr, Stream } from './stream'
-
-export interface Hander {
-  readonly hdr: (block: any) => void
-  readonly gce: (block: any) => void
-  readonly com: (block: any) => void
-  readonly app: {
-    readonly NETSCAPE: (block: any) => void
-  }
-  readonly img: (block: any) => void
-  readonly eof: (block: any) => void
-  readonly pte: (block: any) => void
-  readonly unknown: (block: any) => void
-}
+import { Block, Hander, Header, ImgBlock } from './type'
 
 // The actual parsing; returns an object with properties.
 export const parseGIF = (st: Stream, handler: Hander) => {
-
   // LZW (GIF-specific)
-  const parseCT = (entries) => {
+  const parseCT = (entries: number) => {
     // Each entry is 3 bytes, for RGB.
     const ct: number[][] = []
     for (let i = 0; i < entries; i++) {
@@ -28,7 +15,8 @@ export const parseGIF = (st: Stream, handler: Hander) => {
   }
 
   const readSubBlocks = () => {
-    let size, data
+    let size: number
+    let data: string
     data = ''
     do {
       size = st.readByte()
@@ -45,18 +33,15 @@ export const parseGIF = (st: Stream, handler: Hander) => {
     const height = st.readUnsigned()
 
     const bits = byteToBitArr(st.readByte())
-    const gctFlag = bits.shift()
+    const gctFlag = !!bits.shift()
     const colorRes = bitsToNum(bits.splice(0, 3))
-    const sorted = bits.shift()
+    const sorted = !!bits.shift()
     const gctSize = bitsToNum(bits.splice(0, 3))
 
     const bgColor = st.readByte()
     const pixelAspectRatio = st.readByte() // if not 0, aspectRatio = (pixelAspectRatio + 15) / 64
-    let gct
-    if (gctFlag) {
-      gct = parseCT(1 << (gctSize + 1))
-    }
-    const header = {
+    const gct = gctFlag ? parseCT(1 << (gctSize + 1)) : undefined
+    const header: Header = {
       sig,
       ver,
       width,
@@ -72,7 +57,7 @@ export const parseGIF = (st: Stream, handler: Hander) => {
     handler.hdr && handler.hdr(header)
   }
 
-  const parseExt = (block) => {
+  const parseExt = (block: Block) => {
     const parseGCExt = (block) => {
       const blockSize = st.readByte() // Always 4
       const bits = byteToBitArr(st.readByte())
@@ -163,7 +148,7 @@ export const parseGIF = (st: Stream, handler: Hander) => {
     }
   }
 
-  const parseImg = function (img) {
+  const parseImg = (block: Block) => {
     const deinterlace = (pixels: number[], width: number) => {
       // Of course this defeats the purpose of interlacing. And it's *probably*
       // the least efficient way it's ever been implemented. But nevertheless...
@@ -189,38 +174,54 @@ export const parseGIF = (st: Stream, handler: Hander) => {
       return newPixels
     }
 
-    img.leftPos = st.readUnsigned()
-    img.topPos = st.readUnsigned()
-    img.width = st.readUnsigned()
-    img.height = st.readUnsigned()
+    const leftPos = st.readUnsigned()
+    const topPos = st.readUnsigned()
+    const width = st.readUnsigned()
+    const height = st.readUnsigned()
 
     const bits = byteToBitArr(st.readByte())
-    img.lctFlag = bits.shift()
-    img.interlaced = bits.shift()
-    img.sorted = bits.shift()
-    img.reserved = bits.splice(0, 2)
-    img.lctSize = bitsToNum(bits.splice(0, 3))
+    const lctFlag = bits.shift()
+    const interlaced = bits.shift()
+    const sorted = bits.shift()
+    const reserved = bits.splice(0, 2)
+    const lctSize = bitsToNum(bits.splice(0, 3))
 
-    if (img.lctFlag) {
-      img.lct = parseCT(1 << (img.lctSize + 1))
-    }
+    const lct = lctFlag ? parseCT(1 << (lctSize + 1)) : undefined
 
-    img.lzwMinCodeSize = st.readByte()
+    const lzwMinCodeSize = st.readByte()
 
     const lzwData = readSubBlocks()
 
-    img.pixels = lzwDecode(img.lzwMinCodeSize, lzwData)
+    let pixels: number[] = lzwDecode(lzwMinCodeSize, lzwData)
+    // Move
+    if (interlaced) {
+      pixels = deinterlace(pixels, width)
+    }
 
-    if (img.interlaced) {
-      // Move
-      img.pixels = deinterlace(img.pixels, img.width)
+    const img: ImgBlock = {
+      ...block,
+      leftPos,
+      topPos,
+      width,
+      height,
+      lctFlag,
+      interlaced,
+      sorted,
+      reserved,
+      lctSize,
+      lct,
+      lzwMinCodeSize,
+      pixels
     }
     handler.img && handler.img(img)
   }
 
   const parseBlock = () => {
-    const block: Record<string, any> = {}
-    block.sentinel = st.readByte()
+    const sentinel = st.readByte()
+    const block: Block = {
+      sentinel,
+      type: ''
+    }
 
     switch (
       String.fromCharCode(block.sentinel) // For ease of matching
@@ -244,7 +245,7 @@ export const parseGIF = (st: Stream, handler: Hander) => {
     if (block.type !== 'eof') setTimeout(parseBlock, 0)
   }
 
-  const parse = function () {
+  const parse = () => {
     parseHeader()
     setTimeout(parseBlock, 0)
   }

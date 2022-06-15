@@ -1,26 +1,8 @@
-import { Hander, parseGIF } from './parseGIF'
+import { parseGIF } from './parseGIF'
 import { Stream } from './stream'
+import { Hander, Options } from './type'
 
-interface Options {
-  vp_w: number
-  vp_h: number
-  is_vp?: boolean
-  vp_l: number
-  vp_t: number
-  c_w: number
-  c_h: number
-  gif: HTMLImageElement
-  auto_play?: boolean
-  on_end?: (gif: HTMLImageElement) => void
-  loop_delay?: number
-  loop_mode?: boolean
-  draw_while_loading?: boolean
-  show_progress_bar?: boolean
-  progressbar_height?: number
-  progressbar_background_color?: string
-  progressbar_foreground_color?: string
-  max_width?: number
-}
+
 
 const SuperGif = (opts: Options) => {
   const options: Options = Object.assign(
