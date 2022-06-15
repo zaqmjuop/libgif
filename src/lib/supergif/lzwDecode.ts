@@ -4,7 +4,8 @@ export const lzwDecode = (minCodeSize: number, data: string | Uint8Array) => {
   const readCode = (size: number) => {
     let code = 0
     for (let i = 0; i < size; i++) {
-       const val = data instanceof Uint8Array ? data[pos >> 3]: data.charCodeAt(pos >> 3)
+      const val =
+        data instanceof Uint8Array ? data[pos >> 3] : data.charCodeAt(pos >> 3)
       if (val & (1 << (pos & 7))) {
         code |= 1 << i
       }
@@ -13,14 +14,14 @@ export const lzwDecode = (minCodeSize: number, data: string | Uint8Array) => {
     return code
   }
 
-  const output = []
+  const output: number[] = []
 
   const clearCode = 1 << minCodeSize
   const eoiCode = clearCode + 1
 
   let codeSize = minCodeSize + 1
 
-  let dict: any = []
+  let dict: number[][] = []
 
   const clear = function () {
     dict = []
@@ -29,11 +30,11 @@ export const lzwDecode = (minCodeSize: number, data: string | Uint8Array) => {
       dict[i] = [i]
     }
     dict[clearCode] = []
-    dict[eoiCode] = null
+    dict[eoiCode] = null as any
   }
 
-  let code
-  let last
+  let code: number = 0
+  let last: number
 
   while (true) {
     last = code
