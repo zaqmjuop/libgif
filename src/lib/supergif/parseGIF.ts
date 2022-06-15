@@ -104,8 +104,7 @@ export const parseGIF = (st: Stream, handler: Hander) => {
       const blockSize = st.readByte() // Always 12
       const ptHeader = st.readBytes(12)
       const ptData = readSubBlocks()
-      const ptExtBlock: PTExtBlock = { ...block, ptHeader, ptData }
-      handler.pte && handler.pte(ptExtBlock)
+      handler.pte && handler.pte({ ...block, ptHeader, ptData })
     }
 
     const parseAppExt = function (block: ExtBlock) {
@@ -121,11 +120,10 @@ export const parseGIF = (st: Stream, handler: Hander) => {
 
       const parseUnknownAppExt = function (block: AppExtBlock) {
         const appData = readSubBlocks()
-        const unknownAppExtBlock: UnknownAppExtBlock = { ...block, appData }
         // FIXME: This won't work if a handler wants to match on any identifier.
         handler.app &&
           handler.app[block.identifier] &&
-          handler.app[block.identifier](unknownAppExtBlock)
+          handler.app[block.identifier]({ ...block, appData })
       }
 
       const blockSize = st.readByte() // Always 11
