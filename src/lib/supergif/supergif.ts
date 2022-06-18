@@ -24,17 +24,8 @@ const SuperGif = (opts: Options) => {
 
   let stream: Stream
   let hdr
-  const get_canvas_scale = () => {
-    let scale
-    if (options.max_width && hdr && hdr.width > options.max_width) {
-      scale = options.max_width / hdr.width
-    } else {
-      scale = 1
-    }
-    return scale
-  }
 
-  let loadError = null
+  let loadError: string | null = null
   let loading = false
 
   let transparency: number | null = null
@@ -52,10 +43,13 @@ const SuperGif = (opts: Options) => {
 
   let ctx_scaled = false
 
-  let frames: any[] = []
-  let frameOffsets: any[] = [] // elements have .x and .y properties
+  let frames: {
+    data: ImageData
+    delay: number | null
+  }[] = []
+  let frameOffsets: { x: number; y: number }[] = [] // elements have .x and .y properties
 
-  let gif = options.gif
+  const gif = options.gif
   if (typeof options.auto_play == 'undefined')
     options.auto_play =
       !gif.getAttribute('rel:auto_play') ||
@@ -63,7 +57,7 @@ const SuperGif = (opts: Options) => {
 
   const onEndListener =
     typeof options.on_end === 'function' ? options.on_end : null
-  let loopDelay =
+  const loopDelay =
     typeof options.loop_delay === 'number' ? options.loop_delay : 0
   const overrideLoopMode =
     typeof options.loop_mode === 'boolean' ? options.loop_mode : 'auto'
@@ -97,17 +91,15 @@ const SuperGif = (opts: Options) => {
     disposalMethod = null
     frame = null
   }
-
-  // XXX: There's probably a better way to handle catching exceptions when
-  // callbacks are involved.
-  const doParse = () => {
-    try {
-      parseGIF(stream, handler)
-    } catch (err) {
-      doLoadError('parse')
+  const get_canvas_scale = () => {
+    let scale
+    if (options.max_width && hdr && hdr.width > options.max_width) {
+      scale = options.max_width / hdr.width
+    } else {
+      scale = 1
     }
+    return scale
   }
-
   const setSizes = (w: number, h: number) => {
     canvas.width = w * get_canvas_scale()
     canvas.height = h * get_canvas_scale()
@@ -134,7 +126,7 @@ const SuperGif = (opts: Options) => {
     }
   }
 
-  const doShowProgress = (pos, length, draw) => {
+  const doShowProgress = (pos: number, length: number, draw: boolean) => {
     if (draw && showProgressBar) {
       let height = progressBarHeight
       let left, mid, top, width
@@ -185,7 +177,7 @@ const SuperGif = (opts: Options) => {
     }
   }
 
-  const doLoadError = (originOfError) => {
+  const doLoadError = (originOfError: string) => {
     const drawError = () => {
       ctx.fillStyle = 'black'
       ctx.fillRect(
@@ -215,20 +207,115 @@ const SuperGif = (opts: Options) => {
     drawError()
   }
 
-  const doHdr: Hander['hdr'] = (_hdr) => {
-    hdr = _hdr
-    setSizes(hdr.width, hdr.height)
+  const init = () => {
+    const parent = gif.parentNode
+
+    const div = document.createElement('div')
+    canvas = document.createElement('canvas')
+    ctx = canvas.getContext('2d')
+    toolbar = document.createElement('div')
+
+    tmpCanvas = document.createElement('canvas')
+
+    div.setAttribute('width', (canvas.width = gif.width.toString()))
+    div.setAttribute('height', (canvas.height = gif.height.toString()))
+    toolbar.style.minWidth = gif.width + 'px'
+
+    div.className = 'jsgif'
+    toolbar.className = 'jsgif_toolbar'
+    div.appendChild(canvas)
+    div.appendChild(toolbar)
+
+    if (parent) {
+      parent.insertBefore(div, gif)
+      parent.removeChild(gif)
+    }
+
+    if (options.c_w && options.c_h) setSizes(options.c_w, options.c_h)
+    initialized = true
   }
 
-  const doGCE: Hander['gce'] = (gce) => {
-    pushFrame()
+  let canvas
+  let ctx
+  let toolbar
+  let tmpCanvas: HTMLCanvasElement | null = null
+  let initialized = false
+  let load_callback: (gif: HTMLImageElement) => void | undefined
+
+  const load_setup = (callback?: (gif: HTMLImageElement) => void) => {
+    if (loading) {
+      return false
+    }
+    load_callback = callback || load_callback
+
+    loading = true
+    frames = []
     clear()
-    transparency = gce.transparencyGiven ? gce.transparencyIndex : null
-    delay = gce.delayTime
-    disposalMethod = gce.disposalMethod
-    // We don't have much to do with the rest of GCE.
-  }
+    disposalRestoreFromIdx = null
+    lastDisposalMethod = null
+    frame = null
+    lastImg = null
 
+    return true
+  }
+  // player
+  const player = new Player({
+    get frames() {
+      return frames
+    },
+    get gif() {
+      return gif
+    },
+    get onEndListener() {
+      return onEndListener
+    },
+    get overrideLoopMode() {
+      return overrideLoopMode
+    },
+    get loopDelay() {
+      return loopDelay
+    },
+    get auto_play() {
+      return options.auto_play
+    },
+    get loadError() {
+      return loadError
+    },
+    get c_w() {
+      return options.c_w
+    },
+    get c_h() {
+      return options.c_h
+    },
+    get get_canvas_scale() {
+      return get_canvas_scale
+    },
+    get frameOffsets() {
+      return frameOffsets
+    },
+    get tmpCanvas() {
+      return tmpCanvas
+    },
+    get ctx() {
+      return ctx
+    }
+  })
+  // player
+  // hander
+  const doDecodeProgress = (draw: boolean) => {
+    doShowProgress(stream.pos, stream.data.length, draw)
+  }
+  /**
+   * @param{boolean=} draw Whether to draw progress bar or not; this is not idempotent because of translucency.
+   *                       Note that this means that the text will be unsynchronized with the progress bar on non-frames;
+   *                       but those are typically so small (GCE etc.) that it doesn't really matter. TODO: Do this properly.
+   */
+  const withProgress =
+    (fn: Function, draw = false) =>
+    (block) => {
+      fn(block)
+      doDecodeProgress(draw)
+    }
   const pushFrame = () => {
     if (!frame) return
     frames.push({
@@ -237,8 +324,21 @@ const SuperGif = (opts: Options) => {
     })
     frameOffsets.push({ x: 0, y: 0 })
   }
+  const doHdr: Hander['hdr'] = (_hdr) => {
+    hdr = _hdr
+    setSizes(hdr.width, hdr.height)
+  }
+  const doGCE: Hander['gce'] = (gce) => {
+    pushFrame()
+    clear()
+    transparency = gce.transparencyGiven ? gce.transparencyIndex : null
+    delay = gce.delayTime
+    disposalMethod = gce.disposalMethod
+    // We don't have much to do with the rest of GCE.
+  }
+  const doNothing = () => {}
 
-  const doImg = (img) => {
+  const doImg: Hander['img'] = (img) => {
     if (!frame && tmpCanvas) {
       frame = tmpCanvas.getContext('2d')
     }
@@ -336,118 +436,20 @@ const SuperGif = (opts: Options) => {
 
     lastImg = img
   }
-
-  let doDecodeProgress = (draw) => {
-    doShowProgress(stream.pos, stream.data.length, draw)
+  const doEof: Hander['eof'] = (block) => {
+    //toolbar.style.display = '';
+    pushFrame()
+    doDecodeProgress(false)
+    if (!(options.c_w && options.c_h)) {
+      canvas.width = hdr.width * get_canvas_scale()
+      canvas.height = hdr.height * get_canvas_scale()
+    }
+    player.init()
+    loading = false
+    if (load_callback) {
+      load_callback(gif)
+    }
   }
-
-  const doNothing = () => {}
-  /**
-   * @param{boolean=} draw Whether to draw progress bar or not; this is not idempotent because of translucency.
-   *                       Note that this means that the text will be unsynchronized with the progress bar on non-frames;
-   *                       but those are typically so small (GCE etc.) that it doesn't really matter. TODO: Do this properly.
-   */
-  const withProgress =
-    (fn: Function, draw = false) =>
-    (block) => {
-      fn(block)
-      doDecodeProgress(draw)
-    }
-
-  const init = () => {
-    const parent = gif.parentNode
-
-    const div = document.createElement('div')
-    canvas = document.createElement('canvas')
-    ctx = canvas.getContext('2d')
-    toolbar = document.createElement('div')
-
-    tmpCanvas = document.createElement('canvas')
-
-    div.setAttribute('width', (canvas.width = gif.width.toString()))
-    div.setAttribute('height', (canvas.height = gif.height.toString()))
-    toolbar.style.minWidth = gif.width + 'px'
-
-    div.className = 'jsgif'
-    toolbar.className = 'jsgif_toolbar'
-    div.appendChild(canvas)
-    div.appendChild(toolbar)
-
-    if (parent) {
-      parent.insertBefore(div, gif)
-      parent.removeChild(gif)
-    }
-
-    if (options.c_w && options.c_h) setSizes(options.c_w, options.c_h)
-    initialized = true
-  }
-
-  let canvas
-  let ctx
-  let toolbar
-  let tmpCanvas: HTMLCanvasElement | null = null
-  let initialized = false
-  let load_callback: (gif: HTMLImageElement) => void | undefined
-
-  const load_setup = (callback?: (gif: HTMLImageElement) => void) => {
-    if (loading) {
-      return false
-    }
-    load_callback = callback || load_callback
-
-    loading = true
-    frames = []
-    clear()
-    disposalRestoreFromIdx = null
-    lastDisposalMethod = null
-    frame = null
-    lastImg = null
-
-    return true
-  }
-
-  const player = new Player({
-    get frames() {
-      return frames
-    },
-    get gif() {
-      return gif
-    },
-    get onEndListener() {
-      return onEndListener
-    },
-    get overrideLoopMode() {
-      return overrideLoopMode
-    },
-    get loopDelay() {
-      return loopDelay
-    },
-    get auto_play() {
-      return options.auto_play
-    },
-    get loadError() {
-      return loadError
-    },
-    get c_w() {
-      return options.c_w
-    },
-    get c_h() {
-      return options.c_h
-    },
-    get get_canvas_scale() {
-      return get_canvas_scale
-    },
-    get frameOffsets() {
-      return frameOffsets
-    },
-    get tmpCanvas() {
-      return tmpCanvas
-    },
-    get ctx() {
-      return ctx
-    }
-  })
-
   const handler: Hander = {
     hdr: withProgress(doHdr),
     gce: withProgress(doGCE),
@@ -458,27 +460,89 @@ const SuperGif = (opts: Options) => {
       NETSCAPE: withProgress(doNothing)
     },
     img: withProgress(doImg, true),
-    eof: (block) => {
-      //toolbar.style.display = '';
-      pushFrame()
-      doDecodeProgress(false)
-      if (!(options.c_w && options.c_h)) {
-        canvas.width = hdr.width * get_canvas_scale()
-        canvas.height = hdr.height * get_canvas_scale()
-      }
-      player.init()
-      loading = false
-      if (load_callback) {
-        load_callback(gif)
-      }
-    },
-    pte: (block) => {
-      console.log('pte', block)
-    },
-    unknown: (block) => {
-      console.log('unknown', block)
-    }
+    eof: doEof,
+    pte: (block) => console.log('pte', block),
+    unknown: (block) => console.log('unknown', block)
   } as const
+  // XXX: There's probably a better way to handle catching exceptions when
+  // callbacks are involved.
+  const doParse = () => {
+    try {
+      parseGIF(stream, handler)
+    } catch (err) {
+      doLoadError('parse')
+    }
+  }
+  // hander
+
+  const load_url = (
+    src: string,
+    callback?: (gif: HTMLImageElement) => void
+  ) => {
+    if (!load_setup(callback)) return
+
+    let h = new XMLHttpRequest()
+    // new browsers (XMLHttpRequest2-compliant)
+    h.open('GET', src, true)
+
+    if ('overrideMimeType' in h) {
+      h.overrideMimeType('text/plain; charset=x-user-defined')
+    }
+
+    // old browsers (XMLHttpRequest-compliant)
+    else if ('responseType' in h) {
+      h.responseType = 'arraybuffer'
+    }
+
+    // IE9 (Microsoft.XMLHTTP-compliant)
+    else {
+      h.setRequestHeader('Accept-Charset', 'x-user-defined')
+    }
+
+    h.onloadstart = () => {
+      // Wait until connection is opened to replace the gif element with a canvas to avoid a blank img
+      if (!initialized) init()
+    }
+    h.onload = function (e) {
+      if (this.status != 200) {
+        doLoadError('xhr - response')
+      }
+      // emulating response field for IE9
+      if (!('response' in this)) {
+        Object.assign(this, {
+          response: new window.VBArray(this.responseText)
+            .toArray()
+            .map(String.fromCharCode)
+            .join('')
+        })
+      }
+      let data = this.response
+      if (data.toString().indexOf('ArrayBuffer') > 0) {
+        data = new Uint8Array(data)
+      }
+
+      stream = new Stream(data)
+      setTimeout(doParse, 0)
+    }
+    h.onprogress = (e) => {
+      if (e.lengthComputable) doShowProgress(e.loaded, e.total, true)
+    }
+    h.onerror = () => {
+      doLoadError('xhr')
+    }
+    h.send()
+  }
+
+  const load = (callback?: (gif: HTMLImageElement) => void) => {
+    load_url(gif.getAttribute('rel:animated_src') || gif.src, callback)
+  }
+
+  const load_raw = (arr, callback) => {
+    if (!load_setup(callback)) return
+    if (!initialized) init()
+    stream = new Stream(arr)
+    setTimeout(doParse, 0)
+  }
 
   return {
     player,
@@ -487,78 +551,18 @@ const SuperGif = (opts: Options) => {
     pause: player.pause,
     move_relative: player.move_relative,
     move_to: player.move_to,
-
     // getters for instance vars
     get_playing: () => player.playing,
+    get_length: () => player.length(),
+    get_current_frame: () => player.current_frame(),
+
     get_canvas: () => canvas,
     get_canvas_scale: () => get_canvas_scale(),
     get_loading: () => loading,
     get_auto_play: () => options,
-    get_length: () => player.length(),
-    get_current_frame: () => player.current_frame(),
-    load_url: (src: string, callback?: (gif: HTMLImageElement) => void) => {
-      if (!load_setup(callback)) return
-
-      let h = new XMLHttpRequest()
-      // new browsers (XMLHttpRequest2-compliant)
-      h.open('GET', src, true)
-
-      if ('overrideMimeType' in h) {
-        h.overrideMimeType('text/plain; charset=x-user-defined')
-      }
-
-      // old browsers (XMLHttpRequest-compliant)
-      else if ('responseType' in h) {
-        h.responseType = 'arraybuffer'
-      }
-
-      // IE9 (Microsoft.XMLHTTP-compliant)
-      else {
-        h.setRequestHeader('Accept-Charset', 'x-user-defined')
-      }
-
-      h.onloadstart = () => {
-        // Wait until connection is opened to replace the gif element with a canvas to avoid a blank img
-        if (!initialized) init()
-      }
-      h.onload = function (e) {
-        if (this.status != 200) {
-          doLoadError('xhr - response')
-        }
-        // emulating response field for IE9
-        if (!('response' in this)) {
-          Object.assign(this, {
-            response: new window.VBArray(this.responseText)
-              .toArray()
-              .map(String.fromCharCode)
-              .join('')
-          })
-        }
-        let data = this.response
-        if (data.toString().indexOf('ArrayBuffer') > 0) {
-          data = new Uint8Array(data)
-        }
-
-        stream = new Stream(data)
-        setTimeout(doParse, 0)
-      }
-      h.onprogress = (e) => {
-        if (e.lengthComputable) doShowProgress(e.loaded, e.total, true)
-      }
-      h.onerror = () => {
-        doLoadError('xhr')
-      }
-      h.send()
-    },
-    load: function (callback?: (gif: HTMLImageElement) => void) {
-      this.load_url(gif.getAttribute('rel:animated_src') || gif.src, callback)
-    },
-    load_raw: (arr, callback) => {
-      if (!load_setup(callback)) return
-      if (!initialized) init()
-      stream = new Stream(arr)
-      setTimeout(doParse, 0)
-    },
+    load_url,
+    load,
+    load_raw,
     set_frame_offset: setFrameOffset,
     frames
   }
