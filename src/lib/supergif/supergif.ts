@@ -387,13 +387,13 @@ const SuperGif = (opts: Options) => {
   let toolbar
   let tmpCanvas: HTMLCanvasElement | null = null
   let initialized = false
-  let load_callback: Function | undefined
+  let load_callback: (gif: HTMLImageElement) => void | undefined
 
-  const load_setup = (callback?: Function) => {
+  const load_setup = (callback?: (gif: HTMLImageElement) => void) => {
     if (loading) {
       return false
     }
-    load_callback = callback
+    load_callback = callback || load_callback
 
     loading = true
     frames = []
@@ -496,7 +496,7 @@ const SuperGif = (opts: Options) => {
     get_auto_play: () => options,
     get_length: () => player.length(),
     get_current_frame: () => player.current_frame(),
-    load_url: (src, callback) => {
+    load_url: (src: string, callback?: (gif: HTMLImageElement) => void) => {
       if (!load_setup(callback)) return
 
       let h = new XMLHttpRequest()
@@ -550,7 +550,7 @@ const SuperGif = (opts: Options) => {
       }
       h.send()
     },
-    load: function (callback: Function) {
+    load: function (callback?: (gif: HTMLImageElement) => void) {
       this.load_url(gif.getAttribute('rel:animated_src') || gif.src, callback)
     },
     load_raw: (arr, callback) => {
