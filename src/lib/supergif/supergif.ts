@@ -27,11 +27,11 @@ const SuperGif = (opts: Options) => {
   let loadError = null
   let loading = false
 
-  let transparency = null
-  let delay = null
-  let disposalMethod = null
+  let transparency: number | null = null
+  let delay: null | number = null
+  let disposalMethod: null | number = null
   let disposalRestoreFromIdx: number | null = null
-  let lastDisposalMethod = null
+  let lastDisposalMethod: number | null = null
   let frame: CanvasRenderingContext2D | null = null
   let lastImg: {
     leftPos: number
@@ -208,12 +208,12 @@ const SuperGif = (opts: Options) => {
     drawError()
   }
 
-  const doHdr = (_hdr) => {
+  const doHdr: Hander['hdr'] = (_hdr) => {
     hdr = _hdr
     setSizes(hdr.width, hdr.height)
   }
 
-  const doGCE = (gce) => {
+  const doGCE: Hander['gce'] = (gce) => {
     pushFrame()
     clear()
     transparency = gce.transparencyGiven ? gce.transparencyIndex : null
