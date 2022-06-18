@@ -84,6 +84,7 @@ const SuperGif = (opts: Options) => {
     ? options.progressbar_foreground_color
     : 'rgba(255,0,22,.8)'
 
+  // global func
   const clear = () => {
     transparency = null
     delay = null
@@ -100,19 +101,6 @@ const SuperGif = (opts: Options) => {
     }
     return scale
   }
-  const setSizes = (w: number, h: number) => {
-    canvas.width = w * get_canvas_scale()
-    canvas.height = h * get_canvas_scale()
-    toolbar.style.minWidth = w * get_canvas_scale() + 'px'
-    if (tmpCanvas) {
-      tmpCanvas.width = w
-      tmpCanvas.height = h
-      tmpCanvas.style.width = w + 'px'
-      tmpCanvas.style.height = h + 'px'
-      tmpCanvas.getContext('2d')?.setTransform(1, 0, 0, 1, 0, 0)
-    }
-  }
-
   const setFrameOffset = (frame, offset) => {
     if (!frameOffsets[frame]) {
       frameOffsets[frame] = offset
@@ -125,6 +113,29 @@ const SuperGif = (opts: Options) => {
       frameOffsets[frame].y = offset.y
     }
   }
+  // global func
+  // canvas
+  let canvas
+  let ctx
+  let toolbar
+  let tmpCanvas: HTMLCanvasElement | null = null
+  let initialized = false
+  let load_callback: (gif: HTMLImageElement) => void | undefined
+  const setSizes = (w: number, h: number) => {
+    canvas.width = w * get_canvas_scale()
+    canvas.height = h * get_canvas_scale()
+    toolbar.style.minWidth = w * get_canvas_scale() + 'px'
+    if (tmpCanvas) {
+      tmpCanvas.width = w
+      tmpCanvas.height = h
+      tmpCanvas.style.width = w + 'px'
+      tmpCanvas.style.height = h + 'px'
+      tmpCanvas.getContext('2d')?.setTransform(1, 0, 0, 1, 0, 0)
+    }
+  }
+  // canvas
+
+
 
   const doShowProgress = (pos: number, length: number, draw: boolean) => {
     if (draw && showProgressBar) {
@@ -206,41 +217,6 @@ const SuperGif = (opts: Options) => {
     frames = []
     drawError()
   }
-
-  const init = () => {
-    const parent = gif.parentNode
-
-    const div = document.createElement('div')
-    canvas = document.createElement('canvas')
-    ctx = canvas.getContext('2d')
-    toolbar = document.createElement('div')
-
-    tmpCanvas = document.createElement('canvas')
-
-    div.setAttribute('width', (canvas.width = gif.width.toString()))
-    div.setAttribute('height', (canvas.height = gif.height.toString()))
-    toolbar.style.minWidth = gif.width + 'px'
-
-    div.className = 'jsgif'
-    toolbar.className = 'jsgif_toolbar'
-    div.appendChild(canvas)
-    div.appendChild(toolbar)
-
-    if (parent) {
-      parent.insertBefore(div, gif)
-      parent.removeChild(gif)
-    }
-
-    if (options.c_w && options.c_h) setSizes(options.c_w, options.c_h)
-    initialized = true
-  }
-
-  let canvas
-  let ctx
-  let toolbar
-  let tmpCanvas: HTMLCanvasElement | null = null
-  let initialized = false
-  let load_callback: (gif: HTMLImageElement) => void | undefined
 
   const load_setup = (callback?: (gif: HTMLImageElement) => void) => {
     if (loading) {
@@ -474,7 +450,34 @@ const SuperGif = (opts: Options) => {
     }
   }
   // hander
+  // load
+  const init = () => {
+    const parent = gif.parentNode
 
+    const div = document.createElement('div')
+    canvas = document.createElement('canvas')
+    ctx = canvas.getContext('2d')
+    toolbar = document.createElement('div')
+
+    tmpCanvas = document.createElement('canvas')
+
+    div.setAttribute('width', (canvas.width = gif.width.toString()))
+    div.setAttribute('height', (canvas.height = gif.height.toString()))
+    toolbar.style.minWidth = gif.width + 'px'
+
+    div.className = 'jsgif'
+    toolbar.className = 'jsgif_toolbar'
+    div.appendChild(canvas)
+    div.appendChild(toolbar)
+
+    if (parent) {
+      parent.insertBefore(div, gif)
+      parent.removeChild(gif)
+    }
+
+    if (options.c_w && options.c_h) setSizes(options.c_w, options.c_h)
+    initialized = true
+  }
   const load_url = (
     src: string,
     callback?: (gif: HTMLImageElement) => void
@@ -543,7 +546,7 @@ const SuperGif = (opts: Options) => {
     stream = new Stream(arr)
     setTimeout(doParse, 0)
   }
-
+  // load
   return {
     player,
     // play controls
