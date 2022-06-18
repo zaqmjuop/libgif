@@ -1,4 +1,5 @@
 import { parseGIF } from './parseGIF'
+import { Player } from './player'
 import { Stream } from './stream'
 import { Hander, Options, VP } from './type'
 
@@ -23,6 +24,15 @@ const SuperGif = (opts: Options) => {
 
   let stream: Stream
   let hdr
+  const get_canvas_scale = () => {
+    let scale
+    if (options.max_width && hdr && hdr.width > options.max_width) {
+      scale = options.max_width / hdr.width
+    } else {
+      scale = 1
+    }
+    return scale
+  }
 
   let loadError = null
   let loading = false
@@ -40,9 +50,6 @@ const SuperGif = (opts: Options) => {
     height: number
   } | null = null
 
-  let playing = true
-  let forward = true
-
   let ctx_scaled = false
 
   let frames: any[] = []
@@ -54,7 +61,7 @@ const SuperGif = (opts: Options) => {
       !gif.getAttribute('rel:auto_play') ||
       gif.getAttribute('rel:auto_play') == '1'
 
-  let onEndListener =
+  const onEndListener =
     typeof options.on_end === 'function' ? options.on_end : null
   let loopDelay =
     typeof options.loop_delay === 'number' ? options.loop_delay : 0
@@ -330,123 +337,6 @@ const SuperGif = (opts: Options) => {
     lastImg = img
   }
 
-  const player = (() => {
-    let i = -1
-    let iterationCount = 0
-    const getFrames = () => frames
-
-    /**
-     * Gets the index of the frame "up next".
-     * @returns {number}
-     */
-    const getNextFrameNo = () => {
-      const delta = forward ? 1 : -1
-      return (i + delta + frames.length) % frames.length
-    }
-
-    const stepFrame = (amount) => {
-      // XXX: Name is confusing.
-      i = i + amount
-      putFrame()
-    }
-
-    const step = (() => {
-      let stepping = false
-
-      const completeLoop = () => {
-        if (onEndListener !== null) onEndListener(gif)
-        iterationCount++
-
-        if (overrideLoopMode !== false || iterationCount < 0) {
-          doStep()
-        } else {
-          stepping = false
-          playing = false
-        }
-      }
-
-      const doStep = () => {
-        stepping = playing
-        if (!stepping) return
-
-        stepFrame(1)
-        let delay = frames[i].delay * 10
-        if (!delay) delay = 100 // FIXME: Should this even default at all? What should it be?
-
-        const nextFrameNo = getNextFrameNo()
-        if (nextFrameNo === 0) {
-          delay += loopDelay
-          setTimeout(completeLoop, delay)
-        } else {
-          setTimeout(doStep, delay)
-        }
-      }
-
-      return () => {
-        if (!stepping) setTimeout(doStep, 0)
-      }
-    })()
-
-    const putFrame = () => {
-      i = parseInt(`${i}`, 10)
-
-      if (i > frames.length - 1) {
-        i = 0
-      }
-
-      if (i < 0) {
-        i = 0
-      }
-
-      const offset = frameOffsets[i]
-      if (tmpCanvas) {
-        tmpCanvas
-          .getContext('2d')
-          ?.putImageData(frames[i].data, offset.x, offset.y)
-      }
-      ctx.globalCompositeOperation = 'copy'
-      ctx.drawImage(tmpCanvas, 0, 0)
-    }
-
-    const play = () => {
-      playing = true
-      step()
-    }
-
-    const pause = () => {
-      playing = false
-    }
-
-    return {
-      getFrames,
-      init: () => {
-        if (loadError) return
-
-        if (!(options.c_w && options.c_h)) {
-          ctx.scale(get_canvas_scale(), get_canvas_scale())
-        }
-
-        if (options.auto_play) {
-          step()
-        } else {
-          i = 0
-          putFrame()
-        }
-      },
-      step: step,
-      play: play,
-      pause: pause,
-      playing: playing,
-      move_relative: stepFrame,
-      current_frame: () => i,
-      length: () => frames.length,
-      move_to: (frame_idx) => {
-        i = frame_idx
-        putFrame()
-      }
-    }
-  })()
-
   let doDecodeProgress = (draw) => {
     doShowProgress(stream.pos, stream.data.length, draw)
   }
@@ -463,6 +353,100 @@ const SuperGif = (opts: Options) => {
       fn(block)
       doDecodeProgress(draw)
     }
+
+  const init = () => {
+    const parent = gif.parentNode
+
+    const div = document.createElement('div')
+    canvas = document.createElement('canvas')
+    ctx = canvas.getContext('2d')
+    toolbar = document.createElement('div')
+
+    tmpCanvas = document.createElement('canvas')
+
+    div.setAttribute('width', (canvas.width = gif.width.toString()))
+    div.setAttribute('height', (canvas.height = gif.height.toString()))
+    toolbar.style.minWidth = gif.width + 'px'
+
+    div.className = 'jsgif'
+    toolbar.className = 'jsgif_toolbar'
+    div.appendChild(canvas)
+    div.appendChild(toolbar)
+
+    if (parent) {
+      parent.insertBefore(div, gif)
+      parent.removeChild(gif)
+    }
+
+    if (options.c_w && options.c_h) setSizes(options.c_w, options.c_h)
+    initialized = true
+  }
+
+  let canvas
+  let ctx
+  let toolbar
+  let tmpCanvas: HTMLCanvasElement | null = null
+  let initialized = false
+  let load_callback: Function | undefined
+
+  const load_setup = (callback?: Function) => {
+    if (loading) {
+      return false
+    }
+    load_callback = callback
+
+    loading = true
+    frames = []
+    clear()
+    disposalRestoreFromIdx = null
+    lastDisposalMethod = null
+    frame = null
+    lastImg = null
+
+    return true
+  }
+
+  const player = new Player({
+    get frames() {
+      return frames
+    },
+    get gif() {
+      return gif
+    },
+    get onEndListener() {
+      return onEndListener
+    },
+    get overrideLoopMode() {
+      return overrideLoopMode
+    },
+    get loopDelay() {
+      return loopDelay
+    },
+    get auto_play() {
+      return options.auto_play
+    },
+    get loadError() {
+      return loadError
+    },
+    get c_w() {
+      return options.c_w
+    },
+    get c_h() {
+      return options.c_h
+    },
+    get get_canvas_scale() {
+      return get_canvas_scale
+    },
+    get frameOffsets() {
+      return frameOffsets
+    },
+    get tmpCanvas() {
+      return tmpCanvas
+    },
+    get ctx() {
+      return ctx
+    }
+  })
 
   const handler: Hander = {
     hdr: withProgress(doHdr),
@@ -496,67 +480,6 @@ const SuperGif = (opts: Options) => {
     }
   } as const
 
-  const init = () => {
-    const parent = gif.parentNode
-
-    const div = document.createElement('div')
-    canvas = document.createElement('canvas')
-    ctx = canvas.getContext('2d')
-    toolbar = document.createElement('div')
-
-    tmpCanvas = document.createElement('canvas')
-
-    div.setAttribute('width', (canvas.width = gif.width.toString()))
-    div.setAttribute('height', (canvas.height = gif.height.toString()))
-    toolbar.style.minWidth = gif.width + 'px'
-
-    div.className = 'jsgif'
-    toolbar.className = 'jsgif_toolbar'
-    div.appendChild(canvas)
-    div.appendChild(toolbar)
-
-    if (parent) {
-      parent.insertBefore(div, gif)
-      parent.removeChild(gif)
-    }
-
-    if (options.c_w && options.c_h) setSizes(options.c_w, options.c_h)
-    initialized = true
-  }
-
-  const get_canvas_scale = () => {
-    let scale
-    if (options.max_width && hdr && hdr.width > options.max_width) {
-      scale = options.max_width / hdr.width
-    } else {
-      scale = 1
-    }
-    return scale
-  }
-  let canvas
-  let ctx
-  let toolbar
-  let tmpCanvas: HTMLCanvasElement | null
-  let initialized = false
-  let load_callback: Function | undefined
-
-  const load_setup = (callback?: Function) => {
-    if (loading) {
-      return false
-    }
-    load_callback = callback
-
-    loading = true
-    frames = []
-    clear()
-    disposalRestoreFromIdx = null
-    lastDisposalMethod = null
-    frame = null
-    lastImg = null
-
-    return true
-  }
-
   return {
     player,
     // play controls
@@ -566,7 +489,7 @@ const SuperGif = (opts: Options) => {
     move_to: player.move_to,
 
     // getters for instance vars
-    get_playing: () => playing,
+    get_playing: () => player.playing,
     get_canvas: () => canvas,
     get_canvas_scale: () => get_canvas_scale(),
     get_loading: () => loading,
