@@ -2,6 +2,16 @@ export interface Frame {
   data: ImageData
   delay: number
 }
+export interface Offset {
+  x: number
+  y: number
+}
+export interface Rect {
+  leftPos: number
+  topPos: number
+  width: number
+  height: number
+}
 export interface Hander {
   readonly hdr: (block: Header) => void
   readonly gce: (block: GCExtBlock) => void
@@ -56,11 +66,7 @@ export interface Block {
   readonly sentinel: number
   type: 'ext' | 'img' | 'eof' | ''
 }
-export interface ImgBlock extends Block {
-  leftPos: number
-  topPos: number
-  width: number
-  height: number
+export interface ImgBlock extends Block, Rect {
   lctFlag: boolean | undefined
   interlaced: boolean | undefined
   sorted: boolean | undefined

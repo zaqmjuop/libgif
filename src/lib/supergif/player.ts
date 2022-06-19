@@ -1,4 +1,4 @@
-import { Frame } from './type'
+import { Frame, Header, ImgBlock, Offset } from './type'
 
 interface PlayerQuote {
   frames: Frame[]
@@ -11,9 +11,10 @@ interface PlayerQuote {
   c_w: number
   c_h: number
   get_canvas_scale: () => any
-  frameOffsets: any[]
+  frameOffsets: Offset[]
   tmpCanvas: HTMLCanvasElement
   ctx: CanvasRenderingContext2D
+  delay: null | number
 }
 
 export class Player {

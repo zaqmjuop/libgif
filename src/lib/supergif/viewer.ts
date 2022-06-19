@@ -1,5 +1,5 @@
 import { Stream } from './stream'
-import { Frame, Header } from './type'
+import { Frame, Hander, Header, ImgBlock, Offset, Rect } from './type'
 
 interface ViewerQuote {
   get_canvas_scale: () => any
@@ -20,6 +20,15 @@ interface ViewerQuote {
   gif: HTMLImageElement
   frames: Frame[]
   stream: Stream
+  frame: CanvasRenderingContext2D | null
+  delay: null | number
+  frameOffsets: Offset[]
+  lastDisposalMethod: number | null
+  disposalRestoreFromIdx: number | null
+  transparency: number | null
+  drawWhileLoading: boolean
+  auto_play: boolean
+  lastImg: (Rect & Partial<ImgBlock>) | null
 }
 export class Viewer {
   readonly canvas = document.createElement('canvas')
@@ -182,5 +191,124 @@ export class Viewer {
       fn(block)
       this.doDecodeProgress(draw)
     }
+  }
+  pushFrame() {
+    if (!this.quote.frame) return
+    this.quote.frames.push({
+      data: this.quote.frame.getImageData(
+        0,
+        0,
+        this.quote.hdr.width,
+        this.quote.hdr.height
+      ),
+      delay: this.quote.delay || -1
+    })
+    this.quote.frameOffsets.push({ x: 0, y: 0 })
+  }
+
+  doImg(img: ImgBlock) {
+    if (!this.quote.frame && this.tmpCanvas) {
+      this.quote.frame = this.tmpCanvas.getContext('2d')
+    }
+
+    let currIdx = frames.length
+
+    //ct = color table, gct = global color table
+    let ct = img.lctFlag ? img.lct : this.quote.hdr.gct // TODO: What if neither exists?
+
+    /*
+              Disposal method indicates the way in which the graphic is to
+              be treated after being displayed.
+  
+              Values :    0 - No disposal specified. The decoder is
+                              not required to take any action.
+                          1 - Do not dispose. The graphic is to be left
+                              in place.
+                          2 - Restore to background color. The area used by the
+                              graphic must be restored to the background color.
+                          3 - Restore to previous. The decoder is required to
+                              restore the area overwritten by the graphic with
+                              what was there prior to rendering the graphic.
+  
+                              Importantly, "previous" means the frame state
+                              after the last disposal of method 0, 1, or 2.
+              */
+    if (currIdx > 0) {
+      if (this.quote.lastDisposalMethod === 3) {
+        // Restore to previous
+        // If we disposed every frame including first frame up to this point, then we have
+        // no composited frame to restore to. In this case, restore to background instead.
+        if (this.quote.disposalRestoreFromIdx !== null) {
+          this.quote.frame?.putImageData(
+            this.quote.frames[this.quote.disposalRestoreFromIdx].data,
+            0,
+            0
+          )
+        } else {
+          this.quote.lastImg &&
+            this.quote.frame?.clearRect(
+              this.quote.lastImg.leftPos,
+              this.quote.lastImg.topPos,
+              this.quote.lastImg.width,
+              this.quote.lastImg.height
+            )
+        }
+      } else {
+        this.quote.disposalRestoreFromIdx = currIdx - 1
+      }
+
+      if (this.quote.lastDisposalMethod === 2) {
+        // Restore to background color
+        // Browser implementations historically restore to transparent; we do the same.
+        // http://www.wizards-toolkit.org/discourse-server/viewtopic.php?f=1&t=21172#p86079
+        this.quote.lastImg &&
+          this.quote.frame?.clearRect(
+            this.quote.lastImg.leftPos,
+            this.quote.lastImg.topPos,
+            this.quote.lastImg.width,
+            this.quote.lastImg.height
+          )
+      }
+    }
+    // else, Undefined/Do not dispose.
+    // frame contains final pixel data from the last frame; do nothing
+
+    //Get existing pixels for img region after applying disposal method
+    if (this.quote.frame) {
+      let imgData = this.quote.frame.getImageData(
+        img.leftPos,
+        img.topPos,
+        img.width,
+        img.height
+      ) //apply color table colors
+      img.pixels.forEach((pixel, i) => {
+        // imgData.data === [R,G,B,A,R,G,B,A,...]
+        if (pixel !== this.quote.transparency && ct) {
+          imgData.data[i * 4 + 0] = ct[pixel][0]
+          imgData.data[i * 4 + 1] = ct[pixel][1]
+          imgData.data[i * 4 + 2] = ct[pixel][2]
+          imgData.data[i * 4 + 3] = 255 // Opaque.
+        }
+      })
+
+      this.quote.frame?.putImageData(imgData, img.leftPos, img.topPos)
+    }
+
+    if (!this.quote.ctx_scaled) {
+      this.ctx.scale(
+        this.quote.get_canvas_scale(),
+        this.quote.get_canvas_scale()
+      )
+      this.quote.ctx_scaled = true
+    }
+
+    // We could use the on-page canvas directly, except that we draw a progress
+    // bar for each image chunk (not just the final image).
+    if (this.quote.drawWhileLoading) {
+      this.tmpCanvas && this.ctx.drawImage(this.tmpCanvas, 0, 0)
+      this.quote.drawWhileLoading = this.quote.auto_play
+    }
+
+    this.quote.lastImg = img
   }
 }

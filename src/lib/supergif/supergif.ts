@@ -2,7 +2,16 @@ import { Loader } from './loader'
 import { parseGIF } from './parseGIF'
 import { Player } from './player'
 import { Stream } from './stream'
-import { Frame, Hander, Header, Options, VP } from './type'
+import {
+  Frame,
+  Hander,
+  Header,
+  ImgBlock,
+  Offset,
+  Options,
+  Rect,
+  VP
+} from './type'
 import { Viewer } from './viewer'
 
 class SuperGif2 {
@@ -30,7 +39,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   if (options.vp_w && options.vp_h) options.is_vp = true
 
   let stream: Stream
-  let hdr
+  let hdr: Header
 
   const loadError: string | null = null
   let loading = false
@@ -41,17 +50,12 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   let disposalRestoreFromIdx: number | null = null
   let lastDisposalMethod: number | null = null
   let frame: CanvasRenderingContext2D | null = null
-  let lastImg: {
-    leftPos: number
-    topPos: number
-    width: number
-    height: number
-  } | null = null
+  let lastImg: (Rect & Partial<ImgBlock>) | null = null
 
   let ctx_scaled = false
 
   let frames: Frame[] = []
-  let frameOffsets: { x: number; y: number }[] = [] // elements have .x and .y properties
+  let frameOffsets: Offset[] = [] // elements have .x and .y properties
 
   const gif = options.gif
   if (typeof options.auto_play == 'undefined')
@@ -179,6 +183,42 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     get stream() {
       return stream
+    },
+    get frameOffsets() {
+      return frameOffsets
+    },
+    get frame() {
+      return frame
+    },
+    set frame(val: CanvasRenderingContext2D | null) {
+      frame = val
+    },
+    get delay() {
+      return delay
+    },
+    get lastDisposalMethod() {
+      return lastDisposalMethod
+    },
+    get disposalRestoreFromIdx() {
+      return disposalRestoreFromIdx
+    },
+    get transparency() {
+      return transparency
+    },
+    get drawWhileLoading() {
+      return !!drawWhileLoading
+    },
+    set drawWhileLoading(val: boolean) {
+      drawWhileLoading = val
+    },
+    get auto_play() {
+      return !!options.auto_play
+    },
+    get lastImg() {
+      return lastImg
+    },
+    set lastImg(val: (Rect & Partial<ImgBlock>) | null) {
+      lastImg = val
     }
   })
   const canvas = viewer.canvas
@@ -244,25 +284,19 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     get ctx() {
       return ctx
+    },
+    get delay() {
+      return delay
     }
   })
   // player
   // hander
-
-  const pushFrame = () => {
-    if (!frame) return
-    frames.push({
-      data: frame.getImageData(0, 0, hdr.width, hdr.height),
-      delay: delay || -1
-    })
-    frameOffsets.push({ x: 0, y: 0 })
-  }
   const doHdr: Hander['hdr'] = (_hdr) => {
     hdr = _hdr
     viewer.setSizes(hdr.width, hdr.height)
   }
   const doGCE: Hander['gce'] = (gce) => {
-    pushFrame()
+    viewer.pushFrame()
     clear()
     transparency = gce.transparencyGiven ? gce.transparencyIndex : null
     delay = gce.delayTime
@@ -271,107 +305,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   }
   const doNothing = () => {}
 
-  const doImg: Hander['img'] = (img) => {
-    if (!frame && tmpCanvas) {
-      frame = tmpCanvas.getContext('2d')
-    }
-
-    let currIdx = frames.length
-
-    //ct = color table, gct = global color table
-    let ct = img.lctFlag ? img.lct : hdr.gct // TODO: What if neither exists?
-
-    /*
-              Disposal method indicates the way in which the graphic is to
-              be treated after being displayed.
-  
-              Values :    0 - No disposal specified. The decoder is
-                              not required to take any action.
-                          1 - Do not dispose. The graphic is to be left
-                              in place.
-                          2 - Restore to background color. The area used by the
-                              graphic must be restored to the background color.
-                          3 - Restore to previous. The decoder is required to
-                              restore the area overwritten by the graphic with
-                              what was there prior to rendering the graphic.
-  
-                              Importantly, "previous" means the frame state
-                              after the last disposal of method 0, 1, or 2.
-              */
-    if (currIdx > 0) {
-      if (lastDisposalMethod === 3) {
-        // Restore to previous
-        // If we disposed every frame including first frame up to this point, then we have
-        // no composited frame to restore to. In this case, restore to background instead.
-        if (disposalRestoreFromIdx !== null) {
-          frame?.putImageData(frames[disposalRestoreFromIdx].data, 0, 0)
-        } else {
-          lastImg &&
-            frame?.clearRect(
-              lastImg.leftPos,
-              lastImg.topPos,
-              lastImg.width,
-              lastImg.height
-            )
-        }
-      } else {
-        disposalRestoreFromIdx = currIdx - 1
-      }
-
-      if (lastDisposalMethod === 2) {
-        // Restore to background color
-        // Browser implementations historically restore to transparent; we do the same.
-        // http://www.wizards-toolkit.org/discourse-server/viewtopic.php?f=1&t=21172#p86079
-        lastImg &&
-          frame?.clearRect(
-            lastImg.leftPos,
-            lastImg.topPos,
-            lastImg.width,
-            lastImg.height
-          )
-      }
-    }
-    // else, Undefined/Do not dispose.
-    // frame contains final pixel data from the last frame; do nothing
-
-    //Get existing pixels for img region after applying disposal method
-    if (frame) {
-      let imgData = frame.getImageData(
-        img.leftPos,
-        img.topPos,
-        img.width,
-        img.height
-      ) //apply color table colors
-      img.pixels.forEach((pixel, i) => {
-        // imgData.data === [R,G,B,A,R,G,B,A,...]
-        if (pixel !== transparency) {
-          imgData.data[i * 4 + 0] = ct[pixel][0]
-          imgData.data[i * 4 + 1] = ct[pixel][1]
-          imgData.data[i * 4 + 2] = ct[pixel][2]
-          imgData.data[i * 4 + 3] = 255 // Opaque.
-        }
-      })
-
-      frame?.putImageData(imgData, img.leftPos, img.topPos)
-    }
-
-    if (!ctx_scaled) {
-      ctx.scale(get_canvas_scale(), get_canvas_scale())
-      ctx_scaled = true
-    }
-
-    // We could use the on-page canvas directly, except that we draw a progress
-    // bar for each image chunk (not just the final image).
-    if (drawWhileLoading) {
-      tmpCanvas && ctx.drawImage(tmpCanvas, 0, 0)
-      drawWhileLoading = options.auto_play
-    }
-
-    lastImg = img
-  }
+  const doImg: Hander['img'] = viewer.doImg.bind(viewer)
   const doEof: Hander['eof'] = (block) => {
     //toolbar.style.display = '';
-    pushFrame()
+    viewer.pushFrame()
     viewer.doDecodeProgress(false)
     if (!(options.c_w && options.c_h)) {
       canvas.width = hdr.width * get_canvas_scale()
