@@ -311,4 +311,16 @@ export class Viewer {
 
     this.quote.lastImg = img
   }
+  setFrameOffset(frame: number, offset: Offset) {
+    if (!this.quote.frameOffsets[frame]) {
+      this.quote.frameOffsets[frame] = offset
+      return
+    }
+    if (typeof offset.x !== 'undefined') {
+      this.quote.frameOffsets[frame].x = offset.x
+    }
+    if (typeof offset.y !== 'undefined') {
+      this.quote.frameOffsets[frame].y = offset.y
+    }
+  }
 }

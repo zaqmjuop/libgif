@@ -109,18 +109,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     }
     return scale
   }
-  const setFrameOffset = (frame, offset) => {
-    if (!frameOffsets[frame]) {
-      frameOffsets[frame] = offset
-      return
-    }
-    if (typeof offset.x !== 'undefined') {
-      frameOffsets[frame].x = offset.x
-    }
-    if (typeof offset.y !== 'undefined') {
-      frameOffsets[frame].y = offset.y
-    }
-  }
   // global func
   // canvas
   const viewer = new Viewer({
@@ -386,7 +374,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     load_url: loader.load_url.bind(loader),
     load: loader.load.bind(loader),
     load_raw: loader.load_raw.bind(loader),
-    set_frame_offset: setFrameOffset,
+    set_frame_offset: viewer.setFrameOffset.bind(viewer),
     frames
   }
 }
