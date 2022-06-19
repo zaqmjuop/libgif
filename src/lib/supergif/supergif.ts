@@ -1,4 +1,4 @@
-import { Loader } from './loader'
+
 import { parseGIF } from './parseGIF'
 import { Player } from './player'
 import { Stream } from './stream'
