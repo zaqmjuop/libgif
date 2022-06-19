@@ -1,12 +1,15 @@
-
 import { parseGIF } from './parseGIF'
 import { Player } from './player'
 import { Stream } from './stream'
 import { Hander, Options, VP } from './type'
 import { Viewer } from './viewer'
- 
+
+class SuperGif2 {
+  loadError: string | null = null
+}
 
 const SuperGif = (opts: Options & Partial<VP>) => {
+  const instance = new SuperGif2()
   const options: Options & VP = Object.assign(
     {
       //viewport position
@@ -28,7 +31,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   let stream: Stream
   let hdr
 
-  let loadError: string | null = null
+  const loadError: string | null = null
   let loading = false
 
   let transparency: number | null = null
@@ -48,7 +51,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
   let frames: {
     data: ImageData
-    delay: number | null
+    delay: number
   }[] = []
   let frameOffsets: { x: number; y: number }[] = [] // elements have .x and .y properties
 
@@ -119,23 +122,57 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   // global func
   // canvas
   const viewer = new Viewer({
-    get_canvas_scale,
-    showProgressBar,
-    progressBarHeight,
-    progressBarBackgroundColor,
-    progressBarForegroundColor,
-    ctx_scaled,
-    is_vp: !!options.is_vp,
-    vp_t: options.vp_t,
-    vp_h: options.vp_h,
-    vp_l: options.vp_l,
-    vp_w: options.vp_w,
-    c_w: options.c_w,
-    c_h: options.c_h,
-    hdr: hdr,
-    loadError,
-    gif: options.gif,
-    frames
+    get get_canvas_scale() {
+      return get_canvas_scale
+    },
+    get showProgressBar() {
+      return showProgressBar
+    },
+    get progressBarHeight() {
+      return progressBarHeight
+    },
+    get progressBarBackgroundColor() {
+      return progressBarBackgroundColor
+    },
+    get progressBarForegroundColor() {
+      return progressBarForegroundColor
+    },
+    get ctx_scaled() {
+      return ctx_scaled
+    },
+    get is_vp() {
+      return !!options.is_vp
+    },
+    get vp_t() {
+      return options.vp_t
+    },
+    get vp_h() {
+      return options.vp_h
+    },
+    get vp_l() {
+      return options.vp_l
+    },
+    get vp_w() {
+      return options.vp_w
+    },
+    get c_w() {
+      return options.c_w
+    },
+    get c_h() {
+      return options.c_h
+    },
+    get hdr() {
+      return hdr
+    },
+    get loadError() {
+      return loadError
+    },
+    get gif() {
+      return gif
+    },
+    get frames() {
+      return frames
+    }
   })
   const canvas = viewer.canvas
   const ctx = viewer.ctx
@@ -222,7 +259,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     if (!frame) return
     frames.push({
       data: frame.getImageData(0, 0, hdr.width, hdr.height),
-      delay: delay
+      delay: delay || -1
     })
     frameOffsets.push({ x: 0, y: 0 })
   }

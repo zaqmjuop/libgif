@@ -1,17 +1,20 @@
 interface PlayerQuote {
-  frames: any[]
+  frames: {
+    data: ImageData
+    delay: number
+  }[]
   gif: HTMLImageElement
   onEndListener: ((gif: HTMLImageElement) => void) | null
   overrideLoopMode: boolean | 'auto'
   loopDelay: number
   auto_play: boolean | undefined
-  loadError: any
+  loadError: string | null
   c_w: number
   c_h: number
   get_canvas_scale: () => any
   frameOffsets: any[]
-  tmpCanvas: HTMLCanvasElement | null
-  ctx: any
+  tmpCanvas: HTMLCanvasElement
+  ctx: CanvasRenderingContext2D
 }
 
 export class Player {
