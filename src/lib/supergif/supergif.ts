@@ -176,6 +176,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     set frames(val: Frame[]) {
       frames = val
+    },
+    get stream() {
+      return stream
     }
   })
   const canvas = viewer.canvas
@@ -245,20 +248,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   })
   // player
   // hander
-  const doDecodeProgress = (draw: boolean) => {
-    viewer.doShowProgress(stream.pos, stream.data.length, draw)
-  }
-  /**
-   * @param{boolean=} draw Whether to draw progress bar or not; this is not idempotent because of translucency.
-   *                       Note that this means that the text will be unsynchronized with the progress bar on non-frames;
-   *                       but those are typically so small (GCE etc.) that it doesn't really matter. TODO: Do this properly.
-   */
-  const withProgress =
-    (fn: Function, draw = false) =>
-    (block) => {
-      fn(block)
-      doDecodeProgress(draw)
-    }
+
   const pushFrame = () => {
     if (!frame) return
     frames.push({
@@ -382,7 +372,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const doEof: Hander['eof'] = (block) => {
     //toolbar.style.display = '';
     pushFrame()
-    doDecodeProgress(false)
+    viewer.doDecodeProgress(false)
     if (!(options.c_w && options.c_h)) {
       canvas.width = hdr.width * get_canvas_scale()
       canvas.height = hdr.height * get_canvas_scale()
@@ -394,15 +384,15 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     }
   }
   const handler: Hander = {
-    hdr: withProgress(doHdr),
-    gce: withProgress(doGCE),
-    com: withProgress(doNothing),
+    hdr: viewer.withProgress(doHdr),
+    gce: viewer.withProgress(doGCE),
+    com: viewer.withProgress(doNothing),
     // I guess that's all for now.
     app: {
       // TODO: Is there much point in actually supporting iterations?
-      NETSCAPE: withProgress(doNothing)
+      NETSCAPE: viewer.withProgress(doNothing)
     },
-    img: withProgress(doImg, true),
+    img: viewer.withProgress(doImg, true),
     eof: doEof,
     pte: (block) => console.log('pte', block),
     unknown: (block) => console.log('unknown', block)

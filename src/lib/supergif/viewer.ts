@@ -1,3 +1,4 @@
+import { Stream } from './stream'
 import { Frame, Header } from './type'
 
 interface ViewerQuote {
@@ -18,6 +19,7 @@ interface ViewerQuote {
   loadError: string | null
   gif: HTMLImageElement
   frames: Frame[]
+  stream: Stream
 }
 export class Viewer {
   readonly canvas = document.createElement('canvas')
@@ -162,5 +164,23 @@ export class Viewer {
     } as Header // Fake header.
     this.quote.frames = []
     drawError()
+  }
+  doDecodeProgress(draw: boolean) {
+    this.doShowProgress(
+      this.quote.stream.pos,
+      this.quote.stream.data.length,
+      draw
+    )
+  }
+  /**
+   * @param{boolean=} draw Whether to draw progress bar or not; this is not idempotent because of translucency.
+   *                       Note that this means that the text will be unsynchronized with the progress bar on non-frames;
+   *                       but those are typically so small (GCE etc.) that it doesn't really matter. TODO: Do this properly.
+   */
+  withProgress(fn: Function, draw = false) {
+    return (block) => {
+      fn(block)
+      this.doDecodeProgress(draw)
+    }
   }
 }
