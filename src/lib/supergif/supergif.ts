@@ -1,8 +1,10 @@
+import { Loader } from './loader'
 import { parseGIF } from './parseGIF'
 import { Player } from './player'
 import { Stream } from './stream'
 import { Hander, Options, VP } from './type'
 import { Viewer } from './viewer'
+ 
 
 const SuperGif = (opts: Options & Partial<VP>) => {
   const options: Options & VP = Object.assign(
@@ -404,20 +406,20 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       // Wait until connection is opened to replace the gif element with a canvas to avoid a blank img
       if (!viewer.initialized) viewer.init()
     }
-    h.onload = function (e) {
-      if (this.status != 200) {
+    h.onload = (e) => {
+      if (h.status != 200) {
         viewer.doLoadError('xhr - response')
       }
       // emulating response field for IE9
-      if (!('response' in this)) {
+      if (!('response' in h)) {
         Object.assign(this, {
-          response: new window.VBArray(this.responseText)
+          response: new window.VBArray(h.responseText)
             .toArray()
             .map(String.fromCharCode)
             .join('')
         })
       }
-      let data = this.response
+      let data = h.response
       if (data.toString().indexOf('ArrayBuffer') > 0) {
         data = new Uint8Array(data)
       }
