@@ -1,7 +1,7 @@
 import { parseGIF } from './parseGIF'
 import { Player } from './player'
 import { Stream } from './stream'
-import { Hander, Options, VP } from './type'
+import { Frame, Hander, Header, Options, VP } from './type'
 import { Viewer } from './viewer'
 
 class SuperGif2 {
@@ -49,10 +49,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
   let ctx_scaled = false
 
-  let frames: {
-    data: ImageData
-    delay: number
-  }[] = []
+  let frames: Frame[] = []
   let frameOffsets: { x: number; y: number }[] = [] // elements have .x and .y properties
 
   const gif = options.gif
@@ -164,6 +161,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get hdr() {
       return hdr
     },
+    set hdr(val: Header) {
+      hdr = val
+    },
     get loadError() {
       return loadError
     },
@@ -172,6 +172,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     get frames() {
       return frames
+    },
+    set frames(val: Frame[]) {
+      frames = val
     }
   })
   const canvas = viewer.canvas

@@ -1,8 +1,7 @@
+import { Frame } from './type'
+
 interface PlayerQuote {
-  frames: {
-    data: ImageData
-    delay: number
-  }[]
+  frames: Frame[]
   gif: HTMLImageElement
   onEndListener: ((gif: HTMLImageElement) => void) | null
   overrideLoopMode: boolean | 'auto'

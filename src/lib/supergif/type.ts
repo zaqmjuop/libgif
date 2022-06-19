@@ -1,3 +1,7 @@
+export interface Frame {
+  data: ImageData
+  delay: number
+}
 export interface Hander {
   readonly hdr: (block: Header) => void
   readonly gce: (block: GCExtBlock) => void

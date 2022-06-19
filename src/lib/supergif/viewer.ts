@@ -1,4 +1,4 @@
-import { Header } from './type'
+import { Frame, Header } from './type'
 
 interface ViewerQuote {
   get_canvas_scale: () => any
@@ -17,10 +17,7 @@ interface ViewerQuote {
   hdr: Header
   loadError: string | null
   gif: HTMLImageElement
-  frames: {
-    data: ImageData
-    delay: number | null
-  }[]
+  frames: Frame[]
 }
 export class Viewer {
   readonly canvas = document.createElement('canvas')
