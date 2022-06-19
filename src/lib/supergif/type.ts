@@ -33,7 +33,7 @@ export interface VP {
   c_w: number
   c_h: number
 }
-export interface Options extends Partial<VP> {
+export interface Options {
   is_vp?: boolean
   gif: HTMLImageElement
   auto_play?: boolean

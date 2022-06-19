@@ -2,8 +2,9 @@ import { parseGIF } from './parseGIF'
 import { Player } from './player'
 import { Stream } from './stream'
 import { Hander, Options, VP } from './type'
+import { Viewer } from './viewer'
 
-const SuperGif = (opts: Options) => {
+const SuperGif = (opts: Options & Partial<VP>) => {
   const options: Options & VP = Object.assign(
     {
       //viewport position
@@ -64,11 +65,11 @@ const SuperGif = (opts: Options) => {
   let drawWhileLoading = options.hasOwnProperty('draw_while_loading')
     ? options.draw_while_loading
     : true
-  const showProgressBar = drawWhileLoading
+  const showProgressBar = !!(drawWhileLoading
     ? options.hasOwnProperty('show_progress_bar')
       ? options.show_progress_bar
       : true
-    : false
+    : false)
   const progressBarHeight =
     typeof options.progressbar_height === 'number'
       ? options.progressbar_height
@@ -76,12 +77,12 @@ const SuperGif = (opts: Options) => {
   const progressBarBackgroundColor = options.hasOwnProperty(
     'progressbar_background_color'
   )
-    ? options.progressbar_background_color
+    ? options.progressbar_background_color || ''
     : 'rgba(255,255,255,0.4)'
   const progressBarForegroundColor = options.hasOwnProperty(
     'progressbar_foreground_color'
   )
-    ? options.progressbar_foreground_color
+    ? options.progressbar_foreground_color || ''
     : 'rgba(255,0,22,.8)'
 
   // global func
@@ -115,108 +116,31 @@ const SuperGif = (opts: Options) => {
   }
   // global func
   // canvas
-  let canvas
-  let ctx
-  let toolbar
-  let tmpCanvas: HTMLCanvasElement | null = null
-  let initialized = false
+  const viewer = new Viewer({
+    get_canvas_scale,
+    showProgressBar,
+    progressBarHeight,
+    progressBarBackgroundColor,
+    progressBarForegroundColor,
+    ctx_scaled,
+    is_vp: !!options.is_vp,
+    vp_t: options.vp_t,
+    vp_h: options.vp_h,
+    vp_l: options.vp_l,
+    vp_w: options.vp_w,
+    c_w: options.c_w,
+    c_h: options.c_h,
+    hdr: hdr,
+    loadError,
+    gif: options.gif,
+    frames
+  })
+  const canvas = viewer.canvas
+  const ctx = viewer.ctx
+
+  const tmpCanvas = viewer.tmpCanvas
   let load_callback: (gif: HTMLImageElement) => void | undefined
-  const setSizes = (w: number, h: number) => {
-    canvas.width = w * get_canvas_scale()
-    canvas.height = h * get_canvas_scale()
-    toolbar.style.minWidth = w * get_canvas_scale() + 'px'
-    if (tmpCanvas) {
-      tmpCanvas.width = w
-      tmpCanvas.height = h
-      tmpCanvas.style.width = w + 'px'
-      tmpCanvas.style.height = h + 'px'
-      tmpCanvas.getContext('2d')?.setTransform(1, 0, 0, 1, 0, 0)
-    }
-  }
   // canvas
-
-
-
-  const doShowProgress = (pos: number, length: number, draw: boolean) => {
-    if (draw && showProgressBar) {
-      let height = progressBarHeight
-      let left, mid, top, width
-      if (options.is_vp) {
-        if (!ctx_scaled) {
-          top = options.vp_t + options.vp_h - height
-          height = height
-          left = options.vp_l
-          mid = left + (pos / length) * options.vp_w
-          width = canvas.width
-        } else {
-          top = (options.vp_t + options.vp_h - height) / get_canvas_scale()
-          height = height / get_canvas_scale()
-          left = options.vp_l / get_canvas_scale()
-          mid = left + (pos / length) * (options.vp_w / get_canvas_scale())
-          width = canvas.width / get_canvas_scale()
-        }
-        //some debugging, draw rect around viewport
-        if (false) {
-          // if (!ctx_scaled) {
-          //   let l = options.vp_l,
-          //     t = options.vp_t
-          //   let w = options.vp_w,
-          //     h = options.vp_h
-          // } else {
-          //   let l = options.vp_l / get_canvas_scale(),
-          //     t = options.vp_t / get_canvas_scale()
-          //   let w = options.vp_w / get_canvas_scale(),
-          //     h = options.vp_h / get_canvas_scale()
-          // }
-          // ctx.rect(l, t, w, h)
-          // ctx.stroke()
-        }
-      } else {
-        top = (canvas.height - height) / (ctx_scaled ? get_canvas_scale() : 1)
-        mid =
-          ((pos / length) * canvas.width) /
-          (ctx_scaled ? get_canvas_scale() : 1)
-        width = canvas.width / (ctx_scaled ? get_canvas_scale() : 1)
-        height /= ctx_scaled ? get_canvas_scale() : 1
-      }
-
-      ctx.fillStyle = progressBarBackgroundColor
-      ctx.fillRect(mid, top, width - mid, height)
-
-      ctx.fillStyle = progressBarForegroundColor
-      ctx.fillRect(0, top, mid, height)
-    }
-  }
-
-  const doLoadError = (originOfError: string) => {
-    const drawError = () => {
-      ctx.fillStyle = 'black'
-      ctx.fillRect(
-        0,
-        0,
-        options.c_w ? options.c_w : hdr.width,
-        options.c_h ? options.c_h : hdr.height
-      )
-      ctx.strokeStyle = 'red'
-      ctx.lineWidth = 3
-      ctx.moveTo(0, 0)
-      ctx.lineTo(
-        options.c_w ? options.c_w : hdr.width,
-        options.c_h ? options.c_h : hdr.height
-      )
-      ctx.moveTo(0, options.c_h ? options.c_h : hdr.height)
-      ctx.lineTo(options.c_w ? options.c_w : hdr.width, 0)
-      ctx.stroke()
-    }
-
-    loadError = originOfError
-    hdr = {
-      width: gif.width,
-      height: gif.height
-    } // Fake header.
-    frames = []
-    drawError()
-  }
 
   const load_setup = (callback?: (gif: HTMLImageElement) => void) => {
     if (loading) {
@@ -279,7 +203,7 @@ const SuperGif = (opts: Options) => {
   // player
   // hander
   const doDecodeProgress = (draw: boolean) => {
-    doShowProgress(stream.pos, stream.data.length, draw)
+    viewer.doShowProgress(stream.pos, stream.data.length, draw)
   }
   /**
    * @param{boolean=} draw Whether to draw progress bar or not; this is not idempotent because of translucency.
@@ -302,7 +226,7 @@ const SuperGif = (opts: Options) => {
   }
   const doHdr: Hander['hdr'] = (_hdr) => {
     hdr = _hdr
-    setSizes(hdr.width, hdr.height)
+    viewer.setSizes(hdr.width, hdr.height)
   }
   const doGCE: Hander['gce'] = (gce) => {
     pushFrame()
@@ -406,7 +330,7 @@ const SuperGif = (opts: Options) => {
     // We could use the on-page canvas directly, except that we draw a progress
     // bar for each image chunk (not just the final image).
     if (drawWhileLoading) {
-      ctx.drawImage(tmpCanvas, 0, 0)
+      tmpCanvas && ctx.drawImage(tmpCanvas, 0, 0)
       drawWhileLoading = options.auto_play
     }
 
@@ -446,38 +370,12 @@ const SuperGif = (opts: Options) => {
     try {
       parseGIF(stream, handler)
     } catch (err) {
-      doLoadError('parse')
+      viewer.doLoadError('parse')
     }
   }
   // hander
   // load
-  const init = () => {
-    const parent = gif.parentNode
 
-    const div = document.createElement('div')
-    canvas = document.createElement('canvas')
-    ctx = canvas.getContext('2d')
-    toolbar = document.createElement('div')
-
-    tmpCanvas = document.createElement('canvas')
-
-    div.setAttribute('width', (canvas.width = gif.width.toString()))
-    div.setAttribute('height', (canvas.height = gif.height.toString()))
-    toolbar.style.minWidth = gif.width + 'px'
-
-    div.className = 'jsgif'
-    toolbar.className = 'jsgif_toolbar'
-    div.appendChild(canvas)
-    div.appendChild(toolbar)
-
-    if (parent) {
-      parent.insertBefore(div, gif)
-      parent.removeChild(gif)
-    }
-
-    if (options.c_w && options.c_h) setSizes(options.c_w, options.c_h)
-    initialized = true
-  }
   const load_url = (
     src: string,
     callback?: (gif: HTMLImageElement) => void
@@ -504,11 +402,11 @@ const SuperGif = (opts: Options) => {
 
     h.onloadstart = () => {
       // Wait until connection is opened to replace the gif element with a canvas to avoid a blank img
-      if (!initialized) init()
+      if (!viewer.initialized) viewer.init()
     }
     h.onload = function (e) {
       if (this.status != 200) {
-        doLoadError('xhr - response')
+        viewer.doLoadError('xhr - response')
       }
       // emulating response field for IE9
       if (!('response' in this)) {
@@ -528,10 +426,10 @@ const SuperGif = (opts: Options) => {
       setTimeout(doParse, 0)
     }
     h.onprogress = (e) => {
-      if (e.lengthComputable) doShowProgress(e.loaded, e.total, true)
+      if (e.lengthComputable) viewer.doShowProgress(e.loaded, e.total, true)
     }
     h.onerror = () => {
-      doLoadError('xhr')
+      viewer.doLoadError('xhr')
     }
     h.send()
   }
@@ -542,7 +440,7 @@ const SuperGif = (opts: Options) => {
 
   const load_raw = (arr, callback) => {
     if (!load_setup(callback)) return
-    if (!initialized) init()
+    if (!viewer.initialized) viewer.init()
     stream = new Stream(arr)
     setTimeout(doParse, 0)
   }
