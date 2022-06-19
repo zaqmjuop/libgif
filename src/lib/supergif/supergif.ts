@@ -1,3 +1,4 @@
+import { Loader } from './loader'
 import { parseGIF } from './parseGIF'
 import { Player } from './player'
 import { Stream } from './stream'
@@ -418,82 +419,34 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   // hander
   // load
 
-  const load_url = (
-    src: string,
-    callback?: (gif: HTMLImageElement) => void
-  ) => {
-    if (!load_setup(callback)) return
-
-    let h = new XMLHttpRequest()
-    // new browsers (XMLHttpRequest2-compliant)
-    h.open('GET', src, true)
-
-    if ('overrideMimeType' in h) {
-      h.overrideMimeType('text/plain; charset=x-user-defined')
+  const loader = new Loader({
+    get viewer() {
+      return viewer
+    },
+    get stream() {
+      return stream
+    },
+    set stream(val: Stream) {
+      stream = val
+    },
+    get doParse() {
+      return doParse
+    },
+    get load_setup() {
+      return load_setup
+    },
+    get gif() {
+      return gif
     }
-
-    // old browsers (XMLHttpRequest-compliant)
-    else if ('responseType' in h) {
-      h.responseType = 'arraybuffer'
-    }
-
-    // IE9 (Microsoft.XMLHTTP-compliant)
-    else {
-      h.setRequestHeader('Accept-Charset', 'x-user-defined')
-    }
-
-    h.onloadstart = () => {
-      // Wait until connection is opened to replace the gif element with a canvas to avoid a blank img
-      if (!viewer.initialized) viewer.init()
-    }
-    h.onload = (e) => {
-      if (h.status != 200) {
-        viewer.doLoadError('xhr - response')
-      }
-      // emulating response field for IE9
-      if (!('response' in h)) {
-        Object.assign(this, {
-          response: new window.VBArray(h.responseText)
-            .toArray()
-            .map(String.fromCharCode)
-            .join('')
-        })
-      }
-      let data = h.response
-      if (data.toString().indexOf('ArrayBuffer') > 0) {
-        data = new Uint8Array(data)
-      }
-
-      stream = new Stream(data)
-      setTimeout(doParse, 0)
-    }
-    h.onprogress = (e) => {
-      if (e.lengthComputable) viewer.doShowProgress(e.loaded, e.total, true)
-    }
-    h.onerror = () => {
-      viewer.doLoadError('xhr')
-    }
-    h.send()
-  }
-
-  const load = (callback?: (gif: HTMLImageElement) => void) => {
-    load_url(gif.getAttribute('rel:animated_src') || gif.src, callback)
-  }
-
-  const load_raw = (arr, callback) => {
-    if (!load_setup(callback)) return
-    if (!viewer.initialized) viewer.init()
-    stream = new Stream(arr)
-    setTimeout(doParse, 0)
-  }
+  })
   // load
   return {
     player,
     // play controls
-    play: player.play,
-    pause: player.pause,
-    move_relative: player.move_relative,
-    move_to: player.move_to,
+    play: player.play.bind(player),
+    pause: player.pause.bind(player),
+    move_relative: player.move_relative.bind(player),
+    move_to: player.move_to.bind(player),
     // getters for instance vars
     get_playing: () => player.playing,
     get_length: () => player.length(),
@@ -503,9 +456,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get_canvas_scale: () => get_canvas_scale(),
     get_loading: () => loading,
     get_auto_play: () => options,
-    load_url,
-    load,
-    load_raw,
+    load_url: loader.load_url.bind(loader),
+    load: loader.load.bind(loader),
+    load_raw: loader.load_raw.bind(loader),
     set_frame_offset: setFrameOffset,
     frames
   }
