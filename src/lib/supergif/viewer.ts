@@ -16,7 +16,7 @@ interface ViewerQuote {
   c_w: number
   c_h: number
   hdr: Header
-  loadError: string | null
+  loadError: string
   gif: HTMLImageElement
   frames: Frame[]
   stream: Stream

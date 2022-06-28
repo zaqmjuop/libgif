@@ -14,12 +14,9 @@ import {
 } from './type'
 import { Viewer } from './viewer'
 
-class SuperGif2 {
-  loadError: string | null = null
-}
+ 
 
-const SuperGif = (opts: Options & Partial<VP>) => {
-  const instance = new SuperGif2()
+const SuperGif = (opts: Options & Partial<VP>) => { 
   const options: Options & VP = Object.assign(
     {
       //viewport position
@@ -40,8 +37,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
   let stream: Stream
   let hdr: Header
-
-  const loadError: string | null = null
+ 
   let loading = false
 
   let transparency: number | null = null
@@ -65,32 +61,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
   const onEndListener =
     typeof options.on_end === 'function' ? options.on_end : null
-  const loopDelay =
-    typeof options.loop_delay === 'number' ? options.loop_delay : 0
-  const overrideLoopMode =
-    typeof options.loop_mode === 'boolean' ? options.loop_mode : 'auto'
-  let drawWhileLoading = options.hasOwnProperty('draw_while_loading')
-    ? options.draw_while_loading
-    : true
-  const showProgressBar = !!(drawWhileLoading
-    ? options.hasOwnProperty('show_progress_bar')
-      ? options.show_progress_bar
-      : true
-    : false)
-  const progressBarHeight =
-    typeof options.progressbar_height === 'number'
-      ? options.progressbar_height
-      : 25
-  const progressBarBackgroundColor = options.hasOwnProperty(
-    'progressbar_background_color'
-  )
-    ? options.progressbar_background_color || ''
-    : 'rgba(255,255,255,0.4)'
-  const progressBarForegroundColor = options.hasOwnProperty(
-    'progressbar_foreground_color'
-  )
-    ? options.progressbar_foreground_color || ''
-    : 'rgba(255,0,22,.8)'
+  let drawWhileLoading = options.draw_while_loading !== false
 
   // global func
   const clear = () => {
@@ -115,18 +86,28 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get get_canvas_scale() {
       return get_canvas_scale
     },
+    get drawWhileLoading() {
+      return drawWhileLoading
+    },
+    set drawWhileLoading(val: boolean) {
+      drawWhileLoading = val
+    },
     get showProgressBar() {
-      return showProgressBar
+      return drawWhileLoading && options.show_progress_bar !== false
     },
-    get progressBarHeight() {
-      return progressBarHeight
-    },
-    get progressBarBackgroundColor() {
-      return progressBarBackgroundColor
-    },
-    get progressBarForegroundColor() {
-      return progressBarForegroundColor
-    },
+    progressBarHeight:
+      typeof options.progressbar_height === 'number'
+        ? options.progressbar_height
+        : 25,
+    progressBarBackgroundColor:
+      typeof options.progressbar_background_color === 'string'
+        ? options.progressbar_background_color
+        : 'rgba(255,255,255,0.4)',
+    progressBarForegroundColor: options.hasOwnProperty(
+      'progressbar_foreground_color'
+    )
+      ? options.progressbar_foreground_color || ''
+      : 'rgba(255,0,22,.8)',
     get ctx_scaled() {
       return ctx_scaled
     },
@@ -160,9 +141,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     set hdr(val: Header) {
       hdr = val
     },
-    get loadError() {
-      return loadError
-    },
+    loadError: '',
     get gif() {
       return gif
     },
@@ -195,12 +174,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     get transparency() {
       return transparency
-    },
-    get drawWhileLoading() {
-      return !!drawWhileLoading
-    },
-    set drawWhileLoading(val: boolean) {
-      drawWhileLoading = val
     },
     get auto_play() {
       return !!options.auto_play
@@ -246,18 +219,12 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get onEndListener() {
       return onEndListener
     },
-    get overrideLoopMode() {
-      return overrideLoopMode
-    },
-    get loopDelay() {
-      return loopDelay
-    },
+    overrideLoopMode: options.loop_mode !== false,
+    loopDelay: options.loop_delay || 0,
     get auto_play() {
       return options.auto_play
     },
-    get loadError() {
-      return loadError
-    },
+    loadError: '',
     get c_w() {
       return options.c_w
     },

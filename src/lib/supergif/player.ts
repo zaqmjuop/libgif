@@ -4,10 +4,10 @@ interface PlayerQuote {
   frames: Frame[]
   gif: HTMLImageElement
   onEndListener: ((gif: HTMLImageElement) => void) | null
-  overrideLoopMode: boolean | 'auto'
+  overrideLoopMode: boolean
   loopDelay: number
   auto_play: boolean | undefined
-  loadError: string | null
+  loadError: string  
   c_w: number
   c_h: number
   get_canvas_scale: () => any
@@ -54,7 +54,7 @@ export class Player {
         this.quote.onEndListener(this.quote.gif)
       this.iterationCount++
 
-      if (this.quote.overrideLoopMode !== false || this.iterationCount < 0) {
+      if (this.quote.overrideLoopMode || this.iterationCount < 0) {
         doStep()
       } else {
         stepping = false
