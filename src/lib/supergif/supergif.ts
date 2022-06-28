@@ -130,6 +130,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get ctx_scaled() {
       return ctx_scaled
     },
+    set ctx_scaled(val: boolean) {
+      ctx_scaled = val
+    },
     get is_vp() {
       return !!options.is_vp
     },
