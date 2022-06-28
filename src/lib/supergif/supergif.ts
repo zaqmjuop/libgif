@@ -14,9 +14,7 @@ import {
 } from './type'
 import { Viewer } from './viewer'
 
- 
-
-const SuperGif = (opts: Options & Partial<VP>) => { 
+const SuperGif = (opts: Options & Partial<VP>) => {
   const options: Options & VP = Object.assign(
     {
       //viewport position
@@ -37,18 +35,13 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
   let stream: Stream
   let hdr: Header
- 
-  let loading = false
 
   let transparency: number | null = null
   let delay: null | number = null
-  let disposalMethod: null | number = null
   let disposalRestoreFromIdx: number | null = null
   let lastDisposalMethod: number | null = null
   let frame: CanvasRenderingContext2D | null = null
   let lastImg: (Rect & Partial<ImgBlock>) | null = null
-
-  let ctx_scaled = false
 
   let frames: Frame[] = []
   let frameOffsets: Offset[] = [] // elements have .x and .y properties
@@ -59,18 +52,8 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       !gif.getAttribute('rel:auto_play') ||
       gif.getAttribute('rel:auto_play') == '1'
 
-  const onEndListener =
-    typeof options.on_end === 'function' ? options.on_end : null
-  let drawWhileLoading = options.draw_while_loading !== false
-
   // global func
-  const clear = () => {
-    transparency = null
-    delay = null
-    lastDisposalMethod = disposalMethod
-    disposalMethod = null
-    frame = null
-  }
+
   const get_canvas_scale = () => {
     let scale
     if (options.max_width && hdr && hdr.width > options.max_width) {
@@ -82,6 +65,8 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   }
   // global func
   // canvas
+  let ctx_scaled = false
+  let drawWhileLoading = options.draw_while_loading !== false
   const viewer = new Viewer({
     get get_canvas_scale() {
       return get_canvas_scale
@@ -189,25 +174,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const ctx = viewer.ctx
 
   const tmpCanvas = viewer.tmpCanvas
-  let load_callback: (gif: HTMLImageElement) => void | undefined
+
   // canvas
 
-  const load_setup = (callback?: (gif: HTMLImageElement) => void) => {
-    if (loading) {
-      return false
-    }
-    load_callback = callback || load_callback
-
-    loading = true
-    frames = []
-    clear()
-    disposalRestoreFromIdx = null
-    lastDisposalMethod = null
-    frame = null
-    lastImg = null
-
-    return true
-  }
   // player
   const player = new Player({
     get frames() {
@@ -216,9 +185,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get gif() {
       return gif
     },
-    get onEndListener() {
-      return onEndListener
-    },
+    onEndListener: typeof options.on_end === 'function' ? options.on_end : null,
     overrideLoopMode: options.loop_mode !== false,
     loopDelay: options.loop_delay || 0,
     get auto_play() {
@@ -248,62 +215,55 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     }
   })
   // player
-  // hander
-  const doHdr: Hander['hdr'] = (_hdr) => {
-    hdr = _hdr
-    viewer.setSizes(hdr.width, hdr.height)
-  }
-  const doGCE: Hander['gce'] = (gce) => {
-    viewer.pushFrame()
-    clear()
-    transparency = gce.transparencyGiven ? gce.transparencyIndex : null
-    delay = gce.delayTime
-    disposalMethod = gce.disposalMethod
-    // We don't have much to do with the rest of GCE.
-  }
-  const doNothing = () => {}
+  // loader
 
-  const doImg: Hander['img'] = viewer.doImg.bind(viewer)
-  const doEof: Hander['eof'] = (block) => {
-    //toolbar.style.display = '';
-    viewer.pushFrame()
-    viewer.doDecodeProgress(false)
-    if (!(options.c_w && options.c_h)) {
-      canvas.width = hdr.width * get_canvas_scale()
-      canvas.height = hdr.height * get_canvas_scale()
-    }
-    player.init()
-    loading = false
-    if (load_callback) {
-      load_callback(gif)
-    }
+  let disposalMethod: null | number = null
+  let loading = false
+  const clear = () => {
+    transparency = null
+    delay = null
+    lastDisposalMethod = disposalMethod
+    disposalMethod = null
+    frame = null
   }
-  const handler: Hander = {
-    hdr: viewer.withProgress(doHdr),
-    gce: viewer.withProgress(doGCE),
-    com: viewer.withProgress(doNothing),
+  let load_callback: (gif: HTMLImageElement) => void | undefined
+  const HANDER: Hander = {
+    hdr: viewer.withProgress((_hdr) => {
+      hdr = _hdr
+      viewer.setSizes(hdr.width, hdr.height)
+    }),
+    gce: viewer.withProgress((gce) => {
+      viewer.pushFrame()
+      clear()
+      transparency = gce.transparencyGiven ? gce.transparencyIndex : null
+      delay = gce.delayTime
+      disposalMethod = gce.disposalMethod
+      // We don't have much to do with the rest of GCE.
+    }),
+    com: viewer.withProgress(() => {}),
     // I guess that's all for now.
     app: {
       // TODO: Is there much point in actually supporting iterations?
-      NETSCAPE: viewer.withProgress(doNothing)
+      NETSCAPE: viewer.withProgress(() => {})
     },
-    img: viewer.withProgress(doImg, true),
-    eof: doEof,
+    img: viewer.withProgress(viewer.doImg.bind(viewer), true),
+    eof: (block) => {
+      //toolbar.style.display = '';
+      viewer.pushFrame()
+      viewer.doDecodeProgress(false)
+      if (!(options.c_w && options.c_h)) {
+        canvas.width = hdr.width * get_canvas_scale()
+        canvas.height = hdr.height * get_canvas_scale()
+      }
+      player.init()
+      loading = false
+      if (load_callback) {
+        load_callback(gif)
+      }
+    },
     pte: (block) => console.log('pte', block),
     unknown: (block) => console.log('unknown', block)
   } as const
-  // XXX: There's probably a better way to handle catching exceptions when
-  // callbacks are involved.
-  const doParse = () => {
-    try {
-      parseGIF(stream, handler)
-    } catch (err) {
-      viewer.doLoadError('parse')
-    }
-  }
-  // hander
-  // load
-
   const loader = new Loader({
     get viewer() {
       return viewer
@@ -314,17 +274,36 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     set stream(val: Stream) {
       stream = val
     },
-    get doParse() {
-      return doParse
+    // XXX: There's probably a better way to handle catching exceptions when
+    // callbacks are involved.
+    doParse: () => {
+      try {
+        parseGIF(stream, HANDER)
+      } catch (err) {
+        viewer.doLoadError('parse')
+      }
     },
-    get load_setup() {
-      return load_setup
+    load_setup: (callback?: (gif: HTMLImageElement) => void) => {
+      if (loading) {
+        return false
+      }
+      load_callback = callback || load_callback
+
+      loading = true
+      frames = []
+      clear()
+      disposalRestoreFromIdx = null
+      lastDisposalMethod = null
+      frame = null
+      lastImg = null
+
+      return true
     },
     get gif() {
       return gif
     }
   })
-  // load
+  // loader
   return {
     player,
     // play controls
