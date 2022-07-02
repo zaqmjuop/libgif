@@ -271,6 +271,32 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     pte: (block) => console.log('pte', block),
     unknown: (block) => console.log('unknown', block)
   } as const
+
+  const load_setup = (callback?: (gif: HTMLImageElement) => void) => {
+    if (loading) {
+      return false
+    }
+    load_callback = callback || load_callback
+
+    loading = true
+    frames = []
+    clear()
+    disposalRestoreFromIdx = null
+    lastDisposalMethod = null
+    frame = null
+    lastImg = null
+
+    return true
+  }
+  // XXX: There's probably a better way to handle catching exceptions when
+  // callbacks are involved.
+  const doParse = () => {
+    try {
+      parseGIF(stream, HANDER)
+    } catch (err) {
+      viewer.doLoadError('parse')
+    }
+  }
   const loader = new Loader({
     get viewer() {
       return viewer
@@ -283,29 +309,8 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     // XXX: There's probably a better way to handle catching exceptions when
     // callbacks are involved.
-    doParse: () => {
-      try {
-        parseGIF(stream, HANDER)
-      } catch (err) {
-        viewer.doLoadError('parse')
-      }
-    },
-    load_setup: (callback?: (gif: HTMLImageElement) => void) => {
-      if (loading) {
-        return false
-      }
-      load_callback = callback || load_callback
-
-      loading = true
-      frames = []
-      clear()
-      disposalRestoreFromIdx = null
-      lastDisposalMethod = null
-      frame = null
-      lastImg = null
-
-      return true
-    },
+    doParse,
+    load_setup,
     get gif() {
       return gif
     }
@@ -329,7 +334,12 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get_auto_play: () => options,
     load_url: loader.load_url.bind(loader),
     load: loader.load.bind(loader),
-    load_raw: loader.load_raw.bind(loader),
+    load_raw: (arr: string | Uint8Array, callback) => {
+      if (!load_setup(callback)) return
+      if (!viewer.initialized) viewer.init()
+      stream = new Stream(arr)
+      setTimeout(doParse, 0)
+    },
     set_frame_offset: viewer.setFrameOffset.bind(viewer),
     frames
   }

@@ -76,11 +76,4 @@ export class Loader {
       callback
     )
   }
-
-  load_raw(arr, callback) {
-    if (!this.quote.load_setup(callback)) return
-    if (!this.quote.viewer.initialized) this.quote.viewer.init()
-    this.quote.stream = new Stream(arr)
-    setTimeout(this.quote.doParse, 0)
-  }
 }
