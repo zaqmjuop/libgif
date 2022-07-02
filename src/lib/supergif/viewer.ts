@@ -19,7 +19,6 @@ interface ViewerQuote {
   gif: HTMLImageElement
   frames: Frame[]
   stream: Stream
-  frame: CanvasRenderingContext2D | null
   delay: null | number
   frameOffsets: Offset[]
   lastDisposalMethod: number | null
@@ -38,6 +37,7 @@ export class Viewer {
   initialized = false
   ctx_scaled = false
   drawWhileLoading: boolean
+  frame: CanvasRenderingContext2D | null = null
   constructor(quote: ViewerQuote) {
     this.quote = quote
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
@@ -139,9 +139,9 @@ export class Viewer {
     )
   }
   pushFrame() {
-    if (!this.quote.frame) return
+    if (!this.frame) return
     this.quote.frames.push({
-      data: this.quote.frame.getImageData(
+      data: this.frame.getImageData(
         0,
         0,
         this.quote.hdr.width,
@@ -153,8 +153,8 @@ export class Viewer {
   }
 
   doImg(img: ImgBlock) {
-    if (!this.quote.frame && this.tmpCanvas) {
-      this.quote.frame = this.tmpCanvas.getContext('2d')
+    if (!this.frame && this.tmpCanvas) {
+      this.frame = this.tmpCanvas.getContext('2d')
     }
 
     let currIdx = frames.length
@@ -185,14 +185,14 @@ export class Viewer {
         // If we disposed every frame including first frame up to this point, then we have
         // no composited frame to restore to. In this case, restore to background instead.
         if (this.quote.disposalRestoreFromIdx !== null) {
-          this.quote.frame?.putImageData(
+          this.frame?.putImageData(
             this.quote.frames[this.quote.disposalRestoreFromIdx].data,
             0,
             0
           )
         } else {
           this.quote.lastImg &&
-            this.quote.frame?.clearRect(
+            this.frame?.clearRect(
               this.quote.lastImg.leftPos,
               this.quote.lastImg.topPos,
               this.quote.lastImg.width,
@@ -208,7 +208,7 @@ export class Viewer {
         // Browser implementations historically restore to transparent; we do the same.
         // http://www.wizards-toolkit.org/discourse-server/viewtopic.php?f=1&t=21172#p86079
         this.quote.lastImg &&
-          this.quote.frame?.clearRect(
+          this.frame?.clearRect(
             this.quote.lastImg.leftPos,
             this.quote.lastImg.topPos,
             this.quote.lastImg.width,
@@ -220,8 +220,8 @@ export class Viewer {
     // frame contains final pixel data from the last frame; do nothing
 
     //Get existing pixels for img region after applying disposal method
-    if (this.quote.frame) {
-      let imgData = this.quote.frame.getImageData(
+    if (this.frame) {
+      let imgData = this.frame.getImageData(
         img.leftPos,
         img.topPos,
         img.width,
@@ -237,7 +237,7 @@ export class Viewer {
         }
       })
 
-      this.quote.frame?.putImageData(imgData, img.leftPos, img.topPos)
+      this.frame?.putImageData(imgData, img.leftPos, img.topPos)
     }
 
     if (!this.ctx_scaled) {

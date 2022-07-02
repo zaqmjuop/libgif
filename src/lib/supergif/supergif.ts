@@ -41,7 +41,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   let delay: null | number = null
   let disposalRestoreFromIdx: number | null = null
   let lastDisposalMethod: number | null = null
-  let frame: CanvasRenderingContext2D | null = null
   let lastImg: (Rect & Partial<ImgBlock>) | null = null
 
   let frames: Frame[] = []
@@ -134,12 +133,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get frameOffsets() {
       return frameOffsets
     },
-    get frame() {
-      return frame
-    },
-    set frame(val: CanvasRenderingContext2D | null) {
-      frame = val
-    },
     get delay() {
       return delay
     },
@@ -218,7 +211,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     delay = null
     lastDisposalMethod = disposalMethod
     disposalMethod = null
-    frame = null
+    viewer.frame = null
   }
   let load_callback: (gif: HTMLImageElement) => void | undefined
 
@@ -283,7 +276,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     clear()
     disposalRestoreFromIdx = null
     lastDisposalMethod = null
-    frame = null
+    viewer.frame = null
     lastImg = null
 
     return true
