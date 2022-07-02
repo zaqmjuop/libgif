@@ -3,6 +3,7 @@ import { parseGIF } from './parseGIF'
 import { Player } from './player'
 import { Stream } from './stream'
 import {
+  Block,
   Frame,
   Hander,
   Header,
@@ -220,12 +221,25 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     frame = null
   }
   let load_callback: (gif: HTMLImageElement) => void | undefined
+
+  /**
+   * @param{boolean=} draw Whether to draw progress bar or not; this is not idempotent because of translucency.
+   *                       Note that this means that the text will be unsynchronized with the progress bar on non-frames;
+   *                       but those are typically so small (GCE etc.) that it doesn't really matter. TODO: Do this properly.
+   */
+  const withProgress = (fn: Function, draw = false) => {
+    return (block) => {
+      fn(block)
+      viewer.doDecodeProgress(draw)
+    }
+  }
+
   const HANDER: Hander = {
-    hdr: viewer.withProgress((_hdr) => {
+    hdr: withProgress((_hdr) => {
       hdr = _hdr
       viewer.setSizes(hdr.width, hdr.height)
     }),
-    gce: viewer.withProgress((gce) => {
+    gce: withProgress((gce) => {
       viewer.pushFrame()
       clear()
       transparency = gce.transparencyGiven ? gce.transparencyIndex : null
@@ -233,13 +247,13 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       disposalMethod = gce.disposalMethod
       // We don't have much to do with the rest of GCE.
     }),
-    com: viewer.withProgress(() => {}),
+    com: withProgress(() => {}),
     // I guess that's all for now.
     app: {
       // TODO: Is there much point in actually supporting iterations?
-      NETSCAPE: viewer.withProgress(() => {})
+      NETSCAPE: withProgress(() => {})
     },
-    img: viewer.withProgress(viewer.doImg.bind(viewer), true),
+    img: withProgress(viewer.doImg.bind(viewer), true),
     eof: (block) => {
       //toolbar.style.display = '';
       viewer.pushFrame()

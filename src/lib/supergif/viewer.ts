@@ -138,17 +138,6 @@ export class Viewer {
       draw
     )
   }
-  /**
-   * @param{boolean=} draw Whether to draw progress bar or not; this is not idempotent because of translucency.
-   *                       Note that this means that the text will be unsynchronized with the progress bar on non-frames;
-   *                       but those are typically so small (GCE etc.) that it doesn't really matter. TODO: Do this properly.
-   */
-  withProgress(fn: Function, draw = false) {
-    return (block) => {
-      fn(block)
-      this.doDecodeProgress(draw)
-    }
-  }
   pushFrame() {
     if (!this.quote.frame) return
     this.quote.frames.push({
