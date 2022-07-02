@@ -111,24 +111,15 @@ export class Viewer {
   doLoadError(originOfError: string) {
     const drawError = () => {
       this.ctx.fillStyle = 'black'
-      this.ctx.fillRect(
-        0,
-        0,
-        this.quote.c_w ? this.quote.c_w : this.quote.hdr.width,
-        this.quote.c_h ? this.quote.c_h : this.quote.hdr.height
-      )
+      const w = this.quote.c_w || this.quote.hdr.width
+      const h = this.quote.c_h || this.quote.hdr.height
+      this.ctx.fillRect(0, 0, w, h)
       this.ctx.strokeStyle = 'red'
       this.ctx.lineWidth = 3
       this.ctx.moveTo(0, 0)
-      this.ctx.lineTo(
-        this.quote.c_w ? this.quote.c_w : this.quote.hdr.width,
-        this.quote.c_h ? this.quote.c_h : this.quote.hdr.height
-      )
-      this.ctx.moveTo(
-        0,
-        this.quote.c_h ? this.quote.c_h : this.quote.hdr.height
-      )
-      this.ctx.lineTo(this.quote.c_w ? this.quote.c_w : this.quote.hdr.width, 0)
+      this.ctx.lineTo(w, h)
+      this.ctx.moveTo(0, h)
+      this.ctx.lineTo(w, 0)
       this.ctx.stroke()
     }
 

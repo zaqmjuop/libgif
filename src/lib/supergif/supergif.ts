@@ -45,6 +45,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
   let frames: Frame[] = []
   let frameOffsets: Offset[] = [] // elements have .x and .y properties
+  let loadError = ''
 
   const gif = options.gif
   if (typeof options.auto_play == 'undefined')
@@ -111,7 +112,12 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     set hdr(val: Header) {
       hdr = val
     },
-    loadError: '',
+    get loadError() {
+      return loadError
+    },
+    set loadError(val: string) {
+      loadError = val
+    },
     get gif() {
       return gif
     },
@@ -176,7 +182,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get auto_play() {
       return options.auto_play
     },
-    loadError: '',
+    get loadError() {
+      return loadError
+    },
     get c_w() {
       return options.c_w
     },
