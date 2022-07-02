@@ -55,30 +55,21 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   // global func
 
   const get_canvas_scale = () => {
-    let scale
-    if (options.max_width && hdr && hdr.width > options.max_width) {
+    let scale = 1
+    if (options.max_width && hdr?.width && hdr.width > options.max_width) {
       scale = options.max_width / hdr.width
-    } else {
-      scale = 1
     }
     return scale
   }
   // global func
   // canvas
-  let ctx_scaled = false
-  let drawWhileLoading = options.draw_while_loading !== false
   const viewer = new Viewer({
     get get_canvas_scale() {
       return get_canvas_scale
     },
-    get drawWhileLoading() {
-      return drawWhileLoading
-    },
-    set drawWhileLoading(val: boolean) {
-      drawWhileLoading = val
-    },
+    drawWhileLoading: options.draw_while_loading !== false,
     get showProgressBar() {
-      return drawWhileLoading && options.show_progress_bar !== false
+      return this.quote.show_progress_bar !== false
     },
     progressBarHeight:
       typeof options.progressbar_height === 'number'
@@ -92,13 +83,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       'progressbar_foreground_color'
     )
       ? options.progressbar_foreground_color || ''
-      : 'rgba(255,0,22,.8)',
-    get ctx_scaled() {
-      return ctx_scaled
-    },
-    set ctx_scaled(val: boolean) {
-      ctx_scaled = val
-    },
+      : 'rgba(255,0,22,.8)', 
     get is_vp() {
       return !!options.is_vp
     },
