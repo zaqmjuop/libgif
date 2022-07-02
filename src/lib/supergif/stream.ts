@@ -16,17 +16,16 @@ export const byteToBitArr = (bite: number) => {
  */
 // Make compiler happy.
 export class Stream {
-  data: any
-  len: number
-  pos: number
+  readonly data: string | Uint8Array
+  readonly len: number
+  pos = 0
 
   constructor(data: string | Uint8Array) {
     this.data = data
     this.len = this.data.length
-    this.pos = 0
   }
 
-  readByte() {
+  readByte() :number{
     if (this.pos >= this.data.length) {
       throw new Error('Attempted to read past end of stream.')
     }
@@ -34,7 +33,7 @@ export class Stream {
       ? this.data[this.pos++]
       : this.data.charCodeAt(this.pos++) & 0xff
   }
-  readBytes(n: number) {
+  readBytes(n: number): number[] {
     const bytes: number[] = []
     for (let i = 0; i < n; i++) {
       bytes.push(this.readByte())
