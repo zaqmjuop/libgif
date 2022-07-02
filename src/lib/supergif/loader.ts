@@ -15,24 +15,20 @@ export class Loader {
   constructor(quote: LoaderQuote) {
     this.quote = quote
   }
-  load_url = (src: string, callback?: (gif: HTMLImageElement) => void) => {
+  load_url(src: string, callback?: (gif: HTMLImageElement) => void) {
     if (!this.quote.load_setup(callback)) return
 
-    let h = new XMLHttpRequest()
+    const h = new XMLHttpRequest()
     // new browsers (XMLHttpRequest2-compliant)
     h.open('GET', src, true)
 
     if ('overrideMimeType' in h) {
       h.overrideMimeType('text/plain; charset=x-user-defined')
-    }
-
-    // old browsers (XMLHttpRequest-compliant)
-    else if ('responseType' in h) {
+    } else if ('responseType' in h) {
+      // old browsers (XMLHttpRequest-compliant)
       h.responseType = 'arraybuffer'
-    }
-
-    // IE9 (Microsoft.XMLHTTP-compliant)
-    else {
+    } else {
+      // IE9 (Microsoft.XMLHTTP-compliant)
       h.setRequestHeader('Accept-Charset', 'x-user-defined')
     }
 
