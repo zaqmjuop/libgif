@@ -69,7 +69,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     drawWhileLoading: options.draw_while_loading !== false,
     get showProgressBar() {
-      return this.quote.show_progress_bar !== false
+      return options.show_progress_bar !== false
     },
     progressBarHeight:
       typeof options.progressbar_height === 'number'
@@ -83,7 +83,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       'progressbar_foreground_color'
     )
       ? options.progressbar_foreground_color || ''
-      : 'rgba(255,0,22,.8)', 
+      : 'rgba(255,0,22,.8)',
     get is_vp() {
       return !!options.is_vp
     },

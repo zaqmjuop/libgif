@@ -88,53 +88,17 @@ export class Viewer {
   doShowProgress(pos: number, length: number, draw: boolean) {
     if (!draw || !this.quote.showProgressBar) return
     let height = this.quote.progressBarHeight
-    let left, mid, top, width
+    let mid, top, width
+    const scale = this.ctx_scaled ? this.quote.get_canvas_scale() : 1
     if (this.quote.is_vp) {
-      if (!this.ctx_scaled) {
-        top = this.quote.vp_t + this.quote.vp_h - height
-        height = height
-        left = this.quote.vp_l
-        mid = left + (pos / length) * this.quote.vp_w
-        width = this.canvas.width
-      } else {
-        top =
-          (this.quote.vp_t + this.quote.vp_h - height) /
-          this.quote.get_canvas_scale()
-        height = height / this.quote.get_canvas_scale()
-        left = this.quote.vp_l / this.quote.get_canvas_scale()
-        mid =
-          left +
-          (pos / length) * (this.quote.vp_w / this.quote.get_canvas_scale())
-        width = this.canvas.width / this.quote.get_canvas_scale()
-      }
-      //some debugging, draw rect around viewport
-      if (false) {
-        // if (!ctx_scaled) {
-        //   let l = this.quote.vp_l,
-        //     t = this.quote.vp_t
-        //   let w = this.quote.vp_w,
-        //     h = this.quote.vp_h
-        // } else {
-        //   let l = this.quote.vp_l / get_canvas_scale(),
-        //     t = this.quote.vp_t / get_canvas_scale()
-        //   let w = this.quote.vp_w / get_canvas_scale(),
-        //     h = this.quote.vp_h / get_canvas_scale()
-        // }
-        // ctx.rect(l, t, w, h)
-        // ctx.stroke()
-      }
+      top = (this.quote.vp_t + this.quote.vp_h - height) / scale
+      mid = this.quote.vp_l / scale + (pos / length) * (this.quote.vp_w / scale)
     } else {
-      top =
-        (this.canvas.height - height) /
-        (this.ctx_scaled ? this.quote.get_canvas_scale() : 1)
-      mid =
-        ((pos / length) * this.canvas.width) /
-        (this.ctx_scaled ? this.quote.get_canvas_scale() : 1)
-      width =
-        this.canvas.width /
-        (this.ctx_scaled ? this.quote.get_canvas_scale() : 1)
-      height /= this.ctx_scaled ? this.quote.get_canvas_scale() : 1
+      top = (this.canvas.height - height) / scale
+      mid = ((pos / length) * this.canvas.width) / scale
     }
+    height = height / scale
+    width = this.canvas.width / scale
 
     this.ctx.fillStyle =
       this.quote.progressBarBackgroundColor || this.ctx.fillStyle
@@ -297,10 +261,8 @@ export class Viewer {
     }
 
     if (!this.ctx_scaled) {
-      this.ctx.scale(
-        this.quote.get_canvas_scale(),
-        this.quote.get_canvas_scale()
-      )
+      const scale = this.quote.get_canvas_scale()
+      this.ctx.scale(scale, scale)
       this.ctx_scaled = true
     }
 
