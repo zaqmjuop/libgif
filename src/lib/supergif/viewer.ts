@@ -28,6 +28,12 @@ interface ViewerQuote {
   auto_play: boolean
   lastImg: (Rect & Partial<ImgBlock>) | null
 }
+
+enum DisposalMethod {
+  skip = 1,
+  backgroundColor = 2,
+  previous = 3
+}
 export class Viewer {
   readonly canvas = document.createElement('canvas')
   readonly ctx: CanvasRenderingContext2D
@@ -38,6 +44,7 @@ export class Viewer {
   ctx_scaled = false
   drawWhileLoading: boolean
   frame: CanvasRenderingContext2D | null = null
+  opacity = 255
   constructor(quote: ViewerQuote) {
     this.quote = quote
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
@@ -151,17 +158,22 @@ export class Viewer {
     })
     this.quote.frameOffsets.push({ x: 0, y: 0 })
   }
-
+  restorePrevious(idx: number) {
+    this.frame?.putImageData(this.quote.frames[idx].data, 0, 0)
+  }
+  restoreBackgroundColor() {
+    this.quote.lastImg &&
+      this.frame?.clearRect(
+        this.quote.lastImg.leftPos,
+        this.quote.lastImg.topPos,
+        this.quote.lastImg.width,
+        this.quote.lastImg.height
+      )
+  }
   doImg(img: ImgBlock) {
     if (!this.frame && this.tmpCanvas) {
       this.frame = this.tmpCanvas.getContext('2d')
     }
-
-    let currIdx = frames.length
-
-    //ct = color table, gct = global color table
-    let ct = img.lctFlag ? img.lct : this.quote.hdr.gct // TODO: What if neither exists?
-
     /*
               Disposal method indicates the way in which the graphic is to
               be treated after being displayed.
@@ -179,49 +191,36 @@ export class Viewer {
                               Importantly, "previous" means the frame state
                               after the last disposal of method 0, 1, or 2.
               */
-    if (currIdx > 0) {
-      if (this.quote.lastDisposalMethod === 3) {
+    if (this.quote.frames.length > 0) {
+      if (this.quote.lastDisposalMethod === DisposalMethod.previous) {
         // Restore to previous
         // If we disposed every frame including first frame up to this point, then we have
         // no composited frame to restore to. In this case, restore to background instead.
         if (this.quote.disposalRestoreFromIdx !== null) {
-          this.frame?.putImageData(
-            this.quote.frames[this.quote.disposalRestoreFromIdx].data,
-            0,
-            0
-          )
+          this.restorePrevious(this.quote.disposalRestoreFromIdx)
         } else {
-          this.quote.lastImg &&
-            this.frame?.clearRect(
-              this.quote.lastImg.leftPos,
-              this.quote.lastImg.topPos,
-              this.quote.lastImg.width,
-              this.quote.lastImg.height
-            )
+          this.restoreBackgroundColor()
         }
       } else {
-        this.quote.disposalRestoreFromIdx = currIdx - 1
+        this.quote.disposalRestoreFromIdx = this.quote.frames.length - 1
       }
 
       if (this.quote.lastDisposalMethod === 2) {
         // Restore to background color
         // Browser implementations historically restore to transparent; we do the same.
         // http://www.wizards-toolkit.org/discourse-server/viewtopic.php?f=1&t=21172#p86079
-        this.quote.lastImg &&
-          this.frame?.clearRect(
-            this.quote.lastImg.leftPos,
-            this.quote.lastImg.topPos,
-            this.quote.lastImg.width,
-            this.quote.lastImg.height
-          )
+        this.restoreBackgroundColor()
       }
     }
     // else, Undefined/Do not dispose.
     // frame contains final pixel data from the last frame; do nothing
 
+    //ct = color table, gct = global color table
+    const ct = img.lctFlag ? img.lct : this.quote.hdr.gct // TODO: What if neither exists?
+
     //Get existing pixels for img region after applying disposal method
     if (this.frame) {
-      let imgData = this.frame.getImageData(
+      const imgData = this.frame.getImageData(
         img.leftPos,
         img.topPos,
         img.width,
@@ -233,7 +232,7 @@ export class Viewer {
           imgData.data[i * 4 + 0] = ct[pixel][0]
           imgData.data[i * 4 + 1] = ct[pixel][1]
           imgData.data[i * 4 + 2] = ct[pixel][2]
-          imgData.data[i * 4 + 3] = 255 // Opaque.
+          imgData.data[i * 4 + 3] = this.opacity // Opaque.
         }
       })
 

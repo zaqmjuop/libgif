@@ -142,6 +142,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get disposalRestoreFromIdx() {
       return disposalRestoreFromIdx
     },
+    set disposalRestoreFromIdx(val) {
+      disposalRestoreFromIdx = val
+    },
     get transparency() {
       return transparency
     },
