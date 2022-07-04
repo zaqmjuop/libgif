@@ -190,7 +190,7 @@ export const parseGIF = (st: Stream, handler: Hander) => {
       // See appendix E.
       const offsets = [0, 4, 2, 1]
       const steps = [8, 8, 4, 2]
-
+      // todo变成原地成为插行
       let fromRow = 0
       for (let pass = 0; pass < 4; pass++) {
         for (let toRow = offsets[pass]; toRow < rows; toRow += steps[pass]) {
