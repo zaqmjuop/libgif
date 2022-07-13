@@ -1,3 +1,4 @@
+import mitt from 'mitt'
 import { Loader } from './loader'
 import { parseGIF } from './parseGIF'
 import { Player } from './player'
@@ -16,6 +17,7 @@ import {
 import { Viewer } from './viewer'
 
 const SuperGif = (opts: Options & Partial<VP>) => {
+  const emitter = mitt()
   const options: Options & VP = Object.assign(
     {
       //viewport position
@@ -260,6 +262,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       }
       player.init()
       loading = false
+      emitter.emit('load', gif)
       if (load_callback) {
         load_callback(gif)
       }
@@ -311,6 +314,18 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       return gif
     }
   })
+  loader.on('loadstart', () => {
+    // Wait until connection is opened to replace the gif element with a canvas to avoid a blank img
+    !viewer.initialized && viewer.init()
+  })
+  loader.on('load', (data: string | Uint8Array) => {
+    stream = new Stream(data)
+    setTimeout(doParse, 0)
+  })
+  loader.on('progress', (e: ProgressEvent<EventTarget>) => {
+    e.lengthComputable && viewer.doShowProgress(e.loaded, e.total, true)
+  })
+  loader.on('error', () => viewer.doLoadError('xhr'))
   // loader
   return {
     player,

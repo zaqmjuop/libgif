@@ -1,7 +1,7 @@
 import mitt from 'mitt'
 import { Stream } from './stream'
 import { Viewer } from './viewer'
-import { valuesType } from './type'
+import { valuesType, func } from './type'
 
 interface LoaderQuote {
   stream: Stream
@@ -15,10 +15,13 @@ interface LoaderQuote {
 const EMITS = ['loadstart', 'load', 'progress', 'error'] as const
 
 export class Loader {
-  public readonly mitt = mitt<Record<valuesType<typeof EMITS>, unknown>>()
+  private readonly emitter = mitt<Record<valuesType<typeof EMITS>, unknown>>()
   readonly quote: LoaderQuote
   constructor(quote: LoaderQuote) {
     this.quote = quote
+  }
+  on(type: valuesType<typeof EMITS>, func: func) {
+    return this.emitter.on(type, func)
   }
 
   load_url(src: string, callback?: (gif: HTMLImageElement) => void) {
@@ -39,9 +42,7 @@ export class Loader {
     }
 
     h.onloadstart = () => {
-      this.mitt.emit('loadstart')
-      // Wait until connection is opened to replace the gif element with a canvas to avoid a blank img
-      if (!this.quote.viewer.initialized) this.quote.viewer.init()
+      this.emitter.emit('loadstart')
     }
     h.onload = (e) => {
       if (h.status != 200) {
@@ -60,18 +61,13 @@ export class Loader {
       if (data.toString().indexOf('ArrayBuffer') > 0) {
         data = new Uint8Array(data)
       }
-      this.mitt.emit('load', data)
-      this.quote.stream = new Stream(data)
-      setTimeout(this.quote.doParse, 0)
+      this.emitter.emit('load', data)
     }
     h.onprogress = (e) => {
-      this.mitt.emit('progress', e)
-      if (e.lengthComputable)
-        this.quote.viewer.doShowProgress(e.loaded, e.total, true)
+      this.emitter.emit('progress', e)
     }
     h.onerror = () => {
-      this.quote.viewer.doLoadError('xhr')
-      this.mitt.emit('error', 'xhr')
+      this.emitter.emit('error', 'xhr')
     }
     h.send()
   }

@@ -113,4 +113,5 @@ export interface GCExtBlock extends ExtBlock {
   transparencyIndex: number
   terminator: number
 }
-export type valuesType<T> = T extends readonly (infer U)[] ? U : never;
+export type valuesType<T> = T extends readonly (infer U)[] ? U : never
+export type func = (...args: any[]) => any
