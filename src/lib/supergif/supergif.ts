@@ -175,7 +175,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get gif() {
       return gif
     },
-    onEndListener: typeof options.on_end === 'function' ? options.on_end : null,
     overrideLoopMode: options.loop_mode !== false,
     loopDelay: options.loop_delay || 0,
     get auto_play() {
@@ -206,6 +205,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       return delay
     }
   })
+  options.on_end && player.on('complete', options.on_end)
   // player
   // loader
 

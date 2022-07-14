@@ -1,13 +1,13 @@
 import { Frame, Header, ImgBlock, Offset } from './type'
+import { Emitter } from './Emitter'
 
 interface PlayerQuote {
   frames: Frame[]
   gif: HTMLImageElement
-  onEndListener: ((gif: HTMLImageElement) => void) | null
   overrideLoopMode: boolean
   loopDelay: number
   auto_play: boolean | undefined
-  loadError: string  
+  loadError: string
   c_w: number
   c_h: number
   get_canvas_scale: () => any
@@ -17,7 +17,7 @@ interface PlayerQuote {
   delay: null | number
 }
 
-export class Player {
+export class Player extends Emitter<['complete']> {
   i = -1
   iterationCount = 0
   forward = true
@@ -25,6 +25,7 @@ export class Player {
   readonly quote: PlayerQuote
 
   constructor(quote: PlayerQuote) {
+    super()
     this.quote = quote
   }
   get frames() {
@@ -50,8 +51,7 @@ export class Player {
     let stepping = false
 
     const completeLoop = () => {
-      if (this.quote.onEndListener !== null)
-        this.quote.onEndListener(this.quote.gif)
+      this.emit('complete', this.quote.gif)
       this.iterationCount++
 
       if (this.quote.overrideLoopMode || this.iterationCount < 0) {
