@@ -1,7 +1,6 @@
-import mitt from 'mitt'
 import { Stream } from './stream'
 import { Viewer } from './viewer'
-import { valuesType, func } from './type'
+import { Emitter } from './Emitter'
 
 interface LoaderQuote {
   stream: Stream
@@ -14,14 +13,11 @@ interface LoaderQuote {
 }
 const EMITS = ['loadstart', 'load', 'progress', 'error'] as const
 
-export class Loader {
-  private readonly emitter = mitt<Record<valuesType<typeof EMITS>, unknown>>()
+export class Loader extends Emitter<typeof EMITS> {
   readonly quote: LoaderQuote
   constructor(quote: LoaderQuote) {
+    super()
     this.quote = quote
-  }
-  on(type: valuesType<typeof EMITS>, func: func) {
-    return this.emitter.on(type, func)
   }
 
   load_url(src: string, callback?: (gif: HTMLImageElement) => void) {
@@ -42,7 +38,7 @@ export class Loader {
     }
 
     h.onloadstart = () => {
-      this.emitter.emit('loadstart')
+      this.emit('loadstart')
     }
     h.onload = (e) => {
       if (h.status != 200) {
@@ -61,13 +57,13 @@ export class Loader {
       if (data.toString().indexOf('ArrayBuffer') > 0) {
         data = new Uint8Array(data)
       }
-      this.emitter.emit('load', data)
+      this.emit('load', data)
     }
     h.onprogress = (e) => {
-      this.emitter.emit('progress', e)
+      this.emit('progress', e)
     }
     h.onerror = () => {
-      this.emitter.emit('error', 'xhr')
+      this.emit('error', 'xhr')
     }
     h.send()
   }

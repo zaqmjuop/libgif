@@ -41,7 +41,7 @@ export class Player extends Emitter<['complete']> {
     return (this.i + delta + this.frames.length) % this.frames.length
   }
 
-  stepFrame(amount) {
+  stepFrame(amount: number) {
     // XXX: Name is confusing.
     this.i = this.i + amount
     this.putFrame()
