@@ -357,3 +357,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 }
 
 export default SuperGif
+/**
+ * 下载
+ * 读取字符
+ * 解析
+ * 播放
+ */
