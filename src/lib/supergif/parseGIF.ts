@@ -12,44 +12,52 @@ import {
 } from './type'
 
 // The actual parsing; returns an object with properties.
-export const parseGIF = (st: Stream, handler: Hander) => {
+export class GifParser {
+  st: Stream
+  handler: Hander
+  constructor(st: Stream, handler: Hander) {
+    this.st = st
+    this.handler = handler
+    this.parse()
+  }
+
   // LZW (GIF-specific)
-  const parseCT = (entries: number) => {
+  parseCT = (entries: number) => {
     // Each entry is 3 bytes, for RGB.
     const ct: number[][] = []
     for (let i = 0; i < entries; i++) {
-      ct.push(st.readBytes(3))
+      ct.push(this.st.readBytes(3))
     }
     return ct
   }
 
-  const readSubBlocks = () => {
+  readSubBlocks = () => {
     let size: number
     let data: string
     data = ''
     do {
-      size = st.readByte()
-      data += st.read(size)
+      size = this.st.readByte()
+      data += this.st.read(size)
     } while (size !== 0)
     return data
   }
 
-  const parseHeader = () => {
-    const sig = st.read(3)
-    const ver = st.read(3)
+  parseHeader = () => {
+    const sig = this.st.read(3)
+    const ver = this.st.read(3)
     if (sig !== 'GIF') throw new Error('Not a GIF file.') // XXX: This should probably be handled more nicely.
-    const width = st.readUnsigned()
-    const height = st.readUnsigned()
+    const width = this.st.readUnsigned()
+    const height = this.st.readUnsigned()
 
-    const bits = byteToBitArr(st.readByte())
+    const bits = byteToBitArr(this.st.readByte())
     const gctFlag = !!bits.shift()
     const colorRes = bitsToNum(bits.splice(0, 3))
     const sorted = !!bits.shift()
     const gctSize = bitsToNum(bits.splice(0, 3))
 
-    const bgColor = st.readByte()
-    const pixelAspectRatio = st.readByte() // if not 0, aspectRatio = (pixelAspectRatio + 15) / 64
-    const gct = gctFlag ? parseCT(1 << (gctSize + 1)) : undefined
+    const bgColor = this.st.readByte()
+    const pixelAspectRatio = this.st.readByte() // if not 0, aspectRatio = (pixelAspectRatio + 15) / 64
+    const gct = gctFlag ? this.parseCT(1 << (gctSize + 1)) : undefined
     const header: Header = {
       sig,
       ver,
@@ -63,26 +71,26 @@ export const parseGIF = (st: Stream, handler: Hander) => {
       pixelAspectRatio,
       gct
     }
-    handler.hdr && handler.hdr(header)
+    this.handler.hdr && this.handler.hdr(header)
   }
 
-  const parseExt = (block: Block) => {
+  parseExt = (block: Block) => {
     const parseGCExt = (block: ExtBlock) => {
-      const blockSize = st.readByte() // Always 4
-      const bits = byteToBitArr(st.readByte())
+      const blockSize = this.st.readByte() // Always 4
+      const bits = byteToBitArr(this.st.readByte())
       const reserved = bits.splice(0, 3) // Reserved; should be 000.
       const disposalMethod = bitsToNum(bits.splice(0, 3))
       const userInput = !!bits.shift()
       const transparencyGiven = !!bits.shift()
 
-      const delayTime = st.readUnsigned()
+      const delayTime = this.st.readUnsigned()
 
-      const transparencyIndex = st.readByte()
+      const transparencyIndex = this.st.readByte()
 
-      const terminator = st.readByte()
+      const terminator = this.st.readByte()
 
-      handler.gce &&
-        handler.gce({
+      this.handler.gce &&
+        this.handler.gce({
           ...block,
           reserved,
           disposalMethod,
@@ -94,41 +102,46 @@ export const parseGIF = (st: Stream, handler: Hander) => {
         })
     }
 
-    const parseComExt = function (block: ExtBlock) {
-      const comment = readSubBlocks()
-      handler.com && handler.com({ ...block, comment })
+    const parseComExt = (block: ExtBlock) => {
+      const comment = this.readSubBlocks()
+      this.handler.com && this.handler.com({ ...block, comment })
     }
 
-    const parsePTExt = function (block: ExtBlock) {
+    const parsePTExt = (block: ExtBlock) => {
       // No one *ever* uses this. If you use it, deal with parsing it yourself.
-      const blockSize = st.readByte() // Always 12
-      const ptHeader = st.readBytes(12)
-      const ptData = readSubBlocks()
-      handler.pte && handler.pte({ ...block, ptHeader, ptData })
+      const blockSize = this.st.readByte() // Always 12
+      const ptHeader = this.st.readBytes(12)
+      const ptData = this.readSubBlocks()
+      this.handler.pte && this.handler.pte({ ...block, ptHeader, ptData })
     }
 
-    const parseAppExt = function (block: ExtBlock) {
-      const parseNetscapeExt = function (block: AppExtBlock) {
-        const blockSize = st.readByte() // Always 3
-        const unknown = st.readByte() // ??? Always 1? What is this?
-        const iterations = st.readUnsigned()
-        const terminator = st.readByte()
-        handler.app &&
-          handler.app.NETSCAPE &&
-          handler.app.NETSCAPE({ ...block, unknown, iterations, terminator })
+    const parseAppExt = (block: ExtBlock) => {
+      const parseNetscapeExt = (block: AppExtBlock) => {
+        const blockSize = this.st.readByte() // Always 3
+        const unknown = this.st.readByte() // ??? Always 1? What is this?
+        const iterations = this.st.readUnsigned()
+        const terminator = this.st.readByte()
+        this.handler.app &&
+          this.handler.app.NETSCAPE &&
+          this.handler.app.NETSCAPE({
+            ...block,
+            unknown,
+            iterations,
+            terminator
+          })
       }
 
-      const parseUnknownAppExt = function (block: AppExtBlock) {
-        const appData = readSubBlocks()
+      const parseUnknownAppExt = (block: AppExtBlock) => {
+        const appData = this.readSubBlocks()
         // FIXME: This won't work if a handler wants to match on any identifier.
-        handler.app &&
-          handler.app[block.identifier] &&
-          handler.app[block.identifier]({ ...block, appData })
+        this.handler.app &&
+          this.handler.app[block.identifier] &&
+          this.handler.app[block.identifier]({ ...block, appData })
       }
 
-      const blockSize = st.readByte() // Always 11
-      const identifier = st.read(8)
-      const authCode = st.read(3)
+      const blockSize = this.st.readByte() // Always 11
+      const identifier = this.st.read(8)
+      const authCode = this.st.read(3)
       const appBlock: AppExtBlock = { ...block, identifier, authCode }
       switch (appBlock.identifier) {
         case 'NETSCAPE':
@@ -141,12 +154,12 @@ export const parseGIF = (st: Stream, handler: Hander) => {
     }
 
     const parseUnknownExt = (block: ExtBlock) => {
-      const data = readSubBlocks()
+      const data = this.readSubBlocks()
       const unknownExtBlock = { ...block, data }
-      handler.unknown && handler.unknown(unknownExtBlock)
+      this.handler.unknown && this.handler.unknown(unknownExtBlock)
     }
 
-    const label = st.readByte()
+    const label = this.st.readByte()
     const extBlock: ExtBlock = {
       ...block,
       label,
@@ -176,7 +189,7 @@ export const parseGIF = (st: Stream, handler: Hander) => {
     }
   }
 
-  const parseImg = (block: Block) => {
+  parseImg = (block: Block) => {
     const deinterlace = (pixels: number[], width: number) => {
       // Of course this defeats the purpose of interlacing. And it's *probably*
       // the least efficient way it's ever been implemented. But nevertheless...
@@ -202,23 +215,23 @@ export const parseGIF = (st: Stream, handler: Hander) => {
       return newPixels
     }
 
-    const leftPos = st.readUnsigned()
-    const topPos = st.readUnsigned()
-    const width = st.readUnsigned()
-    const height = st.readUnsigned()
+    const leftPos = this.st.readUnsigned()
+    const topPos = this.st.readUnsigned()
+    const width = this.st.readUnsigned()
+    const height = this.st.readUnsigned()
 
-    const bits = byteToBitArr(st.readByte())
+    const bits = byteToBitArr(this.st.readByte())
     const lctFlag = bits.shift()
     const interlaced = bits.shift()
     const sorted = bits.shift()
     const reserved = bits.splice(0, 2)
     const lctSize = bitsToNum(bits.splice(0, 3))
 
-    const lct = lctFlag ? parseCT(1 << (lctSize + 1)) : undefined
+    const lct = lctFlag ? this.parseCT(1 << (lctSize + 1)) : undefined
 
-    const lzwMinCodeSize = st.readByte()
+    const lzwMinCodeSize = this.st.readByte()
 
-    const lzwData = readSubBlocks()
+    const lzwData = this.readSubBlocks()
 
     let pixels: number[] = lzwDecode(lzwMinCodeSize, lzwData)
     // Move
@@ -241,11 +254,11 @@ export const parseGIF = (st: Stream, handler: Hander) => {
       lzwMinCodeSize,
       pixels
     }
-    handler.img && handler.img(img)
+    this.handler.img && this.handler.img(img)
   }
 
-  const parseBlock = () => {
-    const sentinel = st.readByte()
+  parseBlock = () => {
+    const sentinel = this.st.readByte()
     const block: Block = {
       sentinel,
       type: ''
@@ -256,27 +269,25 @@ export const parseGIF = (st: Stream, handler: Hander) => {
     ) {
       case '!':
         block.type = 'ext'
-        parseExt(block)
+        this.parseExt(block)
         break
       case ',':
         block.type = 'img'
-        parseImg(block)
+        this.parseImg(block)
         break
       case ';':
         block.type = 'eof'
-        handler.eof && handler.eof(block)
+        this.handler.eof && this.handler.eof(block)
         break
       default:
         throw new Error('Unknown block: 0x' + block.sentinel.toString(16)) // TODO: Pad this with a 0.
     }
 
-    if (block.type !== 'eof') setTimeout(parseBlock, 0)
+    if (block.type !== 'eof') setTimeout(this.parseBlock, 0)
   }
 
-  const parse = () => {
-    parseHeader()
-    setTimeout(parseBlock, 0)
+  parse = () => {
+    this.parseHeader()
+    setTimeout(this.parseBlock, 0)
   }
-
-  parse()
 }

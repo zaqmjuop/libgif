@@ -1,6 +1,6 @@
 import mitt from 'mitt'
 import { Loader } from './loader'
-import { parseGIF } from './parseGIF'
+import { GifParser } from './parseGIF'
 import { Player } from './player'
 import { Stream } from './stream'
 import {
@@ -291,7 +291,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   // callbacks are involved.
   const doParse = () => {
     try {
-      parseGIF(stream, HANDER)
+      new GifParser(stream, HANDER)
     } catch (err) {
       viewer.doLoadError('parse')
     }
