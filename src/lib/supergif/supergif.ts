@@ -41,7 +41,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   let hdr: Header
 
   let transparency: number | null = null
-  let delay: null | number = null
   let disposalRestoreFromIdx: number | null = null
   let lastDisposalMethod: number | null = null
   let lastImg: (Rect & Partial<ImgBlock>) | null = null
@@ -112,9 +111,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get gif() {
       return gif
     },
-    get delay() {
-      return delay
-    },
     get lastDisposalMethod() {
       return lastDisposalMethod
     },
@@ -147,10 +143,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     overrideLoopMode: options.loop_mode !== false,
     loopDelay: options.loop_delay || 0,
-    auto_play,
-    get delay() {
-      return delay
-    }
+    auto_play
   })
   player.on('putFrame', viewer.onPutFrame)
   player.on('init', viewer.resize)
@@ -161,7 +154,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   let disposalMethod: null | number = null
   const clear = () => {
     transparency = null
-    delay = null
+    viewer.delay = null
     lastDisposalMethod = disposalMethod
     disposalMethod = null
     viewer.frame = null
@@ -189,7 +182,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       viewer.pushFrame()
       clear()
       transparency = gce.transparencyGiven ? gce.transparencyIndex : null
-      delay = gce.delayTime
+      viewer.delay = gce.delayTime
       disposalMethod = gce.disposalMethod
       // We don't have much to do with the rest of GCE.
     }),

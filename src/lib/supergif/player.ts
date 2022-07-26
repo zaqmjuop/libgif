@@ -6,11 +6,10 @@ interface PlayerQuote {
   frames: Frame[]
   loopDelay: number
   auto_play: boolean | undefined
-  delay: null | number
 }
 
 export class Player extends Emitter<['complete', 'putFrame', 'init']> {
-  i = -1
+  private i = -1
   iterationCount = 0
   forward = true
   playing = true
@@ -30,12 +29,6 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     return (
       (this.i + delta + this.quote.frames.length) % this.quote.frames.length
     )
-  }
-
-  stepFrame(amount: number) {
-    // XXX: Name is confusing.
-    this.i = this.i + amount
-    this.putFrame()
   }
 
   step() {
@@ -58,8 +51,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
       if (!stepping) return
 
       this.stepFrame(1)
-      let delay = this.quote.frames[this.i].delay * 10
-      if (!delay) delay = 100 // FIXME: Should this even default at all? What should it be?
+      let delay = this.quote.frames[this.i].delay * 10 || 16.67
 
       const nextFrameNo = this.getNextFrameNo()
       if (nextFrameNo === 0) {
@@ -73,17 +65,16 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     return !stepping && setTimeout(doStep, 0)
   }
 
+  stepFrame(amount: number) {
+    // XXX: Name is confusing.
+    this.i = this.i + amount
+    this.putFrame()
+  }
+
   putFrame() {
-    this.i = parseInt(`${this.i}`, 10)
-
-    if (this.i > this.quote.frames.length - 1) {
+    if (this.i < 0 || this.i > this.quote.frames.length - 1) {
       this.i = 0
     }
-
-    if (this.i < 0) {
-      this.i = 0
-    }
-
     this.emit('putFrame', this.i)
   }
 
