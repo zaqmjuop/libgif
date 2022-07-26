@@ -25,7 +25,7 @@ const EMITS = [
   'unknown'
 ] as const
 export class GifParser extends Emitter<typeof EMITS> {
-  st: Stream | null = null
+  private st: Stream | null = null
 
   public get loading() {
     return !!this.st
