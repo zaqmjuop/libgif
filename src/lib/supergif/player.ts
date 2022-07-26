@@ -2,9 +2,8 @@ import { Frame } from './type'
 import { Emitter } from './Emitter'
 
 interface PlayerQuote {
-  frames: Frame[]
-  gif: HTMLImageElement
   overrideLoopMode: boolean
+  frames: Frame[]
   loopDelay: number
   auto_play: boolean | undefined
   delay: null | number
@@ -43,7 +42,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     let stepping = false
 
     const completeLoop = () => {
-      this.emit('complete', this.quote.gif)
+      this.emit('complete')
       this.iterationCount++
 
       if (this.quote.overrideLoopMode || this.iterationCount < 0) {

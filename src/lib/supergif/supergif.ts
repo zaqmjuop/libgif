@@ -145,9 +145,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get frames() {
       return viewer.frames
     },
-    get gif() {
-      return gif
-    },
     overrideLoopMode: options.loop_mode !== false,
     loopDelay: options.loop_delay || 0,
     auto_play,
@@ -157,7 +154,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   })
   player.on('putFrame', viewer.onPutFrame)
   player.on('init', viewer.resize)
-  player.on('complete', () => emitter.emit('complete'))
+  player.on('complete', () => emitter.emit('complete', gif))
   // player
   // loader
 
