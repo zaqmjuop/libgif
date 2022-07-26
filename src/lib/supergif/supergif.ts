@@ -292,15 +292,14 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   loader.on('loadstart', () => {})
   // XXX: There's probably a better way to handle catching exceptions when
   // callbacks are involved.
-  const onDownload = (data: string | Uint8Array) => {
+  loader.on('load', (data: string | Uint8Array) => {
     stream = new Stream(data)
     try {
       gifParser.parse(stream)
     } catch (err) {
       viewer.doLoadError('parse')
     }
-  }
-  loader.on('load', onDownload)
+  })
   loader.on('progress', (e: ProgressEvent<EventTarget>) => {
     e.lengthComputable && viewer.doShowProgress(e.loaded, e.total, true)
   })
