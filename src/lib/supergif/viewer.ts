@@ -16,7 +16,6 @@ interface ViewerQuote {
   hdr: Header
   gif: HTMLImageElement
   delay: null | number
-  frameOffsets: Offset[]
   lastDisposalMethod: number | null
   disposalRestoreFromIdx: number | null
   transparency: number | null
@@ -42,6 +41,7 @@ export class Viewer {
   frame: CanvasRenderingContext2D | null = null
   opacity = 255
   frames: Frame[] = []
+  private frameOffsets: Offset[] = []
   constructor(quote: ViewerQuote) {
     this.quote = quote
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
@@ -148,7 +148,7 @@ export class Viewer {
       ),
       delay: this.quote.delay || -1
     })
-    this.quote.frameOffsets.push({ x: 0, y: 0 })
+    this.frameOffsets.push({ x: 0, y: 0 })
   }
   restorePrevious(idx: number) {
     this.frame?.putImageData(this.frames[idx].data, 0, 0)
@@ -247,22 +247,23 @@ export class Viewer {
     this.quote.lastImg = img
   }
   setFrameOffset(frame: number, offset: Offset) {
-    if (!this.quote.frameOffsets[frame]) {
-      this.quote.frameOffsets[frame] = offset
+    if (!this.frameOffsets[frame]) {
+      this.frameOffsets[frame] = offset
       return
     }
     if (typeof offset.x !== 'undefined') {
-      this.quote.frameOffsets[frame].x = offset.x
+      this.frameOffsets[frame].x = offset.x
     }
     if (typeof offset.y !== 'undefined') {
-      this.quote.frameOffsets[frame].y = offset.y
+      this.frameOffsets[frame].y = offset.y
     }
   }
-  onPutFrame = (e: { data: ImageData; offset: Offset }) => {
+  onPutFrame = (flag: number) => {
     if (this.tmpCanvas) {
-      this.tmpCanvas
-        .getContext('2d')
-        ?.putImageData(e.data, e.offset.x, e.offset.y)
+      const offset = this.frameOffsets[flag]
+      const data = this.frames[flag].data
+
+      this.tmpCanvas.getContext('2d')?.putImageData(data, offset.x, offset.y)
     }
     this.ctx.globalCompositeOperation = 'copy'
     this.ctx.drawImage(this.tmpCanvas, 0, 0)

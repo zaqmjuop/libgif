@@ -1,4 +1,4 @@
-import { Frame, Header, ImgBlock, Offset } from './type'
+import { Frame } from './type'
 import { Emitter } from './Emitter'
 
 interface PlayerQuote {
@@ -7,7 +7,6 @@ interface PlayerQuote {
   overrideLoopMode: boolean
   loopDelay: number
   auto_play: boolean | undefined
-  frameOffsets: Offset[]
   delay: null | number
 }
 
@@ -86,8 +85,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
       this.i = 0
     }
 
-    const offset = this.quote.frameOffsets[this.i]
-    this.emit('putFrame', { data: this.quote.frames[this.i].data, offset })
+    this.emit('putFrame', this.i)
   }
 
   play() {

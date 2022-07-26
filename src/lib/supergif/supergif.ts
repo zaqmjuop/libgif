@@ -46,7 +46,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   let lastDisposalMethod: number | null = null
   let lastImg: (Rect & Partial<ImgBlock>) | null = null
 
-  let frameOffsets: Offset[] = [] // elements have .x and .y properties
   let loadError = ''
 
   const gif = options.gif
@@ -113,9 +112,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get gif() {
       return gif
     },
-    get frameOffsets() {
-      return frameOffsets
-    },
     get delay() {
       return delay
     },
@@ -155,9 +151,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     overrideLoopMode: options.loop_mode !== false,
     loopDelay: options.loop_delay || 0,
     auto_play,
-    get frameOffsets() {
-      return frameOffsets
-    },
     get delay() {
       return delay
     }
