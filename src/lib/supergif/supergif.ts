@@ -170,12 +170,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     }
   })
   player.on('putFrame', viewer.onPutFrame)
-  player.on('init', () => {
-    if (!(options.c_w && options.c_h)) {
-      const zoom = get_canvas_scale()
-      viewer.ctx.scale(zoom, zoom)
-    }
-  })
+  player.on('init', viewer.resize)
   player.on('complete', () => emitter.emit('complete'))
   // player
   // loader

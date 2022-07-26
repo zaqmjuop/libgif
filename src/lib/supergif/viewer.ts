@@ -1,7 +1,7 @@
 import { Frame, Hander, Header, ImgBlock, Offset, Rect } from './type'
 
 interface ViewerQuote {
-  get_canvas_scale: () => any
+  get_canvas_scale: () => number
   showProgressBar: boolean
   progressBarHeight: number
   progressBarBackgroundColor: string
@@ -266,5 +266,11 @@ export class Viewer {
     }
     this.ctx.globalCompositeOperation = 'copy'
     this.ctx.drawImage(this.tmpCanvas, 0, 0)
+  }
+  resize = () => {
+    if (!(this.quote.c_w && this.quote.c_h)) {
+      const zoom = this.quote.get_canvas_scale()
+      this.ctx.scale(zoom, zoom)
+    }
   }
 }
