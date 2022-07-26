@@ -284,10 +284,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   }
 
   const loader = new Loader({
-    load_setup,
-    get gif() {
-      return gif
-    }
+    load_setup
   })
   loader.on('loadstart', () => {})
   // XXX: There's probably a better way to handle catching exceptions when
@@ -305,6 +302,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   })
   loader.on('error', (message: string) => viewer.doLoadError(message))
   // loader
+  const getSrc = () => gif.getAttribute('rel:animated_src') || gif.src
 
   return {
     player,
@@ -323,7 +321,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get_loading: () => loading,
     get_auto_play: () => options,
     load_url: loader.load_url.bind(loader),
-    load: loader.load.bind(loader),
+    load: (callback?: (gif: HTMLImageElement) => void) => {
+      loader.load_url(getSrc(), callback)
+    },
     load_raw: loader.load_raw.bind(loader),
     set_frame_offset: viewer.setFrameOffset.bind(viewer),
     frames

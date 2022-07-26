@@ -4,7 +4,6 @@ interface LoaderQuote {
   load_setup: (
     callback?: ((gif: HTMLImageElement) => void) | undefined
   ) => boolean
-  gif: HTMLImageElement
 }
 const EMITS = ['loadstart', 'load', 'progress', 'error'] as const
 
@@ -61,12 +60,6 @@ export class Loader extends Emitter<typeof EMITS> {
       this.emit('error', 'xhr')
     }
     h.send()
-  }
-  load(callback?: (gif: HTMLImageElement) => void) {
-    this.load_url(
-      this.quote.gif.getAttribute('rel:animated_src') || this.quote.gif.src,
-      callback
-    )
   }
   load_raw = (data: string | Uint8Array, callback) => {
     if (!this.quote.load_setup(callback)) return
