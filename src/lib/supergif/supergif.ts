@@ -149,7 +149,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const canvas = viewer.canvas
   const ctx = viewer.ctx
 
-  const tmpCanvas = viewer.tmpCanvas
   viewer.init()
   // canvas
 
@@ -176,9 +175,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get frameOffsets() {
       return frameOffsets
     },
-    get tmpCanvas() {
-      return tmpCanvas
-    },
     get ctx() {
       return ctx
     },
@@ -186,6 +182,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       return delay
     }
   })
+  player.on('putFrame', viewer.onPutFrame)
   options.on_end && player.on('complete', options.on_end)
   // player
   // loader

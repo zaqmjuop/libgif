@@ -11,12 +11,11 @@ interface PlayerQuote {
   c_h: number
   get_canvas_scale: () => any
   frameOffsets: Offset[]
-  tmpCanvas: HTMLCanvasElement
   ctx: CanvasRenderingContext2D
   delay: null | number
 }
 
-export class Player extends Emitter<['complete']> {
+export class Player extends Emitter<['complete', 'putFrame']> {
   i = -1
   iterationCount = 0
   forward = true
@@ -93,13 +92,7 @@ export class Player extends Emitter<['complete']> {
     }
 
     const offset = this.quote.frameOffsets[this.i]
-    if (this.quote.tmpCanvas) {
-      this.quote.tmpCanvas
-        .getContext('2d')
-        ?.putImageData(this.frames[this.i].data, offset.x, offset.y)
-    }
-    this.quote.ctx.globalCompositeOperation = 'copy'
-    this.quote.ctx.drawImage(this.quote.tmpCanvas, 0, 0)
+    this.emit('putFrame', { data: this.frames[this.i].data, offset })
   }
 
   play() {

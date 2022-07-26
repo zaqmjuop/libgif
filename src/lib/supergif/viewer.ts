@@ -258,4 +258,13 @@ export class Viewer {
       this.quote.frameOffsets[frame].y = offset.y
     }
   }
+  onPutFrame = (e: { data: ImageData; offset: Offset }) => {
+    if (this.tmpCanvas) {
+      this.tmpCanvas
+        .getContext('2d')
+        ?.putImageData(e.data, e.offset.x, e.offset.y)
+    }
+    this.ctx.globalCompositeOperation = 'copy'
+    this.ctx.drawImage(this.tmpCanvas, 0, 0)
+  }
 }
