@@ -43,7 +43,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   let transparency: number | null = null
   let disposalRestoreFromIdx: number | null = null
   let lastDisposalMethod: number | null = null
-  let lastImg: (Rect & Partial<ImgBlock>) | null = null
 
   let loadError = ''
 
@@ -126,13 +125,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get transparency() {
       return transparency
     },
-    auto_play,
-    get lastImg() {
-      return lastImg
-    },
-    set lastImg(val: (Rect & Partial<ImgBlock>) | null) {
-      lastImg = val
-    }
+    auto_play
   })
   const canvas = viewer.canvas
 
@@ -141,12 +134,19 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
   // player
   const player = new Player({
-    get frames() {
-      return viewer.frames
-    },
     overrideLoopMode: options.loop_mode !== false,
     loopDelay: options.loop_delay || 0,
-    auto_play
+    auto_play,
+    get lastDisposalMethod() {
+      return lastDisposalMethod
+    },
+    get disposalRestoreFromIdx() {
+      return disposalRestoreFromIdx
+    },
+    set disposalRestoreFromIdx(val) {
+      disposalRestoreFromIdx = val
+    },
+    viewer
   })
   player.on('putFrame', viewer.onPutFrame)
   player.on('init', viewer.resize)
@@ -182,7 +182,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       viewer.setSizes(hdr.width, hdr.height)
     }),
     gce: withProgress((gce) => {
-      viewer.pushFrame()
+      player.pushFrame()
       clear()
       transparency = gce.transparencyGiven ? gce.transparencyIndex : null
       player.delay = gce.delayTime
@@ -192,10 +192,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     com: withProgress(() => {}),
     // I guess that's all for now.
     app: withProgress(() => {}),
-    img: withProgress(viewer.doImg.bind(viewer), true),
+    img: withProgress(player.doImg, true),
     eof: (block) => {
       //toolbar.style.display = '';
-      withProgress(() => viewer.pushFrame())(block)
+      withProgress(() => player.pushFrame())(block)
       if (!(options.c_w && options.c_h)) {
         canvas.width = hdr.width * get_canvas_scale()
         canvas.height = hdr.height * get_canvas_scale()
@@ -226,6 +226,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     try {
       gifParser.parse(stream)
     } catch (err) {
+      player.frames = []
       viewer.doLoadError('parse')
     }
   })
@@ -234,6 +235,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   })
   loader.on('error', (message: string) => {
     loadError = message
+    player.frames = []
     viewer.doLoadError(message)
   })
   // loader
@@ -244,12 +246,12 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   }
 
   const load_setup = () => {
-    viewer.frames = []
+    player.frames = []
     clear()
     disposalRestoreFromIdx = null
     lastDisposalMethod = null
     viewer.frame = null
-    lastImg = null
+    player.lastImg = void 0
   }
 
   const load_url = (url: string) => {
@@ -290,9 +292,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     load_raw,
     set_frame_offset: viewer.setFrameOffset.bind(viewer),
     get frames() {
-      return viewer.frames
+      return player.frames
     },
-    get_length: () => viewer.frames.length,
+    get_length: () => player.frames.length,
     on: emitter.on,
     off: emitter.off
   }
