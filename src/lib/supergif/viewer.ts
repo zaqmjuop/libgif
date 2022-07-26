@@ -15,7 +15,6 @@ interface ViewerQuote {
   c_h: number
   hdr: Header
   gif: HTMLImageElement
-  frames: Frame[]
   delay: null | number
   frameOffsets: Offset[]
   lastDisposalMethod: number | null
@@ -42,6 +41,7 @@ export class Viewer {
   drawWhileLoading: boolean
   frame: CanvasRenderingContext2D | null = null
   opacity = 255
+  frames: Frame[] = []
   constructor(quote: ViewerQuote) {
     this.quote = quote
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
@@ -131,7 +131,7 @@ export class Viewer {
       width: this.quote.gif.width,
       height: this.quote.gif.height
     } as Header // Fake header.
-    this.quote.frames = []
+    this.frames = []
     drawError()
   }
   doDecodeProgress(pos: number, length: number, draw: boolean) {
@@ -139,7 +139,7 @@ export class Viewer {
   }
   pushFrame() {
     if (!this.frame) return
-    this.quote.frames.push({
+    this.frames.push({
       data: this.frame.getImageData(
         0,
         0,
@@ -151,7 +151,7 @@ export class Viewer {
     this.quote.frameOffsets.push({ x: 0, y: 0 })
   }
   restorePrevious(idx: number) {
-    this.frame?.putImageData(this.quote.frames[idx].data, 0, 0)
+    this.frame?.putImageData(this.frames[idx].data, 0, 0)
   }
   restoreBackgroundColor() {
     this.quote.lastImg &&
@@ -183,7 +183,7 @@ export class Viewer {
                               Importantly, "previous" means the frame state
                               after the last disposal of method 0, 1, or 2.
               */
-    if (this.quote.frames.length > 0) {
+    if (this.frames.length > 0) {
       if (this.quote.lastDisposalMethod === DisposalMethod.previous) {
         // Restore to previous
         // If we disposed every frame including first frame up to this point, then we have
@@ -194,7 +194,7 @@ export class Viewer {
           this.restoreBackgroundColor()
         }
       } else {
-        this.quote.disposalRestoreFromIdx = this.quote.frames.length - 1
+        this.quote.disposalRestoreFromIdx = this.frames.length - 1
       }
 
       if (this.quote.lastDisposalMethod === 2) {

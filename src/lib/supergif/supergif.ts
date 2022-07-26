@@ -46,7 +46,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   let lastDisposalMethod: number | null = null
   let lastImg: (Rect & Partial<ImgBlock>) | null = null
 
-  let frames: Frame[] = []
   let frameOffsets: Offset[] = [] // elements have .x and .y properties
   let loadError = ''
 
@@ -114,12 +113,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get gif() {
       return gif
     },
-    get frames() {
-      return frames
-    },
-    set frames(val: Frame[]) {
-      frames = val
-    },
     get frameOffsets() {
       return frameOffsets
     },
@@ -154,7 +147,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   // player
   const player = new Player({
     get frames() {
-      return frames
+      return viewer.frames
     },
     get gif() {
       return gif
@@ -265,7 +258,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   }
 
   const load_setup = () => {
-    frames = []
+    viewer.frames = []
     clear()
     disposalRestoreFromIdx = null
     lastDisposalMethod = null
@@ -300,7 +293,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     move_to: player.move_to.bind(player),
     // getters for instance vars
     get_playing: () => player.playing,
-    get_length: () => player.length(),
     get_current_frame: () => player.current_frame(),
 
     get_canvas: () => canvas,
@@ -311,7 +303,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     load,
     load_raw,
     set_frame_offset: viewer.setFrameOffset.bind(viewer),
-    frames,
+    get frames() {
+      return viewer.frames
+    },
+    get_length: () => viewer.frames.length,
     on: emitter.on,
     off: emitter.off
   }
