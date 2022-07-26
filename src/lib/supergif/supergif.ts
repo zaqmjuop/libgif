@@ -108,6 +108,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     set hdr(val: Header) {
       hdr = val
     },
+    get delay() {
+      return player.delay
+    },
     get gif() {
       return gif
     },
@@ -154,7 +157,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   let disposalMethod: null | number = null
   const clear = () => {
     transparency = null
-    viewer.delay = null
+    player.delay = null
     lastDisposalMethod = disposalMethod
     disposalMethod = null
     viewer.frame = null
@@ -182,7 +185,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       viewer.pushFrame()
       clear()
       transparency = gce.transparencyGiven ? gce.transparencyIndex : null
-      viewer.delay = gce.delayTime
+      player.delay = gce.delayTime
       disposalMethod = gce.disposalMethod
       // We don't have much to do with the rest of GCE.
     }),

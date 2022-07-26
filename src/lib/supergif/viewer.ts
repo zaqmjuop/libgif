@@ -13,6 +13,7 @@ interface ViewerQuote {
   vp_w: number
   c_w: number
   c_h: number
+  delay: number
   hdr: Header
   gif: HTMLImageElement
   lastDisposalMethod: number | null
@@ -41,7 +42,6 @@ export class Viewer {
   opacity = 255
   frames: Frame[] = []
   private frameOffsets: Offset[] = []
-  delay: null | number = null
   constructor(quote: ViewerQuote) {
     this.quote = quote
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
@@ -146,7 +146,7 @@ export class Viewer {
         this.quote.hdr.width,
         this.quote.hdr.height
       ),
-      delay: this.delay || -1
+      delay: this.quote.delay || -1
     })
     this.frameOffsets.push({ x: 0, y: 0 })
   }

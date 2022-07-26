@@ -13,6 +13,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
   iterationCount = 0
   forward = true
   playing = true
+  delay: null | number = null
   readonly quote: PlayerQuote
 
   constructor(quote: PlayerQuote) {
@@ -51,7 +52,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
       if (!stepping) return
 
       this.stepFrame(1)
-      let delay = this.quote.frames[this.i].delay * 10 || 16.67
+      let delay = (this.delay || 1.666) * 10
 
       const nextFrameNo = this.getNextFrameNo()
       if (nextFrameNo === 0) {
