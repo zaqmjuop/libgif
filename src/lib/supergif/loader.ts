@@ -4,9 +4,6 @@ const EMITS = ['loadstart', 'load', 'progress', 'error'] as const
 
 export class Loader extends Emitter<typeof EMITS> {
   private _loading = false
-  constructor() {
-    super()
-  }
 
   get loading() {
     return this._loading
