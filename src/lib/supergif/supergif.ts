@@ -276,22 +276,11 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
     return true
   }
-  // XXX: There's probably a better way to handle catching exceptions when
-  // callbacks are involved.
-  const doParse = () => {
-    try {
-      new GifParser(stream, HANDER)
-    } catch (err) {
-      viewer.doLoadError('parse')
-    }
-  }
+
   const loader = new Loader({
     get viewer() {
       return viewer
     },
-    // XXX: There's probably a better way to handle catching exceptions when
-    // callbacks are involved.
-    doParse,
     load_setup,
     get gif() {
       return gif
@@ -301,10 +290,17 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     // Wait until connection is opened to replace the gif element with a canvas to avoid a blank img
     !viewer.initialized && viewer.init()
   })
-  loader.on('load', (data: string | Uint8Array) => {
+  // XXX: There's probably a better way to handle catching exceptions when
+  // callbacks are involved.
+  const onDownload = (data: string | Uint8Array) => {
     stream = new Stream(data)
-    setTimeout(doParse, 0)
-  })
+    try {
+      new GifParser(stream, HANDER)
+    } catch (err) {
+      viewer.doLoadError('parse')
+    }
+  }
+  loader.on('load', onDownload)
   loader.on('progress', (e: ProgressEvent<EventTarget>) => {
     e.lengthComputable && viewer.doShowProgress(e.loaded, e.total, true)
   })
@@ -331,8 +327,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     load_raw: (arr: string | Uint8Array, callback) => {
       if (!load_setup(callback)) return
       if (!viewer.initialized) viewer.init()
-      stream = new Stream(arr)
-      setTimeout(doParse, 0)
+      onDownload(arr)
     },
     set_frame_offset: viewer.setFrameOffset.bind(viewer),
     frames

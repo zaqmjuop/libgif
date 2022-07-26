@@ -3,7 +3,6 @@ import { Emitter } from './Emitter'
 
 interface LoaderQuote {
   viewer: Viewer
-  doParse: () => void
   load_setup: (
     callback?: ((gif: HTMLImageElement) => void) | undefined
   ) => boolean
