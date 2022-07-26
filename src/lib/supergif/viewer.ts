@@ -14,7 +14,6 @@ interface ViewerQuote {
   c_w: number
   c_h: number
   hdr: Header
-  loadError: string
   gif: HTMLImageElement
   frames: Frame[]
   delay: null | number
@@ -128,7 +127,6 @@ export class Viewer {
       this.ctx.stroke()
     }
 
-    this.quote.loadError = originOfError
     this.quote.hdr = {
       width: this.quote.gif.width,
       height: this.quote.gif.height

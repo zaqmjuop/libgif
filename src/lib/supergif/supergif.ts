@@ -111,12 +111,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     set hdr(val: Header) {
       hdr = val
     },
-    get loadError() {
-      return loadError
-    },
-    set loadError(val: string) {
-      loadError = val
-    },
     get gif() {
       return gif
     },
@@ -170,9 +164,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     overrideLoopMode: options.loop_mode !== false,
     loopDelay: options.loop_delay || 0,
     auto_play,
-    get loadError() {
-      return loadError
-    },
     get c_w() {
       return options.c_w
     },
@@ -245,7 +236,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
         canvas.width = hdr.width * get_canvas_scale()
         canvas.height = hdr.height * get_canvas_scale()
       }
-      player.init()
+      if (!loadError) {
+        player.init()
+      }
       emitter.emit('load', gif)
     },
     pte: (block) => console.log('pte', block),
@@ -275,7 +268,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   loader.on('progress', (e: ProgressEvent<EventTarget>) => {
     e.lengthComputable && viewer.doShowProgress(e.loaded, e.total, true)
   })
-  loader.on('error', (message: string) => viewer.doLoadError(message))
+  loader.on('error', (message: string) => {
+    loadError = message
+    viewer.doLoadError(message)
+  })
   // loader
   const getSrc = () => gif.getAttribute('rel:animated_src') || gif.src
 
@@ -306,7 +302,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
   const load = () => {
     if (getLoading()) return
-    load_setup() 
+    load_setup()
     load_url(getSrc())
   }
 

@@ -7,7 +7,6 @@ interface PlayerQuote {
   overrideLoopMode: boolean
   loopDelay: number
   auto_play: boolean | undefined
-  loadError: string
   c_w: number
   c_h: number
   get_canvas_scale: () => any
@@ -116,8 +115,6 @@ export class Player extends Emitter<['complete']> {
     return this.frames
   }
   init() {
-    if (this.quote.loadError) return
-
     if (!(this.quote.c_w && this.quote.c_h)) {
       this.quote.ctx.scale(
         this.quote.get_canvas_scale(),
