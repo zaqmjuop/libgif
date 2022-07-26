@@ -241,8 +241,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     img: withProgress(viewer.doImg.bind(viewer), true),
     eof: (block) => {
       //toolbar.style.display = '';
-      viewer.pushFrame()
-      viewer.doDecodeProgress(stream.pos, stream.data.length, false)
+      withProgress(() => viewer.pushFrame())(block)
       if (!(options.c_w && options.c_h)) {
         canvas.width = hdr.width * get_canvas_scale()
         canvas.height = hdr.height * get_canvas_scale()
