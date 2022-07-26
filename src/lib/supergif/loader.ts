@@ -1,8 +1,6 @@
-import { Viewer } from './viewer'
 import { Emitter } from './Emitter'
 
 interface LoaderQuote {
-  viewer: Viewer
   load_setup: (
     callback?: ((gif: HTMLImageElement) => void) | undefined
   ) => boolean
@@ -39,7 +37,7 @@ export class Loader extends Emitter<typeof EMITS> {
     }
     h.onload = (e) => {
       if (h.status != 200) {
-        this.quote.viewer.doLoadError('xhr - response')
+        this.emit('error', 'xhr - response')
       }
       // emulating response field for IE9
       if (!('response' in h)) {
@@ -69,5 +67,9 @@ export class Loader extends Emitter<typeof EMITS> {
       this.quote.gif.getAttribute('rel:animated_src') || this.quote.gif.src,
       callback
     )
+  }
+  load_raw = (data: string | Uint8Array, callback) => {
+    if (!this.quote.load_setup(callback)) return
+    this.emit('load', data)
   }
 }

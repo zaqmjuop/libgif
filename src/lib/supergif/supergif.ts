@@ -155,7 +155,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const ctx = viewer.ctx
 
   const tmpCanvas = viewer.tmpCanvas
-
+  viewer.init()
   // canvas
 
   // player
@@ -284,18 +284,12 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   }
 
   const loader = new Loader({
-    get viewer() {
-      return viewer
-    },
     load_setup,
     get gif() {
       return gif
     }
   })
-  loader.on('loadstart', () => {
-    // Wait until connection is opened to replace the gif element with a canvas to avoid a blank img
-    !viewer.initialized && viewer.init()
-  })
+  loader.on('loadstart', () => {})
   // XXX: There's probably a better way to handle catching exceptions when
   // callbacks are involved.
   const onDownload = (data: string | Uint8Array) => {
@@ -310,8 +304,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   loader.on('progress', (e: ProgressEvent<EventTarget>) => {
     e.lengthComputable && viewer.doShowProgress(e.loaded, e.total, true)
   })
-  loader.on('error', () => viewer.doLoadError('xhr'))
+  loader.on('error', (message: string) => viewer.doLoadError(message))
   // loader
+
   return {
     player,
     // play controls
@@ -330,11 +325,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get_auto_play: () => options,
     load_url: loader.load_url.bind(loader),
     load: loader.load.bind(loader),
-    load_raw: (arr: string | Uint8Array, callback) => {
-      if (!load_setup(callback)) return
-      if (!viewer.initialized) viewer.init()
-      onDownload(arr)
-    },
+    load_raw: loader.load_raw.bind(loader),
     set_frame_offset: viewer.setFrameOffset.bind(viewer),
     frames
   }
