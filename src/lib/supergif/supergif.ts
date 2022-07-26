@@ -1,4 +1,4 @@
-import mitt from 'mitt'
+import { Emitter } from './Emitter'
 import { Loader } from './loader'
 import { GifParser } from './parseGIF'
 import { Player } from './player'
@@ -12,16 +12,13 @@ import {
   Offset,
   Options,
   Rect,
-  valuesType,
-  func,
   VP
 } from './type'
 import { Viewer } from './viewer'
 
 const SuperGif = (opts: Options & Partial<VP>) => {
   const EMITS = ['loadstart', 'load', 'progress', 'error'] as const
-  type emitTypes = valuesType<typeof EMITS>
-  const emitter = mitt<Record<emitTypes, unknown>>()
+  const emitter = new Emitter<typeof EMITS>()
   const options: Options & VP = Object.assign(
     {
       //viewport position
@@ -324,8 +321,8 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     load_raw: loader.load_raw.bind(loader),
     set_frame_offset: viewer.setFrameOffset.bind(viewer),
     frames,
-    on: (type: emitTypes, func: func) => emitter.on(type, func),
-    off: (type: emitTypes, func?: func) => emitter.off(type, func)
+    on: emitter.on,
+    off: emitter.off
   }
 }
 

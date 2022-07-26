@@ -12,12 +12,12 @@ export class Loader extends Emitter<typeof EMITS> {
     this.quote = quote
   }
 
-  load_url(src: string) {
+  load_url(url: string) {
     if (!this.quote.load_setup()) return
 
     const h = new XMLHttpRequest()
     // new browsers (XMLHttpRequest2-compliant)
-    h.open('GET', src, true)
+    h.open('GET', url, true)
 
     if ('overrideMimeType' in h) {
       h.overrideMimeType('text/plain; charset=x-user-defined')
