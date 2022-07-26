@@ -50,10 +50,8 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   let loadError = ''
 
   const gif = options.gif
-  if (typeof options.auto_play == 'undefined')
-    options.auto_play =
-      !gif.getAttribute('rel:auto_play') ||
-      gif.getAttribute('rel:auto_play') == '1'
+  const auto_play =
+    options.auto_play || gif.getAttribute('rel:auto_play') !== '0'
 
   // global func
 
@@ -150,9 +148,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get transparency() {
       return transparency
     },
-    get auto_play() {
-      return !!options.auto_play
-    },
+    auto_play,
     get lastImg() {
       return lastImg
     },
@@ -177,9 +173,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     overrideLoopMode: options.loop_mode !== false,
     loopDelay: options.loop_delay || 0,
-    get auto_play() {
-      return options.auto_play
-    },
+    auto_play,
     get loadError() {
       return loadError
     },
