@@ -125,9 +125,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     set frames(val: Frame[]) {
       frames = val
     },
-    get stream() {
-      return stream
-    },
     get frameOffsets() {
       return frameOffsets
     },
@@ -220,7 +217,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const withProgress = (fn: Function, draw = false) => {
     return (block) => {
       fn(block)
-      viewer.doDecodeProgress(draw)
+      viewer.doDecodeProgress(stream.pos, stream.data.length, draw)
     }
   }
 
@@ -247,7 +244,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     eof: (block) => {
       //toolbar.style.display = '';
       viewer.pushFrame()
-      viewer.doDecodeProgress(false)
+      viewer.doDecodeProgress(stream.pos, stream.data.length, false)
       if (!(options.c_w && options.c_h)) {
         canvas.width = hdr.width * get_canvas_scale()
         canvas.height = hdr.height * get_canvas_scale()
@@ -291,12 +288,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const loader = new Loader({
     get viewer() {
       return viewer
-    },
-    get stream() {
-      return stream
-    },
-    set stream(val: Stream) {
-      stream = val
     },
     // XXX: There's probably a better way to handle catching exceptions when
     // callbacks are involved.

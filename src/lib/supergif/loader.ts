@@ -1,9 +1,7 @@
-import { Stream } from './stream'
 import { Viewer } from './viewer'
 import { Emitter } from './Emitter'
 
 interface LoaderQuote {
-  stream: Stream
   viewer: Viewer
   doParse: () => void
   load_setup: (

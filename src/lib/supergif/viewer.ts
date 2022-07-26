@@ -1,4 +1,3 @@
-import { Stream } from './stream'
 import { Frame, Hander, Header, ImgBlock, Offset, Rect } from './type'
 
 interface ViewerQuote {
@@ -18,7 +17,6 @@ interface ViewerQuote {
   loadError: string
   gif: HTMLImageElement
   frames: Frame[]
-  stream: Stream
   delay: null | number
   frameOffsets: Offset[]
   lastDisposalMethod: number | null
@@ -138,12 +136,8 @@ export class Viewer {
     this.quote.frames = []
     drawError()
   }
-  doDecodeProgress(draw: boolean) {
-    this.doShowProgress(
-      this.quote.stream.pos,
-      this.quote.stream.data.length,
-      draw
-    )
+  doDecodeProgress(pos: number, length: number, draw: boolean) {
+    this.doShowProgress(pos, length, draw)
   }
   pushFrame() {
     if (!this.frame) return
