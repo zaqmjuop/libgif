@@ -1,3 +1,4 @@
+import { Emitter } from './Emitter'
 import { lzwDecode } from './lzwDecode'
 import { bitsToNum, byteToBitArr, Stream } from './stream'
 import {
@@ -12,17 +13,27 @@ import {
 } from './type'
 
 // The actual parsing; returns an object with properties.
-export class GifParser {
-  st: Stream
-  handler: Hander
-  constructor(st: Stream, handler: Hander) {
-    this.st = st
-    this.handler = handler
-    this.parse()
+
+const EMITS = [
+  'hdr',
+  'gce',
+  'com',
+  'app',
+  'img',
+  'eof',
+  'pte',
+  'unknown'
+] as const
+export class GifParser extends Emitter<typeof EMITS> {
+  st: Stream | null = null
+
+  public get loading() {
+    return !!this.st
   }
 
   // LZW (GIF-specific)
-  parseCT = (entries: number) => {
+  private parseCT = (entries: number) => {
+    if (!this.st) return
     // Each entry is 3 bytes, for RGB.
     const ct: number[][] = []
     for (let i = 0; i < entries; i++) {
@@ -31,7 +42,8 @@ export class GifParser {
     return ct
   }
 
-  readSubBlocks = () => {
+  private readSubBlocks = () => {
+    if (!this.st) return
     let size: number
     let data: string
     data = ''
@@ -42,7 +54,8 @@ export class GifParser {
     return data
   }
 
-  parseHeader = () => {
+  private parseHeader = () => {
+    if (!this.st) return
     const sig = this.st.read(3)
     const ver = this.st.read(3)
     if (sig !== 'GIF') throw new Error('Not a GIF file.') // XXX: This should probably be handled more nicely.
@@ -71,11 +84,13 @@ export class GifParser {
       pixelAspectRatio,
       gct
     }
-    this.handler.hdr && this.handler.hdr(header)
+    this.emit('hdr', header)
   }
 
-  parseExt = (block: Block) => {
+  private parseExt = (block: Block) => {
+    if (!this.st) return
     const parseGCExt = (block: ExtBlock) => {
+      if (!this.st) return
       const blockSize = this.st.readByte() // Always 4
       const bits = byteToBitArr(this.st.readByte())
       const reserved = bits.splice(0, 3) // Reserved; should be 000.
@@ -88,55 +103,54 @@ export class GifParser {
       const transparencyIndex = this.st.readByte()
 
       const terminator = this.st.readByte()
-
-      this.handler.gce &&
-        this.handler.gce({
-          ...block,
-          reserved,
-          disposalMethod,
-          userInput,
-          transparencyGiven,
-          delayTime,
-          transparencyIndex,
-          terminator
-        })
+      this.emit('gce', {
+        ...block,
+        reserved,
+        disposalMethod,
+        userInput,
+        transparencyGiven,
+        delayTime,
+        transparencyIndex,
+        terminator
+      })
     }
 
     const parseComExt = (block: ExtBlock) => {
+      if (!this.st) return
       const comment = this.readSubBlocks()
-      this.handler.com && this.handler.com({ ...block, comment })
+      this.emit('com', { ...block, comment })
     }
 
     const parsePTExt = (block: ExtBlock) => {
+      if (!this.st) return
       // No one *ever* uses this. If you use it, deal with parsing it yourself.
       const blockSize = this.st.readByte() // Always 12
       const ptHeader = this.st.readBytes(12)
       const ptData = this.readSubBlocks()
-      this.handler.pte && this.handler.pte({ ...block, ptHeader, ptData })
+      this.emit('pte', { ...block, ptHeader, ptData })
     }
 
     const parseAppExt = (block: ExtBlock) => {
+      if (!this.st) return
       const parseNetscapeExt = (block: AppExtBlock) => {
+        if (!this.st) return
         const blockSize = this.st.readByte() // Always 3
         const unknown = this.st.readByte() // ??? Always 1? What is this?
         const iterations = this.st.readUnsigned()
         const terminator = this.st.readByte()
-        this.handler.app &&
-          this.handler.app.NETSCAPE &&
-          this.handler.app.NETSCAPE({
-            ...block,
-            unknown,
-            iterations,
-            terminator
-          })
+        this.emit('app', {
+          ...block,
+          unknown,
+          iterations,
+          terminator,
+          identifier: 'NETSCAPE'
+        })
       }
 
       const parseUnknownAppExt = (block: AppExtBlock) => {
         const appData = this.readSubBlocks()
         // FIXME: This won't work if a handler wants to match on any identifier.
-        this.handler.app &&
-          this.handler.app[block.identifier] &&
-          this.handler.app[block.identifier]({ ...block, appData })
+        this.emit('app', { ...block, appData, identifier: block.identifier })
       }
 
       const blockSize = this.st.readByte() // Always 11
@@ -156,7 +170,7 @@ export class GifParser {
     const parseUnknownExt = (block: ExtBlock) => {
       const data = this.readSubBlocks()
       const unknownExtBlock = { ...block, data }
-      this.handler.unknown && this.handler.unknown(unknownExtBlock)
+      this.emit('unknown', unknownExtBlock)
     }
 
     const label = this.st.readByte()
@@ -189,7 +203,8 @@ export class GifParser {
     }
   }
 
-  parseImg = (block: Block) => {
+  private parseImg = (block: Block) => {
+    if (!this.st) return
     const deinterlace = (pixels: number[], width: number) => {
       // Of course this defeats the purpose of interlacing. And it's *probably*
       // the least efficient way it's ever been implemented. But nevertheless...
@@ -231,7 +246,7 @@ export class GifParser {
 
     const lzwMinCodeSize = this.st.readByte()
 
-    const lzwData = this.readSubBlocks()
+    const lzwData: string = this.readSubBlocks() as string
 
     let pixels: number[] = lzwDecode(lzwMinCodeSize, lzwData)
     // Move
@@ -254,10 +269,11 @@ export class GifParser {
       lzwMinCodeSize,
       pixels
     }
-    this.handler.img && this.handler.img(img)
+    this.emit('img', img)
   }
 
-  parseBlock = () => {
+  private parseBlock = () => {
+    if (!this.st) return
     const sentinel = this.st.readByte()
     const block: Block = {
       sentinel,
@@ -277,7 +293,8 @@ export class GifParser {
         break
       case ';':
         block.type = 'eof'
-        this.handler.eof && this.handler.eof(block)
+        this.st = null
+        this.emit('eof', block)
         break
       default:
         throw new Error('Unknown block: 0x' + block.sentinel.toString(16)) // TODO: Pad this with a 0.
@@ -286,7 +303,9 @@ export class GifParser {
     if (block.type !== 'eof') setTimeout(this.parseBlock, 0)
   }
 
-  parse = () => {
+  public parse = (st: Stream) => {
+    if (this.st) return
+    this.st = st
     this.parseHeader()
     setTimeout(this.parseBlock, 0)
   }

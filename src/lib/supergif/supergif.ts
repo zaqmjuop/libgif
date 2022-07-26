@@ -221,6 +221,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     }
   }
 
+  const gifParser = new GifParser()
   const HANDER: Hander = {
     hdr: withProgress((_hdr) => {
       hdr = _hdr
@@ -236,10 +237,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     }),
     com: withProgress(() => {}),
     // I guess that's all for now.
-    app: {
-      // TODO: Is there much point in actually supporting iterations?
-      NETSCAPE: withProgress(() => {})
-    },
+    app: withProgress(() => {}),
     img: withProgress(viewer.doImg.bind(viewer), true),
     eof: (block) => {
       //toolbar.style.display = '';
@@ -259,6 +257,14 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     pte: (block) => console.log('pte', block),
     unknown: (block) => console.log('unknown', block)
   } as const
+  gifParser.on('hdr', HANDER.hdr)
+  gifParser.on('gce', HANDER.gce)
+  gifParser.on('com', HANDER.com)
+  gifParser.on('app', HANDER.app)
+  gifParser.on('img', HANDER.img)
+  gifParser.on('eof', HANDER.eof)
+  gifParser.on('pte', HANDER.pte)
+  gifParser.on('unknown', HANDER.unknown)
 
   const load_setup = (callback?: (gif: HTMLImageElement) => void) => {
     if (loading) {
@@ -295,7 +301,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const onDownload = (data: string | Uint8Array) => {
     stream = new Stream(data)
     try {
-      new GifParser(stream, HANDER)
+      gifParser.parse(stream)
     } catch (err) {
       viewer.doLoadError('parse')
     }

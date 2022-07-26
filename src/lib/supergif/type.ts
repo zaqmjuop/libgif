@@ -16,9 +16,7 @@ export interface Hander {
   readonly hdr: (block: Header) => void
   readonly gce: (block: GCExtBlock) => void
   readonly com: (block: ComExtBlock) => void
-  readonly app: {
-    readonly NETSCAPE: (block: NetscapeExtBlock) => void
-  }
+  readonly app: (block: NetscapeExtBlock | UnknownAppExtBlock) => void
   readonly img: (block: ImgBlock) => void
   readonly eof: (block: Block) => void
   readonly pte: (block: PTExtBlock) => void
@@ -91,9 +89,11 @@ export interface UnknownAppExtBlock extends AppExtBlock {
   appData: string
 }
 export interface NetscapeExtBlock extends AppExtBlock {
-  unknown: number
-  iterations: number
-  terminator: number
+  appData: {
+    unknown: number
+    iterations: number
+    terminator: number
+  }
 }
 export interface PTExtBlock extends ExtBlock {
   ptHeader: number[]
