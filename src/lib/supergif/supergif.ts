@@ -12,12 +12,16 @@ import {
   Offset,
   Options,
   Rect,
+  valuesType,
+  func,
   VP
 } from './type'
 import { Viewer } from './viewer'
 
 const SuperGif = (opts: Options & Partial<VP>) => {
-  const emitter = mitt()
+  const EMITS = ['loadstart', 'load', 'progress', 'error'] as const
+  type emitTypes = valuesType<typeof EMITS>
+  const emitter = mitt<Record<emitTypes, unknown>>()
   const options: Options & VP = Object.assign(
     {
       //viewport position
@@ -207,7 +211,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     disposalMethod = null
     viewer.frame = null
   }
-  let load_callback: (gif: HTMLImageElement) => void | undefined
 
   /**
    * @param{boolean=} draw Whether to draw progress bar or not; this is not idempotent because of translucency.
@@ -250,9 +253,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       player.init()
       loading = false
       emitter.emit('load', gif)
-      if (load_callback) {
-        load_callback(gif)
-      }
     },
     pte: (block) => console.log('pte', block),
     unknown: (block) => console.log('unknown', block)
@@ -266,11 +266,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   gifParser.on('pte', HANDER.pte)
   gifParser.on('unknown', HANDER.unknown)
 
-  const load_setup = (callback?: (gif: HTMLImageElement) => void) => {
+  const load_setup = () => {
     if (loading) {
       return false
     }
-    load_callback = callback || load_callback
 
     loading = true
     frames = []
@@ -321,12 +320,12 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get_loading: () => loading,
     get_auto_play: () => options,
     load_url: loader.load_url.bind(loader),
-    load: (callback?: (gif: HTMLImageElement) => void) => {
-      loader.load_url(getSrc(), callback)
-    },
+    load: () => loader.load_url(getSrc()),
     load_raw: loader.load_raw.bind(loader),
     set_frame_offset: viewer.setFrameOffset.bind(viewer),
-    frames
+    frames,
+    on: (type: emitTypes, func: func) => emitter.on(type, func),
+    off: (type: emitTypes, func?: func) => emitter.off(type, func)
   }
 }
 

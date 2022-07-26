@@ -7,6 +7,9 @@ export abstract class Emitter<
   public on(type: valuesType<T>, func: func) {
     return this.emitter.on(type, func)
   }
+  public off(type: valuesType<T>, func?: func) {
+    return this.emitter.off(type, func)
+  }
   protected emit(type: valuesType<T>, value?: any) {
     return this.emitter.emit(type, value)
   }

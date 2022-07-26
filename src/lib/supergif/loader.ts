@@ -1,9 +1,7 @@
 import { Emitter } from './Emitter'
 
 interface LoaderQuote {
-  load_setup: (
-    callback?: ((gif: HTMLImageElement) => void) | undefined
-  ) => boolean
+  load_setup: () => boolean
 }
 const EMITS = ['loadstart', 'load', 'progress', 'error'] as const
 
@@ -14,8 +12,8 @@ export class Loader extends Emitter<typeof EMITS> {
     this.quote = quote
   }
 
-  load_url(src: string, callback?: (gif: HTMLImageElement) => void) {
-    if (!this.quote.load_setup(callback)) return
+  load_url(src: string) {
+    if (!this.quote.load_setup()) return
 
     const h = new XMLHttpRequest()
     // new browsers (XMLHttpRequest2-compliant)
@@ -61,8 +59,8 @@ export class Loader extends Emitter<typeof EMITS> {
     }
     h.send()
   }
-  load_raw = (data: string | Uint8Array, callback) => {
-    if (!this.quote.load_setup(callback)) return
+  load_raw = (data: string | Uint8Array) => {
+    if (!this.quote.load_setup()) return
     this.emit('load', data)
   }
 }
