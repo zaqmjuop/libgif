@@ -200,7 +200,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   // loader
 
   let disposalMethod: null | number = null
-  let loading = false
   const clear = () => {
     transparency = null
     delay = null
@@ -247,7 +246,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
         canvas.height = hdr.height * get_canvas_scale()
       }
       player.init()
-      loading = false
       emitter.emit('load', gif)
     },
     pte: (block) => console.log('pte', block),
@@ -262,25 +260,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   gifParser.on('pte', HANDER.pte)
   gifParser.on('unknown', HANDER.unknown)
 
-  const load_setup = () => {
-    if (loading) {
-      return false
-    }
-
-    loading = true
-    frames = []
-    clear()
-    disposalRestoreFromIdx = null
-    lastDisposalMethod = null
-    viewer.frame = null
-    lastImg = null
-
-    return true
-  }
-
-  const loader = new Loader({
-    load_setup
-  })
+  const loader = new Loader()
   loader.on('loadstart', () => {})
   // XXX: There's probably a better way to handle catching exceptions when
   // callbacks are involved.
@@ -299,6 +279,37 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   // loader
   const getSrc = () => gif.getAttribute('rel:animated_src') || gif.src
 
+  const getLoading = () => {
+    return loader.loading || gifParser.loading
+  }
+
+  const load_setup = () => {
+    frames = []
+    clear()
+    disposalRestoreFromIdx = null
+    lastDisposalMethod = null
+    viewer.frame = null
+    lastImg = null
+  }
+
+  const load_url = (url: string) => {
+    if (getLoading()) return
+    load_setup()
+    loader.load_url(url)
+  }
+
+  const load_raw = (data: string | Uint8Array) => {
+    if (getLoading()) return
+    load_setup()
+    loader.load_raw(data)
+  }
+
+  const load = () => {
+    if (getLoading()) return
+    load_setup() 
+    load_url(getSrc())
+  }
+
   return {
     player,
     // play controls
@@ -313,11 +324,11 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
     get_canvas: () => canvas,
     get_canvas_scale: () => get_canvas_scale(),
-    get_loading: () => loading,
+    get_loading: getLoading,
     get_auto_play: () => options,
-    load_url: loader.load_url.bind(loader),
-    load: () => loader.load_url(getSrc()),
-    load_raw: loader.load_raw.bind(loader),
+    load_url,
+    load,
+    load_raw,
     set_frame_offset: viewer.setFrameOffset.bind(viewer),
     frames,
     on: emitter.on,

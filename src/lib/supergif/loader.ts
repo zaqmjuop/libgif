@@ -1,19 +1,20 @@
 import { Emitter } from './Emitter'
 
-interface LoaderQuote {
-  load_setup: () => boolean
-}
 const EMITS = ['loadstart', 'load', 'progress', 'error'] as const
 
 export class Loader extends Emitter<typeof EMITS> {
-  readonly quote: LoaderQuote
-  constructor(quote: LoaderQuote) {
+  private _loading = false
+  constructor() {
     super()
-    this.quote = quote
+  }
+
+  get loading() {
+    return this._loading
   }
 
   load_url(url: string) {
-    if (!this.quote.load_setup()) return
+    if (this._loading) return
+    this._loading = true
 
     const h = new XMLHttpRequest()
     // new browsers (XMLHttpRequest2-compliant)
@@ -30,6 +31,7 @@ export class Loader extends Emitter<typeof EMITS> {
     }
 
     h.onloadstart = () => {
+      console.log(this._loading, url)
       this.emit('loadstart')
     }
     h.onload = (e) => {
@@ -49,7 +51,7 @@ export class Loader extends Emitter<typeof EMITS> {
       if (data.toString().indexOf('ArrayBuffer') > 0) {
         data = new Uint8Array(data)
       }
-      this.emit('load', data)
+      this.onLoad(data)
     }
     h.onprogress = (e) => {
       this.emit('progress', e)
@@ -60,7 +62,12 @@ export class Loader extends Emitter<typeof EMITS> {
     h.send()
   }
   load_raw = (data: string | Uint8Array) => {
-    if (!this.quote.load_setup()) return
+    if (this._loading) return
+    this._loading = true
+    this.onLoad(data)
+  }
+  private onLoad(data: string | Uint8Array) {
+    this._loading = false
     this.emit('load', data)
   }
 }
