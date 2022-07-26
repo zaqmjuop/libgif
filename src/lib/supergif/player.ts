@@ -7,15 +7,11 @@ interface PlayerQuote {
   overrideLoopMode: boolean
   loopDelay: number
   auto_play: boolean | undefined
-  c_w: number
-  c_h: number
-  get_canvas_scale: () => any
   frameOffsets: Offset[]
-  ctx: CanvasRenderingContext2D
   delay: null | number
 }
 
-export class Player extends Emitter<['complete', 'putFrame']> {
+export class Player extends Emitter<['complete', 'putFrame', 'init']> {
   i = -1
   iterationCount = 0
   forward = true
@@ -108,12 +104,7 @@ export class Player extends Emitter<['complete', 'putFrame']> {
     return this.frames
   }
   init() {
-    if (!(this.quote.c_w && this.quote.c_h)) {
-      this.quote.ctx.scale(
-        this.quote.get_canvas_scale(),
-        this.quote.get_canvas_scale()
-      )
-    }
+    this.emit('init')
 
     if (this.quote.auto_play) {
       this.step()

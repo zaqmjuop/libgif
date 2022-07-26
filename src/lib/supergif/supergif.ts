@@ -17,7 +17,7 @@ import {
 import { Viewer } from './viewer'
 
 const SuperGif = (opts: Options & Partial<VP>) => {
-  const EMITS = ['loadstart', 'load', 'progress', 'error'] as const
+  const EMITS = ['loadstart', 'load', 'progress', 'error', 'complete'] as const
   const emitter = new Emitter<typeof EMITS>()
   const options: Options & VP = Object.assign(
     {
@@ -147,7 +147,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     }
   })
   const canvas = viewer.canvas
-  const ctx = viewer.ctx
 
   viewer.init()
   // canvas
@@ -163,27 +162,21 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     overrideLoopMode: options.loop_mode !== false,
     loopDelay: options.loop_delay || 0,
     auto_play,
-    get c_w() {
-      return options.c_w
-    },
-    get c_h() {
-      return options.c_h
-    },
-    get get_canvas_scale() {
-      return get_canvas_scale
-    },
     get frameOffsets() {
       return frameOffsets
-    },
-    get ctx() {
-      return ctx
     },
     get delay() {
       return delay
     }
   })
   player.on('putFrame', viewer.onPutFrame)
-  options.on_end && player.on('complete', options.on_end)
+  player.on('init', () => {
+    if (!(options.c_w && options.c_h)) {
+      const zoom = get_canvas_scale()
+      viewer.ctx.scale(zoom, zoom)
+    }
+  })
+  player.on('complete', () => emitter.emit('complete'))
   // player
   // loader
 
