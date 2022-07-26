@@ -69,9 +69,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       return get_canvas_scale
     },
     drawWhileLoading: options.draw_while_loading !== false,
-    get showProgressBar() {
-      return options.show_progress_bar !== false
-    },
+    showProgressBar: options.show_progress_bar !== false,
     progressBarHeight:
       typeof options.progressbar_height === 'number'
         ? options.progressbar_height

@@ -93,7 +93,7 @@ export class Viewer {
     this.tmpCanvas.getContext('2d')?.setTransform(1, 0, 0, 1, 0, 0)
   }
   doShowProgress(pos: number, length: number, draw: boolean) {
-    if (!draw || !this.quote.showProgressBar) return
+    if (!draw || !this.showProgressBar) return
     let height = this.quote.progressBarHeight
     let mid, top, width
     const scale = this.ctx_scaled ? this.quote.get_canvas_scale() : 1
