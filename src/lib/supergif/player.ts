@@ -132,25 +132,26 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
       this.quote.viewer.frame = this.quote.viewer.tmpCanvas.getContext('2d')
     }
     if (this.quote.viewer.frames.length > 0) {
-      if (this.quote.lastDisposalMethod === DisposalMethod.previous) {
-        // Restore to previous
-        // If we disposed every frame including first frame up to this point, then we have
-        // no composited frame to restore to. In this case, restore to background instead.
-        // 如果到目前为止我们处理了包括第一帧在内的每一帧，那么我们就没有要还原的合成帧。在这种情况下，请改为还原到背景。
-        if (this.disposalRestoreFromIdx >= 0) {
-          const data =
-            this.quote.viewer.frames[this.disposalRestoreFromIdx].data
-          this.quote.viewer.frame?.putImageData(data, 0, 0)
-        } else {
+      switch (this.quote.lastDisposalMethod) {
+        case DisposalMethod.previous:
+          // Restore to previous
+          // If we disposed every frame including first frame up to this point, then we have
+          // no composited frame to restore to. In this case, restore to background instead.
+          // 如果到目前为止我们处理了包括第一帧在内的每一帧，那么我们就没有要还原的合成帧。在这种情况下，请改为还原到背景。
+          if (this.disposalRestoreFromIdx >= 0) {
+            const data =
+              this.quote.viewer.frames[this.disposalRestoreFromIdx].data
+            this.quote.viewer.frame?.putImageData(data, 0, 0)
+          } else {
+            this.quote.viewer.restoreBackgroundColor(this.lastImg)
+          }
+          break
+        case DisposalMethod.backgroundColor:
+          // Restore to background color
+          // Browser implementations historically restore to transparent; we do the same.
+          // http://www.wizards-toolkit.org/discourse-server/viewtopic.php?f=1&t=21172#p86079
           this.quote.viewer.restoreBackgroundColor(this.lastImg)
-        }
-      }
-
-      if (this.quote.lastDisposalMethod === DisposalMethod.backgroundColor) {
-        // Restore to background color
-        // Browser implementations historically restore to transparent; we do the same.
-        // http://www.wizards-toolkit.org/discourse-server/viewtopic.php?f=1&t=21172#p86079
-        this.quote.viewer.restoreBackgroundColor(this.lastImg)
+          break
       }
     }
     // else, Undefined/Do not dispose.
