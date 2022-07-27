@@ -113,5 +113,12 @@ export interface GCExtBlock extends ExtBlock {
   transparencyIndex: number
   terminator: number
 }
+
+export interface Gif89aData {
+  header?: Header
+  imgs: ImgBlock[]
+  app?: AppExtBlock
+  blocks: Array<Block>
+}
 export type valuesType<T> = T extends readonly (infer U)[] ? U : never
 export type func = (...args: any[]) => any

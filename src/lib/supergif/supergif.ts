@@ -3,17 +3,7 @@ import { Loader } from './loader'
 import { GifParser } from './parseGIF'
 import { Player } from './player'
 import { Stream } from './stream'
-import {
-  Block,
-  Frame,
-  Hander,
-  Header,
-  ImgBlock,
-  Offset,
-  Options,
-  Rect,
-  VP
-} from './type'
+import { Gif89aData, Hander, Header, Options, VP } from './type'
 import { Viewer } from './viewer'
 
 const SuperGif = (opts: Options & Partial<VP>) => {
@@ -162,13 +152,24 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     }
   }
 
+  let gifData: Gif89aData = {
+    imgs: [],
+    blocks: []
+  }
+
   const gifParser = new GifParser()
   const HANDER: Hander = {
     hdr: withProgress((_hdr) => {
+      gifData = {
+        imgs: [],
+        blocks: []
+      }
+      gifData.header = _hdr
       hdr = _hdr
       viewer.setSizes(hdr.width, hdr.height)
     }),
     gce: withProgress((gce) => {
+      gifData.blocks.push(gce)
       player.pushFrame()
       clear()
       transparency = gce.transparencyGiven ? gce.transparencyIndex : null
@@ -176,11 +177,21 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       disposalMethod = gce.disposalMethod
       // We don't have much to do with the rest of GCE.
     }),
-    com: withProgress(() => {}),
+    com: withProgress((block) => {
+      gifData.blocks.push(block)
+    }),
     // I guess that's all for now.
-    app: withProgress(() => {}),
-    img: withProgress(player.doImg, true),
+    app: withProgress((appBlock) => {
+      gifData.app = appBlock
+    }),
+    img: withProgress((imageBlock) => {
+      gifData.imgs.push(imageBlock)
+      gifData.blocks.push(imageBlock)
+      player.doImg(imageBlock)
+    }, true),
     eof: (block) => {
+      gifData.blocks.push(block)
+      console.log('eof', gifData)
       //toolbar.style.display = '';
       withProgress(() => player.pushFrame())(block)
       if (!(options.c_w && options.c_h)) {
@@ -192,8 +203,12 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       }
       emitter.emit('load', gif)
     },
-    pte: (block) => console.log('pte', block),
-    unknown: (block) => console.log('unknown', block)
+    pte: (block) => {
+      gifData.blocks.push(block)
+    },
+    unknown: (block) => {
+      gifData.blocks.push(block)
+    }
   } as const
   gifParser.on('hdr', HANDER.hdr)
   gifParser.on('gce', HANDER.gce)
