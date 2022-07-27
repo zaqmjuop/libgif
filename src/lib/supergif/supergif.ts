@@ -29,8 +29,14 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
   let stream: Stream
 
-  let transparency: number | null = null
-  let lastDisposalMethod: number | null = null
+  const currentData: Record<
+    'transparency' | 'lastDisposalMethod' | 'disposalMethod',
+    number | null
+  > = {
+    transparency: null,
+    lastDisposalMethod: null,
+    disposalMethod: null
+  }
 
   let loadError = ''
 
@@ -99,7 +105,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       return gif
     },
     get transparency() {
-      return transparency
+      return currentData.transparency
     }
   })
   const canvas = viewer.canvas
@@ -116,7 +122,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       return gifData
     },
     get lastDisposalMethod() {
-      return lastDisposalMethod
+      return currentData.lastDisposalMethod
     },
     viewer
   })
@@ -125,15 +131,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   player.on('complete', () => emitter.emit('complete', gif))
   // player
   // loader
-
-  let disposalMethod: null | number = null
-  const clear = () => {
-    transparency = null
-    player.delay = null
-    lastDisposalMethod = disposalMethod
-    disposalMethod = null
-    viewer.frame = null
-  }
 
   /**
    * @param{boolean=} draw Whether to draw progress bar or not; this is not idempotent because of translucency.
@@ -156,10 +153,13 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     gce: withProgress((gce) => {
       gifData.blocks.push(gce)
       player.pushFrame()
-      clear()
-      transparency = gce.transparencyGiven ? gce.transparencyIndex : null
       player.delay = gce.delayTime
-      disposalMethod = gce.disposalMethod
+      viewer.frame = null
+      currentData.lastDisposalMethod = currentData.disposalMethod
+      currentData.transparency = gce.transparencyGiven
+        ? gce.transparencyIndex
+        : null
+      currentData.disposalMethod = gce.disposalMethod
       // We don't have much to do with the rest of GCE.
     }),
     com: withProgress((block) => {
@@ -238,12 +238,14 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       imgs: [],
       blocks: []
     }
+    currentData.transparency = null
+    currentData.disposalMethod = null
+    currentData.lastDisposalMethod = null
     viewer.frames = []
-    clear()
-    player.disposalRestoreFromIdx = null
-    lastDisposalMethod = null
-    viewer.frame = null
+    viewer.frame = null 
+    player.delay = null
     player.lastImg = void 0
+    player.disposalRestoreFromIdx = null
   }
 
   const load_url = (url: string) => {
