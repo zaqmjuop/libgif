@@ -151,7 +151,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     // frame contains final pixel data from the last frame; do nothing
 
     //ct = color table, gct = global color table
-    const ct = img.lctFlag ? img.lct : this.quote.viewer.quote.hdr.gct // TODO: What if neither exists?
+    const ct = img.lctFlag ? img.lct : this.quote.gifData.header.gct // TODO: What if neither exists?
 
     //Get existing pixels for img region after applying disposal method
     if (this.quote.viewer.frame) {
@@ -196,8 +196,8 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
       data: this.quote.viewer.frame.getImageData(
         0,
         0,
-        this.quote.viewer.quote.hdr.width,
-        this.quote.viewer.quote.hdr.height
+        this.quote.gifData.header.width,
+        this.quote.gifData.header.height
       ),
       delay: this.delay || -1
     })

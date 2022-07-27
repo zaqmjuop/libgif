@@ -13,7 +13,6 @@ interface ViewerQuote {
   vp_w: number
   c_w: number
   c_h: number
-  hdr: Header
   gif: HTMLImageElement
   transparency: number | null
   drawWhileLoading: boolean
@@ -104,8 +103,8 @@ export class Viewer {
   doLoadError(originOfError: string) {
     const drawError = () => {
       this.ctx.fillStyle = 'black'
-      const w = this.quote.c_w || this.quote.hdr.width
-      const h = this.quote.c_h || this.quote.hdr.height
+      const w = this.quote.c_w
+      const h = this.quote.c_h
       this.ctx.fillRect(0, 0, w, h)
       this.ctx.strokeStyle = 'red'
       this.ctx.lineWidth = 3
@@ -115,11 +114,6 @@ export class Viewer {
       this.ctx.lineTo(w, 0)
       this.ctx.stroke()
     }
-
-    this.quote.hdr = {
-      width: this.quote.gif.width,
-      height: this.quote.gif.height
-    } as Header // Fake header.
     drawError()
   }
   doDecodeProgress(pos: number, length: number, draw: boolean) {

@@ -28,7 +28,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   if (options.vp_w && options.vp_h) options.is_vp = true
 
   let stream: Stream
-  let hdr: Header
 
   let transparency: number | null = null
   let disposalRestoreFromIdx: number | null = null
@@ -39,13 +38,19 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const gif = options.gif
   const auto_play =
     options.auto_play || gif.getAttribute('rel:auto_play') !== '0'
-  let gifData: Gif89aData
+  let gifData: Gif89aData = {
+    header: { width: gif.width, height: gif.height } as Header,
+    imgs: [],
+    blocks: []
+  }
   // global func
 
   const get_canvas_scale = () => {
     let scale = 1
-    if (options.max_width && hdr?.width && hdr.width > options.max_width) {
-      scale = options.max_width / hdr.width
+    const width = gifData?.header?.width || 0
+    const max_width = options.max_width
+    if (max_width && width && width > max_width) {
+      scale = max_width / width
     }
     return scale
   }
@@ -86,16 +91,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       return options.vp_w
     },
     get c_w() {
-      return options.c_w
+      return options.c_w || gifData.header.width || gif.width
     },
     get c_h() {
-      return options.c_h
-    },
-    get hdr() {
-      return hdr
-    },
-    set hdr(val: Header) {
-      hdr = val
+      return options.c_h || gifData.header.height || gif.height
     },
     get gif() {
       return gif
@@ -158,13 +157,8 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const gifParser = new GifParser()
   const HANDER: Hander = {
     hdr: withProgress((_hdr) => {
-      gifData = {
-        header: _hdr,
-        imgs: [],
-        blocks: []
-      }
-      hdr = _hdr
-      viewer.setSizes(hdr.width, hdr.height)
+      gifData.header = _hdr
+      viewer.setSizes(_hdr.width, _hdr.height)
     }),
     gce: withProgress((gce) => {
       gifData.blocks.push(gce)
@@ -193,8 +187,8 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       //toolbar.style.display = '';
       withProgress(() => player.pushFrame())(block)
       if (!(options.c_w && options.c_h)) {
-        canvas.width = hdr.width * get_canvas_scale()
-        canvas.height = hdr.height * get_canvas_scale()
+        canvas.width = gifData.header.width * get_canvas_scale()
+        canvas.height = gifData.header.height * get_canvas_scale()
       }
       if (!loadError) {
         player.init()
@@ -246,6 +240,11 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   }
 
   const load_setup = () => {
+    gifData = {
+      header: { width: gif.width, height: gif.height } as Header,
+      imgs: [],
+      blocks: []
+    }
     player.frames = []
     clear()
     disposalRestoreFromIdx = null
