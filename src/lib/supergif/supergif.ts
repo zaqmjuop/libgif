@@ -39,7 +39,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const gif = options.gif
   const auto_play =
     options.auto_play || gif.getAttribute('rel:auto_play') !== '0'
-
+  let gifData: Gif89aData
   // global func
 
   const get_canvas_scale = () => {
@@ -114,6 +114,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     overrideLoopMode: options.loop_mode !== false,
     loopDelay: options.loop_delay || 0,
     auto_play,
+    get gifData() {
+      return gifData
+    },
     get lastDisposalMethod() {
       return lastDisposalMethod
     },
@@ -152,19 +155,14 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     }
   }
 
-  let gifData: Gif89aData = {
-    imgs: [],
-    blocks: []
-  }
-
   const gifParser = new GifParser()
   const HANDER: Hander = {
     hdr: withProgress((_hdr) => {
       gifData = {
+        header: _hdr,
         imgs: [],
         blocks: []
       }
-      gifData.header = _hdr
       hdr = _hdr
       viewer.setSizes(hdr.width, hdr.height)
     }),

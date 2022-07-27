@@ -115,7 +115,7 @@ export interface GCExtBlock extends ExtBlock {
 }
 
 export interface Gif89aData {
-  header?: Header
+  header: Header
   imgs: ImgBlock[]
   app?: AppExtBlock
   blocks: Array<Block>

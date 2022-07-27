@@ -1,9 +1,10 @@
-import { Frame, ImgBlock, Rect } from './type'
+import { Frame, Gif89aData, ImgBlock, Rect } from './type'
 import { Emitter } from './Emitter'
 import { Viewer } from './viewer'
 
 interface PlayerQuote {
   overrideLoopMode: boolean
+  gifData: Gif89aData
   lastDisposalMethod: number | null
   disposalRestoreFromIdx: number | null
   loopDelay: number
