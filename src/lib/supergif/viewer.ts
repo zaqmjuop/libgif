@@ -29,6 +29,7 @@ export class Viewer {
   drawWhileLoading: boolean
   frame: CanvasRenderingContext2D | null = null
   opacity = 255
+  frames: Frame[] = []
   public frameOffsets: Offset[] = []
   constructor(quote: ViewerQuote) {
     this.quote = quote

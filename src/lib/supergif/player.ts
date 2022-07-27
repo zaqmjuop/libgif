@@ -25,7 +25,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
   forward = true
   playing = true
   delay: null | number = null
-  frames: Frame[] = []
+
   lastImg?: Rect & Partial<ImgBlock>
   readonly quote: PlayerQuote
 
@@ -40,7 +40,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
    */
   getNextFrameNo() {
     const delta = this.forward ? 1 : -1
-    return (this.i + delta + this.frames.length) % this.frames.length
+    return (this.i + delta + this.quote.viewer.frames.length) % this.quote.viewer.frames.length
   }
 
   step() {
@@ -84,11 +84,11 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
   }
 
   putFrame() {
-    if (this.i < 0 || this.i > this.frames.length - 1) {
+    if (this.i < 0 || this.i > this.quote.viewer.frames.length - 1) {
       this.i = 0
     }
     const flag = this.i
-    const data = this.frames[flag].data
+    const data = this.quote.viewer.frames[flag].data
     this.emit('putFrame', { flag, data })
   }
 
@@ -125,19 +125,19 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     if (!this.quote.viewer.frame && this.quote.viewer.tmpCanvas) {
       this.quote.viewer.frame = this.quote.viewer.tmpCanvas.getContext('2d')
     }
-    if (this.frames.length > 0) {
+    if (this.quote.viewer.frames.length > 0) {
       if (this.quote.lastDisposalMethod === DisposalMethod.previous) {
         // Restore to previous
         // If we disposed every frame including first frame up to this point, then we have
         // no composited frame to restore to. In this case, restore to background instead.
         if (this.quote.disposalRestoreFromIdx !== null) {
-          const data = this.frames[this.quote.disposalRestoreFromIdx].data
+          const data = this.quote.viewer.frames[this.quote.disposalRestoreFromIdx].data
           this.quote.viewer.frame?.putImageData(data, 0, 0)
         } else {
           this.quote.viewer.restoreBackgroundColor(this.lastImg)
         }
       } else {
-        this.quote.disposalRestoreFromIdx = this.frames.length - 1
+        this.quote.disposalRestoreFromIdx = this.quote.viewer.frames.length - 1
       }
 
       if (this.quote.lastDisposalMethod === 2) {
@@ -192,7 +192,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
   }
   pushFrame() {
     if (!this.quote.viewer.frame) return
-    this.frames.push({
+    this.quote.viewer.frames.push({
       data: this.quote.viewer.frame.getImageData(
         0,
         0,

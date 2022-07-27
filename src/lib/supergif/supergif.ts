@@ -220,7 +220,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     try {
       gifParser.parse(stream)
     } catch (err) {
-      player.frames = []
+      viewer.frames = []
       viewer.doLoadError('parse')
     }
   })
@@ -229,7 +229,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   })
   loader.on('error', (message: string) => {
     loadError = message
-    player.frames = []
+    viewer.frames = []
     viewer.doLoadError(message)
   })
   // loader
@@ -245,7 +245,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       imgs: [],
       blocks: []
     }
-    player.frames = []
+    viewer.frames = []
     clear()
     disposalRestoreFromIdx = null
     lastDisposalMethod = null
@@ -291,9 +291,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     load_raw,
     set_frame_offset: viewer.setFrameOffset.bind(viewer),
     get frames() {
-      return player.frames
+      return viewer.frames
     },
-    get_length: () => player.frames.length,
+    get_length: () => viewer.frames.length,
     on: emitter.on,
     off: emitter.off
   }
