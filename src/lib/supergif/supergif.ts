@@ -176,7 +176,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     }, true),
     eof: (block) => {
       gifData.eof = block
-      console.log('eof', gifData)
+      console.log('eof')
       //toolbar.style.display = '';
       withProgress(() => player.pushFrame())(block)
       if (!(options.c_w && options.c_h)) {
@@ -214,6 +214,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       gifParser.parse(stream)
     } catch (err) {
       viewer.frames = []
+      player.frameGroup = []
       viewer.doLoadError('parse')
     }
   })
@@ -223,6 +224,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   loader.on('error', (message: string) => {
     loadError = message
     viewer.frames = []
+    player.frameGroup = []
     viewer.doLoadError(message)
   })
   // loader
@@ -243,6 +245,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     currentData.disposalMethod = null
     currentData.lastDisposalMethod = null
     viewer.frames = []
+    player.frameGroup = []
     viewer.frame = null
     player.delay = null
     player.lastImg = void 0
