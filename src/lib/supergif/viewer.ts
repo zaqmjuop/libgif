@@ -165,4 +165,48 @@ export class Viewer {
     })
     this.frameOffsets.push({ x: 0, y: 0 })
   }
+  imgBlockToImageData = (img: ImgBlock & { ct: number[][] }) => {
+    if (this.frame) {
+      const imgData = this.frame.getImageData(
+        img.leftPos,
+        img.topPos,
+        img.width,
+        img.height
+      ) //apply color table colors
+      img.pixels.forEach((pixel, i) => {
+        // imgData.data === [R,G,B,A,R,G,B,A,...]
+        if (pixel !== this.quote.transparency && img.ct) {
+          imgData.data[i * 4 + 0] = img.ct[pixel][0]
+          imgData.data[i * 4 + 1] = img.ct[pixel][1]
+          imgData.data[i * 4 + 2] = img.ct[pixel][2]
+          imgData.data[i * 4 + 3] = this.opacity // Opaque.
+        }
+      })
+      return imgData
+    }
+  }
+  putImageData = (data: ImageData, left: number, top: number) => {
+    this.frame?.putImageData(data, left, top)
+  }
+  setupFrame() {
+    if (!this.frame && this.tmpCanvas) {
+      this.frame = this.tmpCanvas.getContext('2d')
+    }
+  }
+  initCtxScale() {
+    if (!this.ctx_scaled) {
+      const scale = this.quote.get_canvas_scale()
+      this.ctx.scale(scale, scale)
+      this.ctx_scaled = true
+    }
+  }
+
+  loadingRender(auto_play: boolean) {
+    // We could use the on-page canvas directly, except that we draw a progress
+    // bar for each image chunk (not just the final image).
+    if (this.drawWhileLoading) {
+      this.tmpCanvas && this.ctx.drawImage(this.tmpCanvas, 0, 0)
+      this.drawWhileLoading =  auto_play
+    }
+  }
 }

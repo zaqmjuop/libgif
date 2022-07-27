@@ -152,52 +152,29 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     }
   }
   doImg = (img: ImgBlock) => {
-    if (!this.quote.viewer.frame && this.quote.viewer.tmpCanvas) {
-      this.quote.viewer.frame = this.quote.viewer.tmpCanvas.getContext('2d')
-    }
-    if (this.quote.viewer.frames.length > 0) {
+    this.quote.viewer.setupFrame()
+    if (this.frameGroup.length > 0) {
       this.disposal(this.quote.lastDisposalMethod)
     }
     // else, Undefined/Do not dispose.
     // frame contains final pixel data from the last frame; do nothing
 
     //ct = color table, gct = global color table
-    const ct = img.lctFlag ? img.lct : this.quote.gifData.header.gct // TODO: What if neither exists?
+    const ct = img.lctFlag ? img.lct : this.quote.gifData.header.gct // TODO: What if neither exists? 调用系统颜色表
 
     //Get existing pixels for img region after applying disposal method
-    if (this.quote.viewer.frame) {
-      const imgData = this.quote.viewer.frame.getImageData(
-        img.leftPos,
-        img.topPos,
-        img.width,
-        img.height
-      ) //apply color table colors
-      img.pixels.forEach((pixel, i) => {
-        // imgData.data === [R,G,B,A,R,G,B,A,...]
-        if (pixel !== this.quote.viewer.quote.transparency && ct) {
-          imgData.data[i * 4 + 0] = ct[pixel][0]
-          imgData.data[i * 4 + 1] = ct[pixel][1]
-          imgData.data[i * 4 + 2] = ct[pixel][2]
-          imgData.data[i * 4 + 3] = this.quote.viewer.opacity // Opaque.
-        }
-      })
+    const imgData = this.quote.viewer.imgBlockToImageData({
+      ct: ct as number[][],
+      ...img
+    })
+    if (imgData) {
       this.frameGroup.push({ data: imgData, delay: this.delay || -1 })
-      this.quote.viewer.frame?.putImageData(imgData, img.leftPos, img.topPos)
+      this.quote.viewer.putImageData(imgData, img.leftPos, img.topPos)
     }
 
-    if (!this.quote.viewer.ctx_scaled) {
-      const scale = this.quote.viewer.quote.get_canvas_scale()
-      this.quote.viewer.ctx.scale(scale, scale)
-      this.quote.viewer.ctx_scaled = true
-    }
+    this.quote.viewer.initCtxScale()
 
-    // We could use the on-page canvas directly, except that we draw a progress
-    // bar for each image chunk (not just the final image).
-    if (this.quote.viewer.drawWhileLoading) {
-      this.quote.viewer.tmpCanvas &&
-        this.quote.viewer.ctx.drawImage(this.quote.viewer.tmpCanvas, 0, 0)
-      this.quote.viewer.drawWhileLoading = !!this.quote.auto_play
-    }
+    this.quote.viewer.loadingRender(!!this.quote.auto_play)
 
     this.lastImg = img
   }
