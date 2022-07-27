@@ -13,14 +13,10 @@ interface ViewerQuote {
   vp_w: number
   c_w: number
   c_h: number
-  delay: number
   hdr: Header
   gif: HTMLImageElement
-  lastDisposalMethod: number | null
-  disposalRestoreFromIdx: number | null
   transparency: number | null
   drawWhileLoading: boolean
-  auto_play: boolean
 }
 
 export class Viewer {
@@ -150,7 +146,7 @@ export class Viewer {
       this.frameOffsets[frame].y = offset.y
     }
   }
-  onPutFrame = (e: {flag: number, data: ImageData}) => {
+  onPutFrame = (e: { flag: number; data: ImageData }) => {
     if (this.tmpCanvas) {
       const offset = this.frameOffsets[e.flag]
       const data = e.data

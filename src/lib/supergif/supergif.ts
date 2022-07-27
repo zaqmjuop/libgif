@@ -107,25 +107,12 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     set hdr(val: Header) {
       hdr = val
     },
-    get delay() {
-      return player.delay
-    },
     get gif() {
       return gif
     },
-    get lastDisposalMethod() {
-      return lastDisposalMethod
-    },
-    get disposalRestoreFromIdx() {
-      return disposalRestoreFromIdx
-    },
-    set disposalRestoreFromIdx(val) {
-      disposalRestoreFromIdx = val
-    },
     get transparency() {
       return transparency
-    },
-    auto_play
+    }
   })
   const canvas = viewer.canvas
 
