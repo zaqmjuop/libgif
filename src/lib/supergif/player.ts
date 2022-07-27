@@ -98,13 +98,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
   }
   init() {
     this.emit('init')
-
-    if (this.quote.auto_play) {
-      this.goOn()
-    } else {
-      this.i = 0
-      this.putFrame()
-    }
+    this.quote.auto_play ? this.play() : this.putFrame(0)
   }
   current_frame() {
     return this.i
