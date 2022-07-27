@@ -245,7 +245,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     viewer.frame = null
     player.delay = null
     player.lastImg = void 0
-    player.disposalRestoreFromIdx = null
   }
 
   const load_url = (url: string) => {
