@@ -47,34 +47,24 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     return (this.i + delta + this.frameGroup.length) % this.frameGroup.length
   }
 
-  step() {
-    const completeLoop = () => {
-      this.emit('complete')
-      this.iterationCount++
-
-      if (this.quote.overrideLoopMode || this.iterationCount < 0) {
-        doStep()
-      } else {
-        this.playing = false
-      }
+  complete = () => {
+    this.iterationCount++
+    this.emit('complete')
+    if (this.quote.overrideLoopMode || this.iterationCount < 1) {
+      this.goOn()
+    } else {
+      this.pause()
     }
+  }
 
-    const doStep = () => {
-      if (!this.playing) return
-
-      this.putFrameBy(1)
-      let delay = (this.delay || 1.666) * 10
-
-      const nextFrameNo = this.getNextFrameNo()
-      if (nextFrameNo === 0) {
-        delay += this.quote.loopDelay
-        setTimeout(completeLoop, delay)
-      } else {
-        setTimeout(doStep, delay)
-      }
-    }
-
-    return this.playing && setTimeout(doStep, 0)
+  goOn = () => {
+    if (!this.playing) return
+    this.putFrameBy(1)
+    const delay = (this.delay || 1.666) * 10
+    const isComplete = this.getNextFrameNo() === 0
+    return isComplete
+      ? setTimeout(this.complete, delay + this.quote.loopDelay)
+      : setTimeout(this.goOn, delay)
   }
 
   private putFrameBy(amount: number) {
@@ -94,7 +84,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
 
   play() {
     this.playing = true
-    this.step()
+    this.goOn()
   }
 
   pause() {
@@ -104,7 +94,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     this.emit('init')
 
     if (this.quote.auto_play) {
-      this.step()
+      this.goOn()
     } else {
       this.i = 0
       this.putFrame()
