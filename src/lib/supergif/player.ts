@@ -6,7 +6,6 @@ interface PlayerQuote {
   overrideLoopMode: boolean
   gifData: Gif89aData
   lastDisposalMethod: number | null
-  disposalRestoreFromIdx: number | null
   loopDelay: number
   auto_play: boolean | undefined
   viewer: Viewer
@@ -25,6 +24,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
   forward = true
   playing = true
   delay: null | number = null
+  disposalRestoreFromIdx: number | null = null
 
   lastImg?: Rect & Partial<ImgBlock>
   readonly quote: PlayerQuote
@@ -130,14 +130,14 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
         // Restore to previous
         // If we disposed every frame including first frame up to this point, then we have
         // no composited frame to restore to. In this case, restore to background instead.
-        if (this.quote.disposalRestoreFromIdx !== null) {
-          const data = this.quote.viewer.frames[this.quote.disposalRestoreFromIdx].data
+        if (this.disposalRestoreFromIdx !== null) {
+          const data = this.quote.viewer.frames[this.disposalRestoreFromIdx].data
           this.quote.viewer.frame?.putImageData(data, 0, 0)
         } else {
           this.quote.viewer.restoreBackgroundColor(this.lastImg)
         }
       } else {
-        this.quote.disposalRestoreFromIdx = this.quote.viewer.frames.length - 1
+        this.disposalRestoreFromIdx = this.quote.viewer.frames.length - 1
       }
 
       if (this.quote.lastDisposalMethod === 2) {

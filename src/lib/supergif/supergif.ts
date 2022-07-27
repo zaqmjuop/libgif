@@ -30,7 +30,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   let stream: Stream
 
   let transparency: number | null = null
-  let disposalRestoreFromIdx: number | null = null
   let lastDisposalMethod: number | null = null
 
   let loadError = ''
@@ -118,12 +117,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     get lastDisposalMethod() {
       return lastDisposalMethod
-    },
-    get disposalRestoreFromIdx() {
-      return disposalRestoreFromIdx
-    },
-    set disposalRestoreFromIdx(val) {
-      disposalRestoreFromIdx = val
     },
     viewer
   })
@@ -247,7 +240,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     }
     viewer.frames = []
     clear()
-    disposalRestoreFromIdx = null
+    player.disposalRestoreFromIdx = null
     lastDisposalMethod = null
     viewer.frame = null
     player.lastImg = void 0
