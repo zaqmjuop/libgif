@@ -44,15 +44,10 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
    */
   getNextFrameNo() {
     const delta = this.forward ? 1 : -1
-    return (
-      (this.i + delta + this.frameGroup.length) %
-      this.frameGroup.length
-    )
+    return (this.i + delta + this.frameGroup.length) % this.frameGroup.length
   }
 
   step() {
-    let stepping = false
-
     const completeLoop = () => {
       this.emit('complete')
       this.iterationCount++
@@ -60,16 +55,14 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
       if (this.quote.overrideLoopMode || this.iterationCount < 0) {
         doStep()
       } else {
-        stepping = false
         this.playing = false
       }
     }
 
     const doStep = () => {
-      stepping = this.playing
-      if (!stepping) return
+      if (!this.playing) return
 
-      this.stepFrame(1)
+      this.putFrameBy(1)
       let delay = (this.delay || 1.666) * 10
 
       const nextFrameNo = this.getNextFrameNo()
@@ -81,10 +74,10 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
       }
     }
 
-    return !stepping && setTimeout(doStep, 0)
+    return this.playing && setTimeout(doStep, 0)
   }
 
-  stepFrame(amount: number) {
+  private putFrameBy(amount: number) {
     // XXX: Name is confusing.
     this.i = this.i + amount
     this.putFrame()
@@ -119,7 +112,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
   }
 
   get move_relative() {
-    return this.stepFrame
+    return this.putFrameBy
   }
   current_frame() {
     return this.i
