@@ -38,16 +38,20 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     return this.frameGroup.length - 1
   }
 
+  get move_relative() {
+    return this.putFrameBy
+  }
+
   /**
    * Gets the index of the frame "up next".
    * @returns {number}
    */
-  getNextFrameNo() {
+  private getNextFrameNo() {
     const delta = this.forward ? 1 : -1
     return (this.i + delta + this.frameGroup.length) % this.frameGroup.length
   }
 
-  complete = () => {
+  private complete = () => {
     this.iterationCount++
     this.emit('complete')
     if (this.quote.overrideLoopMode || this.iterationCount < 1) {
@@ -57,7 +61,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     }
   }
 
-  goOn = () => {
+  private goOn = () => {
     if (!this.playing) return
     this.putFrameBy(1)
     const delay = (this.delay || 1.666) * 10
@@ -73,13 +77,15 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     this.putFrame()
   }
 
-  putFrame() {
+  putFrame(flag?: number) {
+    if (typeof flag === 'number') {
+      this.i = flag
+    }
     if (this.i < 0 || this.i > this.frameGroup.length - 1) {
       this.i = 0
     }
-    const flag = this.i
-    const data = this.quote.viewer.frames[flag].data
-    this.emit('putFrame', { flag, data })
+    const data = this.quote.viewer.frames[this.i].data
+    this.emit('putFrame', { flag: this.i, data })
   }
 
   play() {
@@ -99,10 +105,6 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
       this.i = 0
       this.putFrame()
     }
-  }
-
-  get move_relative() {
-    return this.putFrameBy
   }
   current_frame() {
     return this.i
