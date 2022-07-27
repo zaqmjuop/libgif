@@ -116,9 +116,11 @@ export interface GCExtBlock extends ExtBlock {
 
 export interface Gif89aData {
   header: Header
+  gces: GCExtBlock[]
   imgs: ImgBlock[]
   app?: AppExtBlock
-  blocks: Array<Block>
+  exts: ExtBlock[]
+  eof?: Block
 }
 export type valuesType<T> = T extends readonly (infer U)[] ? U : never
 export type func = (...args: any[]) => any

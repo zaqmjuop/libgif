@@ -45,8 +45,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     options.auto_play || gif.getAttribute('rel:auto_play') !== '0'
   let gifData: Gif89aData = {
     header: { width: gif.width, height: gif.height } as Header,
+    gces: [],
     imgs: [],
-    blocks: []
+    exts: []
   }
   // global func
 
@@ -151,7 +152,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       viewer.setSizes(_hdr.width, _hdr.height)
     }),
     gce: withProgress((gce: GCExtBlock) => {
-      gifData.blocks.push(gce)
+      gifData.gces.push(gce)
       player.pushFrame()
       player.delay = gce.delayTime
       viewer.frame = null
@@ -163,19 +164,18 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       // We don't have much to do with the rest of GCE.
     }),
     com: withProgress((block) => {
-      gifData.blocks.push(block)
+      gifData.exts.push(block)
     }),
     // I guess that's all for now.
     app: withProgress((appBlock) => {
       gifData.app = appBlock
     }),
     img: withProgress((imageBlock) => {
-      gifData.imgs.push(imageBlock)
-      gifData.blocks.push(imageBlock)
+      gifData.imgs.push(imageBlock) 
       player.doImg(imageBlock)
     }, true),
     eof: (block) => {
-      gifData.blocks.push(block)
+      gifData.eof = block
       console.log('eof', gifData)
       //toolbar.style.display = '';
       withProgress(() => player.pushFrame())(block)
@@ -189,10 +189,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       emitter.emit('load', gif)
     },
     pte: (block) => {
-      gifData.blocks.push(block)
+      gifData.exts.push(block)
     },
     unknown: (block) => {
-      gifData.blocks.push(block)
+      gifData.exts.push(block)
     }
   } as const
   gifParser.on('hdr', HANDER.hdr)
@@ -235,8 +235,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const load_setup = () => {
     gifData = {
       header: { width: gif.width, height: gif.height } as Header,
+      gces: [],
       imgs: [],
-      blocks: []
+      exts: []
     }
     currentData.transparency = null
     currentData.disposalMethod = null
