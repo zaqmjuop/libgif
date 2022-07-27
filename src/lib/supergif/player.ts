@@ -35,7 +35,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
   }
 
   get disposalRestoreFromIdx() {
-    return this.quote.viewer.frames.length - 1
+    return this.frameGroup.length - 1
   }
 
   /**
@@ -45,8 +45,8 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
   getNextFrameNo() {
     const delta = this.forward ? 1 : -1
     return (
-      (this.i + delta + this.quote.viewer.frames.length) %
-      this.quote.viewer.frames.length
+      (this.i + delta + this.frameGroup.length) %
+      this.frameGroup.length
     )
   }
 
@@ -91,7 +91,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
   }
 
   putFrame() {
-    if (this.i < 0 || this.i > this.quote.viewer.frames.length - 1) {
+    if (this.i < 0 || this.i > this.frameGroup.length - 1) {
       this.i = 0
     }
     const flag = this.i
