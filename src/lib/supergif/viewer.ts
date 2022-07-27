@@ -157,4 +157,12 @@ export class Viewer {
       this.ctx.scale(zoom, zoom)
     }
   }
+  pushFrame(delay: number | null) {
+    if (!this.frame) return
+    this.frames.push({
+      data: this.frame.getImageData(0, 0, this.quote.c_w, this.quote.c_h),
+      delay: delay || -1
+    })
+    this.frameOffsets.push({ x: 0, y: 0 })
+  }
 }

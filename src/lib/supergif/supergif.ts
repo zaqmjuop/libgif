@@ -3,7 +3,7 @@ import { Loader } from './loader'
 import { GifParser } from './parseGIF'
 import { Player } from './player'
 import { Stream } from './stream'
-import { Gif89aData, Hander, Header, Options, VP } from './type'
+import { GCExtBlock, Gif89aData, Hander, Header, Options, VP } from './type'
 import { Viewer } from './viewer'
 
 const SuperGif = (opts: Options & Partial<VP>) => {
@@ -150,7 +150,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       gifData.header = _hdr
       viewer.setSizes(_hdr.width, _hdr.height)
     }),
-    gce: withProgress((gce) => {
+    gce: withProgress((gce: GCExtBlock) => {
       gifData.blocks.push(gce)
       player.pushFrame()
       player.delay = gce.delayTime
@@ -242,7 +242,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     currentData.disposalMethod = null
     currentData.lastDisposalMethod = null
     viewer.frames = []
-    viewer.frame = null 
+    viewer.frame = null
     player.delay = null
     player.lastImg = void 0
     player.disposalRestoreFromIdx = null

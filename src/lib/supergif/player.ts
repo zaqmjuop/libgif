@@ -40,7 +40,10 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
    */
   getNextFrameNo() {
     const delta = this.forward ? 1 : -1
-    return (this.i + delta + this.quote.viewer.frames.length) % this.quote.viewer.frames.length
+    return (
+      (this.i + delta + this.quote.viewer.frames.length) %
+      this.quote.viewer.frames.length
+    )
   }
 
   step() {
@@ -131,7 +134,8 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
         // If we disposed every frame including first frame up to this point, then we have
         // no composited frame to restore to. In this case, restore to background instead.
         if (this.disposalRestoreFromIdx !== null) {
-          const data = this.quote.viewer.frames[this.disposalRestoreFromIdx].data
+          const data =
+            this.quote.viewer.frames[this.disposalRestoreFromIdx].data
           this.quote.viewer.frame?.putImageData(data, 0, 0)
         } else {
           this.quote.viewer.restoreBackgroundColor(this.lastImg)
@@ -191,16 +195,6 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     this.lastImg = img
   }
   pushFrame() {
-    if (!this.quote.viewer.frame) return
-    this.quote.viewer.frames.push({
-      data: this.quote.viewer.frame.getImageData(
-        0,
-        0,
-        this.quote.gifData.header.width,
-        this.quote.gifData.header.height
-      ),
-      delay: this.delay || -1
-    })
-    this.quote.viewer.frameOffsets.push({ x: 0, y: 0 })
+    this.quote.viewer.pushFrame(this.delay)
   }
 }
