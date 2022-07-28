@@ -86,7 +86,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       return gif
     }
   })
-  const canvas = viewer.canvas
 
   viewer.init()
   // canvas
@@ -238,7 +237,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get_playing: () => player.playing,
     get_current_frame: () => player.current_frame(),
 
-    get_canvas: () => canvas,
+    get_canvas: () => viewer.canvas,
     get_canvas_scale: itemGif.get_canvas_scale,
     get_loading: getLoading,
     get_auto_play: () => options,
