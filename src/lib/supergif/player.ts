@@ -127,6 +127,7 @@ export class Player extends Emitter<['complete']> {
     })
 
     if (imgData) {
+      // 绘制当前帧
       this.quote.viewer.putImageData(imgData, img.leftPos, img.topPos)
     }
 
@@ -169,6 +170,7 @@ export class Player extends Emitter<['complete']> {
     if (this.quote.viewer.frame) {
       const width = this.quote.viewer.canvas.width
       const height = this.quote.viewer.canvas.width
+      // 保存上一帧
       this.frameGroup.push({
         width,
         height,

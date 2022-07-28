@@ -142,16 +142,6 @@ export class Viewer {
       this.frameOffsets[flag].y = offset.y
     }
   }
-  onPutFrame = (e: { flag: number; data: ImageData }) => {
-    if (this.tmpCanvas) {
-      const offset = this.frameOffsets[e.flag]
-      const data = e.data
-
-      this.tmpCanvas.getContext('2d')?.putImageData(data, offset.x, offset.y)
-    }
-    this.ctx.globalCompositeOperation = 'copy'
-    this.ctx.drawImage(this.tmpCanvas, 0, 0)
-  }
   pushFrame(delay: number | null) {
     if (!this.frame) return
     this.frames.push({
@@ -189,6 +179,17 @@ export class Viewer {
   }
   putImageData = (data: ImageData, left: number, top: number) => {
     this.frame?.putImageData(data, left, top)
+  }
+
+  onPutFrame = (e: { flag: number; data: ImageData }) => {
+    if (this.tmpCanvas) {
+      const offset = this.frameOffsets[e.flag]
+      const data = e.data
+
+      this.tmpCanvas.getContext('2d')?.putImageData(data, offset.x, offset.y)
+    }
+    this.ctx.globalCompositeOperation = 'copy'
+    this.ctx.drawImage(this.tmpCanvas, 0, 0)
   }
   setupFrame() {
     this.frame = this.tmpCanvas.getContext('2d')
