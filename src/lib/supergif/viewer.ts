@@ -78,6 +78,12 @@ export class Viewer {
     this.tmpCanvas.style.height = h + 'px'
     this.tmpCanvas.getContext('2d')?.setTransform(1, 0, 0, 1, 0, 0)
   }
+  resize = () => {
+    if (!(this.quote.c_w && this.quote.c_h)) {
+      const zoom = this.quote.get_canvas_scale()
+      this.ctx.scale(zoom, zoom)
+    }
+  }
   doShowProgress(pos: number, length: number, draw: boolean) {
     if (!draw || !this.showProgressBar) return
     let height = this.quote.progressBarHeight
@@ -101,21 +107,18 @@ export class Viewer {
       this.quote.progressBarForegroundColor || this.ctx.fillStyle
     this.ctx.fillRect(0, top, mid, height)
   }
-  doLoadError(originOfError: string) {
-    const drawError = () => {
-      this.ctx.fillStyle = 'black'
-      const w = this.quote.c_w
-      const h = this.quote.c_h
-      this.ctx.fillRect(0, 0, w, h)
-      this.ctx.strokeStyle = 'red'
-      this.ctx.lineWidth = 3
-      this.ctx.moveTo(0, 0)
-      this.ctx.lineTo(w, h)
-      this.ctx.moveTo(0, h)
-      this.ctx.lineTo(w, 0)
-      this.ctx.stroke()
-    }
-    drawError()
+  doLoadError = (originOfError: string) => {
+    this.ctx.fillStyle = 'black'
+    const w = this.canvas.width
+    const h = this.canvas.height
+    this.ctx.fillRect(0, 0, w, h)
+    this.ctx.strokeStyle = 'red'
+    this.ctx.lineWidth = 3
+    this.ctx.moveTo(0, 0)
+    this.ctx.lineTo(w, h)
+    this.ctx.moveTo(0, h)
+    this.ctx.lineTo(w, 0)
+    this.ctx.stroke()
   }
   doDecodeProgress(pos: number, length: number, draw: boolean) {
     this.doShowProgress(pos, length, draw)
@@ -151,16 +154,10 @@ export class Viewer {
     this.ctx.globalCompositeOperation = 'copy'
     this.ctx.drawImage(this.tmpCanvas, 0, 0)
   }
-  resize = () => {
-    if (!(this.quote.c_w && this.quote.c_h)) {
-      const zoom = this.quote.get_canvas_scale()
-      this.ctx.scale(zoom, zoom)
-    }
-  }
   pushFrame(delay: number | null) {
     if (!this.frame) return
     this.frames.push({
-      data: this.frame.getImageData(0, 0, this.quote.c_w, this.quote.c_h),
+      data: this.frame.getImageData(0, 0, this.canvas.width, this.canvas.height),
       delay: delay || -1
     })
     this.frameOffsets.push({ x: 0, y: 0 })

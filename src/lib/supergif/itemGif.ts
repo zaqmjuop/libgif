@@ -1,7 +1,9 @@
 import { Emitter } from './Emitter'
 import { Frame, Gif89aData, Header, ImgBlock, Rect } from './type'
 
-interface Quote {}
+interface Quote {
+  max_width?: number
+}
 
 export class ItemGif extends Emitter {
   readonly quote: Quote
@@ -19,5 +21,14 @@ export class ItemGif extends Emitter {
       imgs: [],
       exts: []
     }
+  }
+  get_canvas_scale = () => {
+    let scale = 1
+    const width = this.data.header.width
+    const max_width = this.quote.max_width
+    if (max_width && width && width > max_width) {
+      scale = max_width / width
+    }
+    return scale
   }
 }

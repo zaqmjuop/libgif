@@ -35,23 +35,16 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const gif = options.gif
   const auto_play =
     options.auto_play || gif.getAttribute('rel:auto_play') !== '0'
-  let itemGif = new ItemGif({}, { width: gif.width, height: gif.height })
+  let itemGif = new ItemGif(
+    { max_width: options.max_width },
+    { width: gif.width, height: gif.height }
+  )
   // global func
-
-  const get_canvas_scale = () => {
-    let scale = 1
-    const width = itemGif.data.header.width
-    const max_width = options.max_width
-    if (max_width && width && width > max_width) {
-      scale = max_width / width
-    }
-    return scale
-  }
   // global func
   // canvas
   const viewer = new Viewer({
     get get_canvas_scale() {
-      return get_canvas_scale
+      return itemGif.get_canvas_scale
     },
     drawWhileLoading: options.draw_while_loading !== false,
     showProgressBar: options.show_progress_bar !== false,
@@ -154,8 +147,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       //toolbar.style.display = '';
       withProgress(() => player.pushFrame())(block)
       if (!(options.c_w && options.c_h)) {
-        canvas.width = itemGif.data.header.width * get_canvas_scale()
-        canvas.height = itemGif.data.header.height * get_canvas_scale()
+        viewer.setSizes(itemGif.data.header.width, itemGif.data.header.height)
       }
       if (!loadError) {
         player.init()
@@ -209,7 +201,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   }
 
   const load_setup = () => {
-    itemGif = new ItemGif({}, { width: gif.width, height: gif.height })
+    itemGif = new ItemGif(
+      { max_width: options.max_width },
+      { width: gif.width, height: gif.height }
+    )
     viewer.frames = []
     player.frameGroup = []
     player.delay = null
@@ -246,7 +241,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get_current_frame: () => player.current_frame(),
 
     get_canvas: () => canvas,
-    get_canvas_scale: () => get_canvas_scale(),
+    get_canvas_scale: itemGif.get_canvas_scale,
     get_loading: getLoading,
     get_auto_play: () => options,
     load_url,
