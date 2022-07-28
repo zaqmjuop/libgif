@@ -229,10 +229,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   return {
     player,
     // play controls
-    play: player.play.bind(player),
-    pause: player.pause.bind(player),
-    move_relative: player.move_relative.bind(player),
-    move_to: player.move_to.bind(player),
+    play: player.play,
+    pause: player.pause,
+    move_relative: player.putFrameBy,
+    move_to: player.move_to,
     // getters for instance vars
     get_playing: () => player.playing,
     get_current_frame: () => player.current_frame(),
@@ -244,7 +244,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     load_url,
     load,
     load_raw,
-    set_frame_offset: viewer.setFrameOffset.bind(viewer),
+    set_frame_offset: viewer.setFrameOffset,
     get frames() {
       return viewer.frames
     },

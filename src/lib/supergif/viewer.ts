@@ -133,7 +133,7 @@ export class Viewer {
         lastImg.height
       )
   }
-  setFrameOffset(flag: number, offset: Offset) {
+  setFrameOffset = (flag: number, offset: Offset) => {
     if (!this.frameOffsets[flag]) {
       this.frameOffsets[flag] = offset
       return

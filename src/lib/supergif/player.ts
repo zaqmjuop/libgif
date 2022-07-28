@@ -37,10 +37,6 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     return this.frameGroup.length - 1
   }
 
-  get move_relative() {
-    return this.putFrameBy
-  }
-
   /**
    * Gets the index of the frame "up next".
    * @returns {number}
@@ -70,7 +66,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
       : setTimeout(this.goOn, delay)
   }
 
-  private putFrameBy(amount: number) {
+  putFrameBy = (amount: number) => {
     // XXX: Name is confusing.
     this.i = this.i + amount
     this.putFrame()
@@ -87,12 +83,12 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     this.emit('putFrame', { flag: this.i, data })
   }
 
-  play() {
+  play = () => {
     this.playing = true
     this.goOn()
   }
 
-  pause() {
+  pause = () => {
     this.playing = false
   }
   init() {
@@ -102,7 +98,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
   current_frame() {
     return this.i
   }
-  move_to(frame_idx) {
+  move_to = (frame_idx) => {
     this.i = frame_idx
     this.putFrame()
   }
