@@ -177,6 +177,21 @@ export class Viewer {
       return imgData
     }
   }
+  initCtxScale() {
+    if (!this.ctx_scaled) {
+      const scale = this.quote.get_canvas_scale()
+      this.ctx.scale(scale, scale)
+      this.ctx_scaled = true
+    }
+  }
+  loadingRender(auto_play: boolean) {
+    // We could use the on-page canvas directly, except that we draw a progress
+    // bar for each image chunk (not just the final image).
+    if (this.drawWhileLoading) {
+      this.tmpCanvas && this.ctx.drawImage(this.tmpCanvas, 0, 0)
+      this.drawWhileLoading = auto_play
+    }
+  }
   putImageData = (data: ImageData, left: number, top: number) => {
     this.frame?.putImageData(data, left, top)
   }
@@ -193,21 +208,5 @@ export class Viewer {
   }
   setupFrame() {
     this.frame = this.tmpCanvas.getContext('2d')
-  }
-  initCtxScale() {
-    if (!this.ctx_scaled) {
-      const scale = this.quote.get_canvas_scale()
-      this.ctx.scale(scale, scale)
-      this.ctx_scaled = true
-    }
-  }
-
-  loadingRender(auto_play: boolean) {
-    // We could use the on-page canvas directly, except that we draw a progress
-    // bar for each image chunk (not just the final image).
-    if (this.drawWhileLoading) {
-      this.tmpCanvas && this.ctx.drawImage(this.tmpCanvas, 0, 0)
-      this.drawWhileLoading = auto_play
-    }
   }
 }
