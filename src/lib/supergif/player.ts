@@ -127,7 +127,6 @@ export class Player extends Emitter<['complete']> {
   }
   doImg = (img: ImgBlock) => {
     if (this.quote.gifData.gces.length === 1) {
-      console.log('doImg')
       this.quote.viewer.setupFrame()
     }
 

@@ -132,7 +132,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     eof: (block) => {
       itemGif.data.eof = block
-      console.log('eof')
       //toolbar.style.display = '';
       player.pushFrame()
       viewer.setSizes()
