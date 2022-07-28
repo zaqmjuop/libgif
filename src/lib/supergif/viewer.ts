@@ -85,17 +85,17 @@ export class Viewer {
       this.ctx.scale(zoom, zoom)
     }
   }
-  doShowProgress(pos: number, length: number) {
-    if (!this.showProgressBar) return
+  doShowProgress(percent: number) {
+    if (percent > 1 || percent < 0 || !this.showProgressBar) return
     let height = this.quote.progressBarHeight
     let mid, top, width
     const scale = this.ctx_scaled ? this.quote.get_canvas_scale() : 1
     if (this.quote.is_vp) {
       top = (this.quote.vp_t + this.quote.vp_h - height) / scale
-      mid = this.quote.vp_l / scale + (pos / length) * (this.quote.vp_w / scale)
+      mid = this.quote.vp_l / scale + percent * (this.quote.vp_w / scale)
     } else {
       top = (this.canvas.height - height) / scale
-      mid = ((pos / length) * this.canvas.width) / scale
+      mid = (percent * this.canvas.width) / scale
     }
     height = height / scale
     width = this.canvas.width / scale

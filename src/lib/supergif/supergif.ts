@@ -143,9 +143,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     }
   } as const
   const withProgress = (fn: Function) => {
-    return (block) => {
-      fn(block)
-      viewer.doShowProgress(gifParser.pos, gifParser.len)
+    return (...args) => {
+      fn(...args)
+      viewer.doShowProgress(gifParser.pos / gifParser.len)
     }
   }
   gifParser.on('hdr', withProgress(HANDER.hdr))
@@ -172,7 +172,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     }
   })
   loader.on('progress', (e: ProgressEvent<EventTarget>) => {
-    e.lengthComputable && viewer.doShowProgress(e.loaded, e.total, true)
+    e.lengthComputable && viewer.doShowProgress(e.loaded / e.total)
   })
   loader.on('error', (message: string) => {
     loadError = message
