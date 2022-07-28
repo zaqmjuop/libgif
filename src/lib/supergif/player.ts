@@ -130,7 +130,11 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     }
   }
   doImg = (img: ImgBlock) => {
-    this.quote.viewer.setupFrame()
+    if (this.quote.gifData.gces.length === 1) {
+      console.log('doImg')
+      this.quote.viewer.setupFrame()
+    }
+
     const gce = this.quote.gifData.gces[this.quote.gifData.gces.length - 1]
     if (gce) {
       this.disposal(gce.disposalMethod)

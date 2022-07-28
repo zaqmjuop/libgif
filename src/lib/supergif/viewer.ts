@@ -129,16 +129,16 @@ export class Viewer {
         lastImg.height
       )
   }
-  setFrameOffset(frame: number, offset: Offset) {
-    if (!this.frameOffsets[frame]) {
-      this.frameOffsets[frame] = offset
+  setFrameOffset(flag: number, offset: Offset) {
+    if (!this.frameOffsets[flag]) {
+      this.frameOffsets[flag] = offset
       return
     }
     if (typeof offset.x !== 'undefined') {
-      this.frameOffsets[frame].x = offset.x
+      this.frameOffsets[flag].x = offset.x
     }
     if (typeof offset.y !== 'undefined') {
-      this.frameOffsets[frame].y = offset.y
+      this.frameOffsets[flag].y = offset.y
     }
   }
   onPutFrame = (e: { flag: number; data: ImageData }) => {
@@ -165,7 +165,9 @@ export class Viewer {
     })
     this.frameOffsets.push({ x: 0, y: 0 })
   }
-  imgBlockToImageData = (img: ImgBlock & { ct: number[][], transparency: number | null }) => {
+  imgBlockToImageData = (
+    img: ImgBlock & { ct: number[][]; transparency: number | null }
+  ) => {
     if (this.frame) {
       const imgData = this.frame.getImageData(
         img.leftPos,
@@ -189,9 +191,7 @@ export class Viewer {
     this.frame?.putImageData(data, left, top)
   }
   setupFrame() {
-    if (!this.frame && this.tmpCanvas) {
-      this.frame = this.tmpCanvas.getContext('2d')
-    }
+    this.frame = this.tmpCanvas.getContext('2d')
   }
   initCtxScale() {
     if (!this.ctx_scaled) {
@@ -206,7 +206,7 @@ export class Viewer {
     // bar for each image chunk (not just the final image).
     if (this.drawWhileLoading) {
       this.tmpCanvas && this.ctx.drawImage(this.tmpCanvas, 0, 0)
-      this.drawWhileLoading =  auto_play
+      this.drawWhileLoading = auto_play
     }
   }
 }
