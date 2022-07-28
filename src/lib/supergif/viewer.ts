@@ -63,11 +63,12 @@ export class Viewer {
       parent.removeChild(this.quote.gif)
     }
 
-    if (this.quote.c_w && this.quote.c_h)
-      this.setSizes(this.quote.c_w, this.quote.c_h)
+    this.setSizes()
     this.initialized = true
   }
-  setSizes(w: number, h: number) {
+  setSizes() {
+    const w = this.quote.c_w
+    const h = this.quote.c_h
     const scale = this.quote.get_canvas_scale()
     this.canvas.width = w * scale
     this.canvas.height = h * scale
@@ -157,7 +158,12 @@ export class Viewer {
   pushFrame(delay: number | null) {
     if (!this.frame) return
     this.frames.push({
-      data: this.frame.getImageData(0, 0, this.canvas.width, this.canvas.height),
+      data: this.frame.getImageData(
+        0,
+        0,
+        this.canvas.width,
+        this.canvas.height
+      ),
       delay: delay || -1
     })
     this.frameOffsets.push({ x: 0, y: 0 })

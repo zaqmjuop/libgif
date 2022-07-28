@@ -123,7 +123,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const HANDER: Hander = {
     hdr: withProgress((_hdr) => {
       itemGif.data.header = _hdr
-      viewer.setSizes(_hdr.width, _hdr.height)
+      viewer.setSizes()
     }),
     gce: withProgress((gce: GCExtBlock) => {
       itemGif.data.gces.push(gce)
@@ -146,9 +146,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       console.log('eof')
       //toolbar.style.display = '';
       withProgress(() => player.pushFrame())(block)
-      if (!(options.c_w && options.c_h)) {
-        viewer.setSizes(itemGif.data.header.width, itemGif.data.header.height)
-      }
+      viewer.setSizes()
       if (!loadError) {
         player.init()
       }
