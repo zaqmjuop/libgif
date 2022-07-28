@@ -1,4 +1,5 @@
 import { Emitter } from './Emitter'
+import { ItemGif } from './itemGif'
 import { Loader } from './loader'
 import { GifParser } from './parseGIF'
 import { Player } from './player'
@@ -34,17 +35,12 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const gif = options.gif
   const auto_play =
     options.auto_play || gif.getAttribute('rel:auto_play') !== '0'
-  let gifData: Gif89aData = {
-    header: { width: gif.width, height: gif.height } as Header,
-    gces: [],
-    imgs: [],
-    exts: []
-  }
+  let itemGif = new ItemGif({}, { width: gif.width, height: gif.height })
   // global func
 
   const get_canvas_scale = () => {
     let scale = 1
-    const width = gifData?.header?.width || 0
+    const width = itemGif.data.header.width
     const max_width = options.max_width
     if (max_width && width && width > max_width) {
       scale = max_width / width
@@ -88,10 +84,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       return options.vp_w
     },
     get c_w() {
-      return options.c_w || gifData.header.width || gif.width
+      return options.c_w || itemGif.data.header.width || gif.width
     },
     get c_h() {
-      return options.c_h || gifData.header.height || gif.height
+      return options.c_h || itemGif.data.header.height || gif.height
     },
     get gif() {
       return gif
@@ -108,7 +104,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     loopDelay: options.loop_delay || 0,
     auto_play,
     get gifData() {
-      return gifData
+      return itemGif.data
     },
     viewer
   })
@@ -133,33 +129,33 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const gifParser = new GifParser()
   const HANDER: Hander = {
     hdr: withProgress((_hdr) => {
-      gifData.header = _hdr
+      itemGif.data.header = _hdr
       viewer.setSizes(_hdr.width, _hdr.height)
     }),
     gce: withProgress((gce: GCExtBlock) => {
-      gifData.gces.push(gce)
+      itemGif.data.gces.push(gce)
       player.pushFrame()
       // We don't have much to do with the rest of GCE.
     }),
     com: withProgress((block) => {
-      gifData.exts.push(block)
+      itemGif.data.exts.push(block)
     }),
     // I guess that's all for now.
     app: withProgress((appBlock) => {
-      gifData.app = appBlock
+      itemGif.data.app = appBlock
     }),
     img: withProgress((imageBlock) => {
-      gifData.imgs.push(imageBlock)
+      itemGif.data.imgs.push(imageBlock)
       player.doImg(imageBlock)
     }, true),
     eof: (block) => {
-      gifData.eof = block
+      itemGif.data.eof = block
       console.log('eof')
       //toolbar.style.display = '';
       withProgress(() => player.pushFrame())(block)
       if (!(options.c_w && options.c_h)) {
-        canvas.width = gifData.header.width * get_canvas_scale()
-        canvas.height = gifData.header.height * get_canvas_scale()
+        canvas.width = itemGif.data.header.width * get_canvas_scale()
+        canvas.height = itemGif.data.header.height * get_canvas_scale()
       }
       if (!loadError) {
         player.init()
@@ -167,10 +163,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       emitter.emit('load', gif)
     },
     pte: (block) => {
-      gifData.exts.push(block)
+      itemGif.data.exts.push(block)
     },
     unknown: (block) => {
-      gifData.exts.push(block)
+      itemGif.data.exts.push(block)
     }
   } as const
   gifParser.on('hdr', HANDER.hdr)
@@ -213,12 +209,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   }
 
   const load_setup = () => {
-    gifData = {
-      header: { width: gif.width, height: gif.height } as Header,
-      gces: [],
-      imgs: [],
-      exts: []
-    }
+    itemGif = new ItemGif({}, { width: gif.width, height: gif.height })
     viewer.frames = []
     player.frameGroup = []
     player.delay = null
