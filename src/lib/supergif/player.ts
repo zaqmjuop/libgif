@@ -164,6 +164,10 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     this.lastImg = img
   }
   pushFrame() {
+    const gce = this.quote.gifData.gces[this.quote.gifData.gces.length - 1]
+    if (gce) {
+      this.delay = gce.delayTime
+    }
     this.quote.viewer.pushFrame(this.delay)
   }
 }

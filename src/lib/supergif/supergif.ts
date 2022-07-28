@@ -139,7 +139,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     gce: withProgress((gce: GCExtBlock) => {
       gifData.gces.push(gce)
       player.pushFrame()
-      player.delay = gce.delayTime
       // We don't have much to do with the rest of GCE.
     }),
     com: withProgress((block) => {
