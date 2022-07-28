@@ -40,6 +40,7 @@ export class Viewer {
   }
   init() {
     const parent = this.quote.gif.parentNode
+    this.canvas.id = '重构'
 
     if (parent) {
       const div = document.createElement('div')
