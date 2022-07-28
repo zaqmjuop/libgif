@@ -72,7 +72,7 @@ export class Player extends Emitter<['complete']> {
     this.putFrame()
   }
 
-  putFrame(flag?: number) {
+  private putFrame(flag?: number) {
     if (typeof flag === 'number') {
       this.i = flag
     }
@@ -102,29 +102,7 @@ export class Player extends Emitter<['complete']> {
     this.i = frame_idx
     this.putFrame()
   }
-  disposal(method: number | null) {
-    switch (method) {
-      case DisposalMethod.previous:
-        // Restore to previous
-        // If we disposed every frame including first frame up to this point, then we have
-        // no composited frame to restore to. In this case, restore to background instead.
-        // 如果到目前为止我们处理了包括第一帧在内的每一帧，那么我们就没有要还原的合成帧。在这种情况下，请改为还原到背景。
-        if (this.disposalRestoreFromIdx >= 0) {
-          const data =
-            this.quote.viewer.frames[this.disposalRestoreFromIdx].data
-          this.quote.viewer.frame?.putImageData(data, 0, 0)
-        } else {
-          this.quote.viewer.restoreBackgroundColor(this.lastImg)
-        }
-        break
-      case DisposalMethod.backgroundColor:
-        // Restore to background color
-        // Browser implementations historically restore to transparent; we do the same.
-        // http://www.wizards-toolkit.org/discourse-server/viewtopic.php?f=1&t=21172#p86079
-        this.quote.viewer.restoreBackgroundColor(this.lastImg)
-        break
-    }
-  }
+
   doImg = (img: ImgBlock) => {
     if (this.quote.gifData.gces.length === 1) {
       this.quote.viewer.setupFrame()
@@ -158,6 +136,30 @@ export class Player extends Emitter<['complete']> {
 
     this.lastImg = img
   }
+  disposal(method: number | null) {
+    switch (method) {
+      case DisposalMethod.previous:
+        // Restore to previous
+        // If we disposed every frame including first frame up to this point, then we have
+        // no composited frame to restore to. In this case, restore to background instead.
+        // 如果到目前为止我们处理了包括第一帧在内的每一帧，那么我们就没有要还原的合成帧。在这种情况下，请改为还原到背景。
+        if (this.disposalRestoreFromIdx >= 0) {
+          const data =
+            this.quote.viewer.frames[this.disposalRestoreFromIdx].data
+          this.quote.viewer.frame?.putImageData(data, 0, 0)
+        } else {
+          this.quote.viewer.restoreBackgroundColor(this.lastImg)
+        }
+        break
+      case DisposalMethod.backgroundColor:
+        // Restore to background color
+        // Browser implementations historically restore to transparent; we do the same.
+        // http://www.wizards-toolkit.org/discourse-server/viewtopic.php?f=1&t=21172#p86079
+        this.quote.viewer.restoreBackgroundColor(this.lastImg)
+        break
+    }
+  }
+
   pushFrame() {
     const gce = this.quote.gifData.gces[this.quote.gifData.gces.length - 1]
     if (gce) {
