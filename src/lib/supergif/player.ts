@@ -25,7 +25,7 @@ export class Player extends Emitter<['complete']> {
   delay: null | number = null
 
   lastImg?: Rect & Partial<ImgBlock>
-  frameGroup: Frame[] = []
+  frameGroup: Array<Frame & Rect> = []
   readonly quote: PlayerQuote
 
   constructor(quote: PlayerQuote) {
@@ -125,8 +125,8 @@ export class Player extends Emitter<['complete']> {
       transparency,
       ...img
     })
+
     if (imgData) {
-      this.frameGroup.push({ data: imgData, delay: this.delay || -1 })
       this.quote.viewer.putImageData(imgData, img.leftPos, img.topPos)
     }
 
@@ -165,6 +165,20 @@ export class Player extends Emitter<['complete']> {
     if (gce) {
       this.delay = gce.delayTime
     }
+
+    if (this.quote.viewer.frame) {
+      const width = this.quote.viewer.canvas.width
+      const height = this.quote.viewer.canvas.width
+      this.frameGroup.push({
+        width,
+        height,
+        leftPos: 0,
+        topPos: 0,
+        data: this.quote.viewer.frame?.getImageData(0, 0, width, height),
+        delay: this.delay || -1
+      })
+    }
+
     this.quote.viewer.pushFrame(this.delay)
   }
 }
