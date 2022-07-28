@@ -21,7 +21,7 @@ export class Viewer {
   readonly canvas = document.createElement('canvas')
   readonly ctx: CanvasRenderingContext2D
   readonly utilCanvas = document.createElement('canvas')
-  readonly utilCtx: CanvasRenderingContext2D | null = null
+  readonly utilCtx: CanvasRenderingContext2D
   readonly toolbar = document.createElement('div')
   readonly quote: ViewerQuote
   initialized = false
@@ -33,7 +33,7 @@ export class Viewer {
   constructor(quote: ViewerQuote) {
     this.quote = quote
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
-    this.utilCtx = this.utilCanvas.getContext('2d')
+    this.utilCtx = this.utilCanvas.getContext('2d') as CanvasRenderingContext2D
     this.drawWhileLoading = quote.drawWhileLoading
   }
   get showProgressBar() {
@@ -124,7 +124,7 @@ export class Viewer {
   }
   restoreBackgroundColor(lastImg?: Rect & Partial<ImgBlock>) {
     lastImg &&
-      this.utilCtx?.clearRect(
+      this.utilCtx.clearRect(
         lastImg.leftPos,
         lastImg.topPos,
         lastImg.width,
@@ -144,7 +144,6 @@ export class Viewer {
     }
   }
   pushFrame(delay: number | null) {
-    if (!this.utilCtx) return
     this.frames.push({
       data: this.utilCtx.getImageData(
         0,
@@ -159,24 +158,22 @@ export class Viewer {
   imgBlockToImageData = (
     img: ImgBlock & { ct: number[][]; transparency: number | null }
   ) => {
-    if (this.utilCtx) {
-      const imgData = this.utilCtx.getImageData(
-        img.leftPos,
-        img.topPos,
-        img.width,
-        img.height
-      ) //apply color table colors
-      img.pixels.forEach((pixel, i) => {
-        // imgData.data === [R,G,B,A,R,G,B,A,...]
-        if (pixel !== img.transparency && img.ct) {
-          imgData.data[i * 4 + 0] = img.ct[pixel][0]
-          imgData.data[i * 4 + 1] = img.ct[pixel][1]
-          imgData.data[i * 4 + 2] = img.ct[pixel][2]
-          imgData.data[i * 4 + 3] = this.opacity // Opaque.
-        }
-      })
-      return imgData
-    }
+    const imgData = this.utilCtx.getImageData(
+      img.leftPos,
+      img.topPos,
+      img.width,
+      img.height
+    ) //apply color table colors
+    img.pixels.forEach((pixel, i) => {
+      // imgData.data === [R,G,B,A,R,G,B,A,...]
+      if (pixel !== img.transparency && img.ct) {
+        imgData.data[i * 4 + 0] = img.ct[pixel][0]
+        imgData.data[i * 4 + 1] = img.ct[pixel][1]
+        imgData.data[i * 4 + 2] = img.ct[pixel][2]
+        imgData.data[i * 4 + 3] = this.opacity // Opaque.
+      }
+    })
+    return imgData
   }
   initCtxScale() {
     if (!this.ctx_scaled) {
@@ -194,7 +191,7 @@ export class Viewer {
     }
   }
   putImageData = (data: ImageData, left: number, top: number) => {
-    this.utilCtx?.putImageData(data, left, top)
+    this.utilCtx.putImageData(data, left, top)
   }
 
   onPutFrame = (e: { flag: number; data: ImageData }) => {
