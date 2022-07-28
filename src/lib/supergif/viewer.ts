@@ -21,7 +21,7 @@ export class Viewer {
   readonly canvas = document.createElement('canvas')
   readonly ctx: CanvasRenderingContext2D
   readonly utilCanvas = document.createElement('canvas')
-  utilCtx: CanvasRenderingContext2D | null = null
+  readonly utilCtx: CanvasRenderingContext2D | null = null
   readonly toolbar = document.createElement('div')
   readonly quote: ViewerQuote
   initialized = false
@@ -33,6 +33,7 @@ export class Viewer {
   constructor(quote: ViewerQuote) {
     this.quote = quote
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
+    this.utilCtx = this.utilCanvas.getContext('2d')
     this.drawWhileLoading = quote.drawWhileLoading
   }
   get showProgressBar() {
@@ -205,8 +206,5 @@ export class Viewer {
     }
     this.ctx.globalCompositeOperation = 'copy'
     this.ctx.drawImage(this.utilCanvas, 0, 0)
-  }
-  setupFrame() {
-    this.utilCtx = this.utilCanvas.getContext('2d')
   }
 }

@@ -76,7 +76,7 @@ export class Player extends Emitter<['complete']> {
     if (typeof flag === 'number') {
       this.i = flag
     }
-    if (this.i < 0 || this.i > this.frameGroup.length - 1) {
+    if (this.i < 0 || this.i >= this.quote.viewer.frames.length) {
       this.i = 0
     }
     const data = this.quote.viewer.frames[this.i].data
@@ -104,9 +104,6 @@ export class Player extends Emitter<['complete']> {
   }
 
   doImg = (img: ImgBlock) => {
-    if (this.quote.gifData.gces.length === 1) {
-      this.quote.viewer.setupFrame()
-    }
 
     const gce = this.quote.gifData.gces[this.quote.gifData.gces.length - 1]
     if (gce) {
@@ -180,7 +177,8 @@ export class Player extends Emitter<['complete']> {
         delay: this.delay || -1
       })
     }
-
-    this.quote.viewer.pushFrame(this.delay)
+    if (this.quote.gifData.imgs.length) {
+      this.quote.viewer.pushFrame(this.delay)
+    }
   }
 }
