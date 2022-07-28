@@ -85,8 +85,8 @@ export class Viewer {
       this.ctx.scale(zoom, zoom)
     }
   }
-  doShowProgress(pos: number, length: number, draw: boolean) {
-    if (!draw || !this.showProgressBar) return
+  doShowProgress(pos: number, length: number) {
+    if (!this.showProgressBar) return
     let height = this.quote.progressBarHeight
     let mid, top, width
     const scale = this.ctx_scaled ? this.quote.get_canvas_scale() : 1

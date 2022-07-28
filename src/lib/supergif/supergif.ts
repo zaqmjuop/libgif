@@ -142,20 +142,20 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       itemGif.data.exts.push(block)
     }
   } as const
-  const withProgress = (fn: Function, draw?:boolean) => {
+  const withProgress = (fn: Function) => {
     return (block) => {
       fn(block)
-      viewer.doShowProgress(gifParser.pos, gifParser.len, !!draw)
+      viewer.doShowProgress(gifParser.pos, gifParser.len)
     }
   }
   gifParser.on('hdr', withProgress(HANDER.hdr))
-  gifParser.on('gce', withProgress(HANDER.gce))
-  gifParser.on('com', withProgress(HANDER.com))
-  gifParser.on('app', withProgress(HANDER.app))
-  gifParser.on('img', withProgress(HANDER.img, true))
+  gifParser.on('gce', HANDER.gce)
+  gifParser.on('com', HANDER.com)
+  gifParser.on('app', HANDER.app)
+  gifParser.on('img', withProgress(HANDER.img))
   gifParser.on('eof', withProgress(HANDER.eof))
-  gifParser.on('pte', withProgress(HANDER.pte))
-  gifParser.on('unknown', withProgress(HANDER.unknown))
+  gifParser.on('pte', HANDER.pte)
+  gifParser.on('unknown', HANDER.unknown)
 
   const loader = new Loader()
   loader.on('loadstart', () => {})
