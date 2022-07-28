@@ -121,9 +121,6 @@ export class Viewer {
     this.ctx.lineTo(w, 0)
     this.ctx.stroke()
   }
-  doDecodeProgress(pos: number, length: number, draw: boolean) {
-    this.doShowProgress(pos, length, draw)
-  }
   restoreBackgroundColor(lastImg?: Rect & Partial<ImgBlock>) {
     lastImg &&
       this.frame?.clearRect(

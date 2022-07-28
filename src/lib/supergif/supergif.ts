@@ -103,45 +103,32 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   // loader
   const gifParser = new GifParser()
 
-  /**
-   * @param{boolean=} draw Whether to draw progress bar or not; this is not idempotent because of translucency.
-   *                       Note that this means that the text will be unsynchronized with the progress bar on non-frames;
-   *                       but those are typically so small (GCE etc.) that it doesn't really matter. TODO: Do this properly.
-   */
-  const withProgress = (fn: Function, draw = false) => {
-    return (block) => {
-      fn(block)
-      viewer.doDecodeProgress(gifParser.pos, gifParser.len, draw)
-    }
-  }
-
-
   const HANDER: Hander = {
-    hdr: withProgress((_hdr) => {
+    hdr: (_hdr) => {
       itemGif.data.header = _hdr
       viewer.setSizes()
-    }),
-    gce: withProgress((gce: GCExtBlock) => {
+    },
+    gce: (gce: GCExtBlock) => {
       itemGif.data.gces.push(gce)
       player.pushFrame()
       // We don't have much to do with the rest of GCE.
-    }),
-    com: withProgress((block) => {
+    },
+    com: (block) => {
       itemGif.data.exts.push(block)
-    }),
+    },
     // I guess that's all for now.
-    app: withProgress((appBlock) => {
+    app: (appBlock) => {
       itemGif.data.app = appBlock
-    }),
-    img: withProgress((imageBlock) => {
+    },
+    img: (imageBlock) => {
       itemGif.data.imgs.push(imageBlock)
       player.doImg(imageBlock)
-    }, true),
+    },
     eof: (block) => {
       itemGif.data.eof = block
       console.log('eof')
       //toolbar.style.display = '';
-      withProgress(() => player.pushFrame())(block)
+      player.pushFrame()
       viewer.setSizes()
       if (!loadError) {
         player.init()
@@ -155,21 +142,27 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       itemGif.data.exts.push(block)
     }
   } as const
-  gifParser.on('hdr', HANDER.hdr)
-  gifParser.on('gce', HANDER.gce)
-  gifParser.on('com', HANDER.com)
-  gifParser.on('app', HANDER.app)
-  gifParser.on('img', HANDER.img)
-  gifParser.on('eof', HANDER.eof)
-  gifParser.on('pte', HANDER.pte)
-  gifParser.on('unknown', HANDER.unknown)
+  const withProgress = (fn: Function, draw?:boolean) => {
+    return (block) => {
+      fn(block)
+      viewer.doShowProgress(gifParser.pos, gifParser.len, !!draw)
+    }
+  }
+  gifParser.on('hdr', withProgress(HANDER.hdr))
+  gifParser.on('gce', withProgress(HANDER.gce))
+  gifParser.on('com', withProgress(HANDER.com))
+  gifParser.on('app', withProgress(HANDER.app))
+  gifParser.on('img', withProgress(HANDER.img, true))
+  gifParser.on('eof', withProgress(HANDER.eof))
+  gifParser.on('pte', withProgress(HANDER.pte))
+  gifParser.on('unknown', withProgress(HANDER.unknown))
 
   const loader = new Loader()
   loader.on('loadstart', () => {})
   // XXX: There's probably a better way to handle catching exceptions when
   // callbacks are involved.
   loader.on('load', (data: string | Uint8Array) => {
-  const stream = new Stream(data)
+    const stream = new Stream(data)
     try {
       gifParser.parse(stream)
     } catch (err) {
