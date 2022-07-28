@@ -108,21 +108,27 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       itemGif.data.header = _hdr
       viewer.setSizes()
     },
+    // I guess that's all for now.
+    app: (appBlock) => {
+      itemGif.data.app = appBlock
+    },
     gce: (gce: GCExtBlock) => {
       itemGif.data.gces.push(gce)
       player.pushFrame()
       // We don't have much to do with the rest of GCE.
     },
-    com: (block) => {
-      itemGif.data.exts.push(block)
-    },
-    // I guess that's all for now.
-    app: (appBlock) => {
-      itemGif.data.app = appBlock
-    },
     img: (imageBlock) => {
       itemGif.data.imgs.push(imageBlock)
       player.doImg(imageBlock)
+    },
+    com: (block) => {
+      itemGif.data.exts.push(block)
+    },
+    pte: (block) => {
+      itemGif.data.exts.push(block)
+    },
+    unknown: (block) => {
+      itemGif.data.exts.push(block)
     },
     eof: (block) => {
       itemGif.data.eof = block
@@ -134,12 +140,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
         player.init()
       }
       emitter.emit('load', gif)
-    },
-    pte: (block) => {
-      itemGif.data.exts.push(block)
-    },
-    unknown: (block) => {
-      itemGif.data.exts.push(block)
     }
   } as const
   const withProgress = (fn: Function) => {
