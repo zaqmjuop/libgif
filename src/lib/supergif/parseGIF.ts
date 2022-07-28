@@ -27,6 +27,14 @@ const EMITS = [
 export class GifParser extends Emitter<typeof EMITS> {
   private st: Stream | null = null
 
+  public get pos() {
+    return this.st?.pos || 0
+  }
+
+  public get len() {
+    return this.st?.data.length || 0
+  }
+
   public get loading() {
     return !!this.st
   }

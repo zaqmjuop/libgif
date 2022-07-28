@@ -28,8 +28,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   }
   if (options.vp_w && options.vp_h) options.is_vp = true
 
-  let stream: Stream
-
   let loadError = ''
 
   const gif = options.gif
@@ -103,6 +101,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   player.on('complete', () => emitter.emit('complete', gif))
   // player
   // loader
+  const gifParser = new GifParser()
 
   /**
    * @param{boolean=} draw Whether to draw progress bar or not; this is not idempotent because of translucency.
@@ -112,11 +111,11 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const withProgress = (fn: Function, draw = false) => {
     return (block) => {
       fn(block)
-      viewer.doDecodeProgress(stream.pos, stream.data.length, draw)
+      viewer.doDecodeProgress(gifParser.pos, gifParser.len, draw)
     }
   }
 
-  const gifParser = new GifParser()
+
   const HANDER: Hander = {
     hdr: withProgress((_hdr) => {
       itemGif.data.header = _hdr
@@ -170,7 +169,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   // XXX: There's probably a better way to handle catching exceptions when
   // callbacks are involved.
   loader.on('load', (data: string | Uint8Array) => {
-    stream = new Stream(data)
+  const stream = new Stream(data)
     try {
       gifParser.parse(stream)
     } catch (err) {
