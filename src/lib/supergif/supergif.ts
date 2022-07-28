@@ -100,8 +100,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     viewer
   })
-  player.on('putFrame', viewer.onPutFrame)
-  player.on('init', viewer.resize)
   player.on('complete', () => emitter.emit('complete', gif))
   // player
   // loader

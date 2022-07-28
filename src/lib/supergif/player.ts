@@ -17,7 +17,7 @@ enum DisposalMethod {
   previous = 3 // Restore to previous. The decoder is required to restore the area overwritten by the graphic with what was there prior to rendering the graphic.
 } // Importantly, "previous" means the frame state after the last disposal of method 0, 1, or 2.
 
-export class Player extends Emitter<['complete', 'putFrame', 'init']> {
+export class Player extends Emitter<['complete']> {
   private i = -1
   iterationCount = 0
   forward = true
@@ -80,7 +80,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
       this.i = 0
     }
     const data = this.quote.viewer.frames[this.i].data
-    this.emit('putFrame', { flag: this.i, data })
+    this.quote.viewer.onPutFrame({ flag: this.i, data })
   }
 
   play = () => {
@@ -92,7 +92,7 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
     this.playing = false
   }
   init() {
-    this.emit('init')
+    this.quote.viewer.resize()
     this.quote.auto_play ? this.play() : this.putFrame(0)
   }
   current_frame() {
