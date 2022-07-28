@@ -140,10 +140,12 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
 
     //ct = color table, gct = global color table
     const ct = img.lctFlag ? img.lct : this.quote.gifData.header.gct // TODO: What if neither exists? 调用系统颜色表
-
+    const transparency =
+      gce && gce.transparencyGiven ? gce.transparencyIndex : null
     //Get existing pixels for img region after applying disposal method
     const imgData = this.quote.viewer.imgBlockToImageData({
       ct: ct as number[][],
+      transparency,
       ...img
     })
     if (imgData) {

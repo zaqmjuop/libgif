@@ -29,10 +29,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
   let stream: Stream
 
-  const currentData: Record<'transparency', number | null> = {
-    transparency: null
-  }
-
   let loadError = ''
 
   const gif = options.gif
@@ -99,9 +95,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     get gif() {
       return gif
-    },
-    get transparency() {
-      return currentData.transparency
     }
   })
   const canvas = viewer.canvas
@@ -148,9 +141,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       player.pushFrame()
       player.delay = gce.delayTime
       viewer.frame = null
-      currentData.transparency = gce.transparencyGiven
-        ? gce.transparencyIndex
-        : null
       // We don't have much to do with the rest of GCE.
     }),
     com: withProgress((block) => {
@@ -231,7 +221,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       imgs: [],
       exts: []
     }
-    currentData.transparency = null
     viewer.frames = []
     player.frameGroup = []
     viewer.frame = null

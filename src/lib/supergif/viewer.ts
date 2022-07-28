@@ -14,7 +14,6 @@ interface ViewerQuote {
   c_w: number
   c_h: number
   gif: HTMLImageElement
-  transparency: number | null
   drawWhileLoading: boolean
 }
 
@@ -165,7 +164,7 @@ export class Viewer {
     })
     this.frameOffsets.push({ x: 0, y: 0 })
   }
-  imgBlockToImageData = (img: ImgBlock & { ct: number[][] }) => {
+  imgBlockToImageData = (img: ImgBlock & { ct: number[][], transparency: number | null }) => {
     if (this.frame) {
       const imgData = this.frame.getImageData(
         img.leftPos,
@@ -175,7 +174,7 @@ export class Viewer {
       ) //apply color table colors
       img.pixels.forEach((pixel, i) => {
         // imgData.data === [R,G,B,A,R,G,B,A,...]
-        if (pixel !== this.quote.transparency && img.ct) {
+        if (pixel !== img.transparency && img.ct) {
           imgData.data[i * 4 + 0] = img.ct[pixel][0]
           imgData.data[i * 4 + 1] = img.ct[pixel][1]
           imgData.data[i * 4 + 2] = img.ct[pixel][2]
