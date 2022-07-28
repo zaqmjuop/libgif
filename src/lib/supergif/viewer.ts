@@ -20,13 +20,13 @@ interface ViewerQuote {
 export class Viewer {
   readonly canvas = document.createElement('canvas')
   readonly ctx: CanvasRenderingContext2D
+  readonly utilCanvas = document.createElement('canvas')
+  utilCtx: CanvasRenderingContext2D | null = null
   readonly toolbar = document.createElement('div')
-  readonly tmpCanvas = document.createElement('canvas')
   readonly quote: ViewerQuote
   initialized = false
   ctx_scaled = false
   drawWhileLoading: boolean
-  frame: CanvasRenderingContext2D | null = null
   opacity = 255
   frames: Frame[] = []
   public frameOffsets: Offset[] = []
@@ -73,11 +73,11 @@ export class Viewer {
     this.canvas.width = w * scale
     this.canvas.height = h * scale
     this.toolbar.style.minWidth = w * scale + 'px'
-    this.tmpCanvas.width = w
-    this.tmpCanvas.height = h
-    this.tmpCanvas.style.width = w + 'px'
-    this.tmpCanvas.style.height = h + 'px'
-    this.tmpCanvas.getContext('2d')?.setTransform(1, 0, 0, 1, 0, 0)
+    this.utilCanvas.width = w
+    this.utilCanvas.height = h
+    this.utilCanvas.style.width = w + 'px'
+    this.utilCanvas.style.height = h + 'px'
+    this.utilCanvas.getContext('2d')?.setTransform(1, 0, 0, 1, 0, 0)
   }
   resize = () => {
     if (!(this.quote.c_w && this.quote.c_h)) {
@@ -123,7 +123,7 @@ export class Viewer {
   }
   restoreBackgroundColor(lastImg?: Rect & Partial<ImgBlock>) {
     lastImg &&
-      this.frame?.clearRect(
+      this.utilCtx?.clearRect(
         lastImg.leftPos,
         lastImg.topPos,
         lastImg.width,
@@ -143,9 +143,9 @@ export class Viewer {
     }
   }
   pushFrame(delay: number | null) {
-    if (!this.frame) return
+    if (!this.utilCtx) return
     this.frames.push({
-      data: this.frame.getImageData(
+      data: this.utilCtx.getImageData(
         0,
         0,
         this.canvas.width,
@@ -158,8 +158,8 @@ export class Viewer {
   imgBlockToImageData = (
     img: ImgBlock & { ct: number[][]; transparency: number | null }
   ) => {
-    if (this.frame) {
-      const imgData = this.frame.getImageData(
+    if (this.utilCtx) {
+      const imgData = this.utilCtx.getImageData(
         img.leftPos,
         img.topPos,
         img.width,
@@ -188,25 +188,25 @@ export class Viewer {
     // We could use the on-page canvas directly, except that we draw a progress
     // bar for each image chunk (not just the final image).
     if (this.drawWhileLoading) {
-      this.tmpCanvas && this.ctx.drawImage(this.tmpCanvas, 0, 0)
+      this.utilCanvas && this.ctx.drawImage(this.utilCanvas, 0, 0) // 真正的视图画布
       this.drawWhileLoading = auto_play
     }
   }
   putImageData = (data: ImageData, left: number, top: number) => {
-    this.frame?.putImageData(data, left, top)
+    this.utilCtx?.putImageData(data, left, top)
   }
 
   onPutFrame = (e: { flag: number; data: ImageData }) => {
-    if (this.tmpCanvas) {
+    if (this.utilCanvas) {
       const offset = this.frameOffsets[e.flag]
       const data = e.data
 
-      this.tmpCanvas.getContext('2d')?.putImageData(data, offset.x, offset.y)
+      this.utilCanvas.getContext('2d')?.putImageData(data, offset.x, offset.y)
     }
     this.ctx.globalCompositeOperation = 'copy'
-    this.ctx.drawImage(this.tmpCanvas, 0, 0)
+    this.ctx.drawImage(this.utilCanvas, 0, 0)
   }
   setupFrame() {
-    this.frame = this.tmpCanvas.getContext('2d')
+    this.utilCtx = this.utilCanvas.getContext('2d')
   }
 }

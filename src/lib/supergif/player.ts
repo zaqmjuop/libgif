@@ -131,7 +131,7 @@ export class Player extends Emitter<['complete']> {
       this.quote.viewer.putImageData(imgData, img.leftPos, img.topPos)
     }
 
-    this.quote.viewer.initCtxScale()
+    this.quote.viewer.initCtxScale() // 调整画布缩放
 
     this.quote.viewer.loadingRender(!!this.quote.auto_play)
 
@@ -147,7 +147,7 @@ export class Player extends Emitter<['complete']> {
         if (this.disposalRestoreFromIdx >= 0) {
           const data =
             this.quote.viewer.frames[this.disposalRestoreFromIdx].data
-          this.quote.viewer.frame?.putImageData(data, 0, 0)
+          this.quote.viewer.utilCtx?.putImageData(data, 0, 0)
         } else {
           this.quote.viewer.restoreBackgroundColor(this.lastImg)
         }
@@ -167,7 +167,7 @@ export class Player extends Emitter<['complete']> {
       this.delay = gce.delayTime
     }
 
-    if (this.quote.viewer.frame) {
+    if (this.quote.viewer.utilCtx) {
       const width = this.quote.viewer.canvas.width
       const height = this.quote.viewer.canvas.width
       // 保存上一帧
@@ -176,7 +176,7 @@ export class Player extends Emitter<['complete']> {
         height,
         leftPos: 0,
         topPos: 0,
-        data: this.quote.viewer.frame?.getImageData(0, 0, width, height),
+        data: this.quote.viewer.utilCtx?.getImageData(0, 0, width, height),
         delay: this.delay || -1
       })
     }
