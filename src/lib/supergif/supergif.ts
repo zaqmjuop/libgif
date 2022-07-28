@@ -29,13 +29,8 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
   let stream: Stream
 
-  const currentData: Record<
-    'transparency' | 'lastDisposalMethod' | 'disposalMethod',
-    number | null
-  > = {
-    transparency: null,
-    lastDisposalMethod: null,
-    disposalMethod: null
+  const currentData: Record<'transparency', number | null> = {
+    transparency: null
   }
 
   let loadError = ''
@@ -122,9 +117,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get gifData() {
       return gifData
     },
-    get lastDisposalMethod() {
-      return currentData.lastDisposalMethod
-    },
     viewer
   })
   player.on('putFrame', viewer.onPutFrame)
@@ -156,11 +148,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       player.pushFrame()
       player.delay = gce.delayTime
       viewer.frame = null
-      currentData.lastDisposalMethod = currentData.disposalMethod
       currentData.transparency = gce.transparencyGiven
         ? gce.transparencyIndex
         : null
-      currentData.disposalMethod = gce.disposalMethod
       // We don't have much to do with the rest of GCE.
     }),
     com: withProgress((block) => {
@@ -171,7 +161,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       gifData.app = appBlock
     }),
     img: withProgress((imageBlock) => {
-      gifData.imgs.push(imageBlock) 
+      gifData.imgs.push(imageBlock)
       player.doImg(imageBlock)
     }, true),
     eof: (block) => {
@@ -242,8 +232,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       exts: []
     }
     currentData.transparency = null
-    currentData.disposalMethod = null
-    currentData.lastDisposalMethod = null
     viewer.frames = []
     player.frameGroup = []
     viewer.frame = null

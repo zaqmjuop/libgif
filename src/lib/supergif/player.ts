@@ -5,7 +5,6 @@ import { Viewer } from './viewer'
 interface PlayerQuote {
   overrideLoopMode: boolean
   gifData: Gif89aData
-  lastDisposalMethod: number | null
   loopDelay: number
   auto_play: boolean | undefined
   viewer: Viewer
@@ -132,8 +131,9 @@ export class Player extends Emitter<['complete', 'putFrame', 'init']> {
   }
   doImg = (img: ImgBlock) => {
     this.quote.viewer.setupFrame()
-    if (this.frameGroup.length > 0) {
-      this.disposal(this.quote.lastDisposalMethod)
+    const gce = this.quote.gifData.gces[this.quote.gifData.gces.length - 1]
+    if (gce) {
+      this.disposal(gce.disposalMethod)
     }
     // else, Undefined/Do not dispose.
     // frame contains final pixel data from the last frame; do nothing
