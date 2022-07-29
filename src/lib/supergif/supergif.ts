@@ -73,10 +73,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       return options.vp_w
     },
     get c_w() {
-      return options.c_w || itemGif.data.header.width || gif.width
+      return options.c_w || gif.width || itemGif.data.header.width
     },
     get c_h() {
-      return options.c_h || itemGif.data.header.height || gif.height
+      return options.c_h || gif.height || itemGif.data.header.height
     },
     get gif() {
       return gif
