@@ -18,15 +18,17 @@ interface ViewerQuote {
 }
 
 export class Viewer {
-  readonly canvas = document.createElement('canvas')
+  readonly canvas = document.createElement('canvas') // 缩放滤镜后的模样
+
   readonly ctx: CanvasRenderingContext2D
-  readonly utilCanvas = document.createElement('canvas')
+  readonly utilCanvas = document.createElement('canvas') // 图片文件原始模样
   readonly utilCtx: CanvasRenderingContext2D
   readonly toolbar = document.createElement('div')
   readonly quote: ViewerQuote
-  ctx_scale = 1
   drawWhileLoading: boolean
   opacity = 255
+  zoomW = 1
+  zoomH = 1
   constructor(quote: ViewerQuote) {
     this.quote = quote
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
@@ -36,64 +38,61 @@ export class Viewer {
   get showProgressBar() {
     return this.drawWhileLoading && this.quote.showProgressBar
   }
-  loadingRender() {
-    // We could use the on-page canvas directly, except that we draw a progress
-    // bar for each image chunk (not just the final image).
-    if (this.drawWhileLoading) {
-      this.utilCanvas && this.ctx.drawImage(this.utilCanvas, 0, 0) // 真正的视图画布
-    }
-  }
-  init() {
+
+  onImgHeader(hdr: Header) {
     const parent = this.quote.gif.parentNode
-    this.canvas.id = '重构'
 
     if (parent) {
+      // init
       const div = document.createElement('div')
-
-      div.setAttribute(
-        'width',
-        (this.canvas.width = this.quote.gif.width).toString()
-      )
-      div.setAttribute(
-        'height',
-        (this.canvas.height = this.quote.gif.height).toString()
-      )
-      this.toolbar.style.minWidth = this.quote.gif.width + 'px'
-
+      let w = 0
+      let zoomW = 1
+      const domWidth = this.quote.gif.getAttribute('width')
+      if (domWidth) {
+        w = parseInt(domWidth)
+        zoomW = w / hdr.width
+      } else {
+        w = hdr.width
+        zoomW = 1
+      }
+      this.canvas.width = w
+      div.setAttribute('width', w.toString())
+      let h = 0
+      let zoomH = 1
+      const domHeight = this.quote.gif.getAttribute('height')
+      if (domHeight) {
+        h = parseInt(domHeight)
+        zoomH = h / hdr.height
+      } else {
+        h = hdr.height
+        zoomH = 1
+      }
+      this.canvas.height = h
+      div.setAttribute('height', h.toString())
+      this.toolbar.style.width = w + 'px'
       div.className = 'jsgif'
       this.toolbar.className = 'jsgif_toolbar'
+      this.canvas.id = '重构'
       div.appendChild(this.canvas)
       div.appendChild(this.toolbar)
       parent.insertBefore(div, this.quote.gif)
       parent.removeChild(this.quote.gif)
+      // setSize
+      this.ctx.scale(zoomW, zoomH)
+      this.zoomW = zoomW
+      this.zoomH = zoomH
+      this.utilCanvas.width = hdr.width
+      this.utilCanvas.height = hdr.height
+      this.utilCanvas.style.width = hdr.width + 'px'
+      this.utilCanvas.style.height = hdr.height + 'px'
+      this.utilCanvas.getContext('2d')?.setTransform(1, 0, 0, 1, 0, 0)
     }
-
-    this.setSizes()
-  }
-  setSizes() {
-    const w = this.quote.c_w
-    const h = this.quote.c_h
-    const scale = this.quote.get_canvas_scale()
-    this.canvas.width = w * scale
-    this.canvas.height = h * scale
-    this.ctx.scale(scale, scale)
-    this.toolbar.style.minWidth = w * scale + 'px'
-    this.utilCanvas.width = w
-    this.utilCanvas.height = h
-    this.utilCanvas.style.width = w + 'px'
-    this.utilCanvas.style.height = h + 'px'
-    this.utilCanvas.getContext('2d')?.setTransform(1, 0, 0, 1, 0, 0)
-  }
-  initCtxScale() {
-    const scale = this.quote.get_canvas_scale()
-    this.ctx.scale(scale, scale)
-    this.ctx_scale = scale
   }
   doShowProgress(percent: number) {
     if (percent > 1 || percent < 0 || !this.showProgressBar) return
-    let height = this.quote.progressBarHeight
+    let height = this.quote.progressBarHeight * this.zoomH
     let mid, top, width
-    const scale = this.ctx_scale
+    const scale = this.zoomW
     if (this.quote.is_vp) {
       top = (this.quote.vp_t + this.quote.vp_h - height) / scale
       mid = this.quote.vp_l / scale + percent * (this.quote.vp_w / scale)
@@ -148,17 +147,21 @@ export class Viewer {
     })
     return imgData
   }
+
+  onPutFrame = (e: { flag: number } & Frame & Rect) => {
+    const data = e.data
+    this.utilCtx.putImageData(data, e.leftPos, e.topPos)
+    this.ctx.globalCompositeOperation = 'copy'
+    this.ctx.drawImage(this.utilCanvas, 0, 0)
+  }
   putImageData = (data: ImageData, left: number, top: number) => {
     this.utilCtx.putImageData(data, left, top)
   }
-
-  onPutFrame = (e: { flag: number } & Frame & Rect) => {
-    if (this.utilCanvas) {
-      const data = e.data
-
-      this.utilCanvas.getContext('2d')?.putImageData(data, e.leftPos, e.topPos)
+  loadingRender() {
+    // We could use the on-page canvas directly, except that we draw a progress
+    // bar for each image chunk (not just the final image).
+    if (this.drawWhileLoading) {
+      this.utilCanvas && this.ctx.drawImage(this.utilCanvas, 0, 0) // 真正的视图画布
     }
-    this.ctx.globalCompositeOperation = 'copy'
-    this.ctx.drawImage(this.utilCanvas, 0, 0)
   }
 }

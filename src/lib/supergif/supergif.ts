@@ -16,10 +16,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       vp_l: 0,
       vp_t: 0,
       vp_w: 0,
-      vp_h: 0,
-      //canvas sizes
-      c_w: 0,
-      c_h: 0
+      vp_h: 0
     },
     opts
   )
@@ -35,12 +32,22 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     { max_width: options.max_width },
     { width: gif.width, height: gif.height }
   )
+  const get_canvas_scale = () => {
+    const imgWidth = itemGif.data.header.width
+    const domWidth = gif.getAttribute('width')
+    let scale = 0.8
+    // if (domWidth && imgWidth) {
+    //   scale = parseInt(domWidth) / imgWidth 
+    // }
+    console.log(scale)
+    return scale
+  }
   // global func
   // global func
   // canvas
   const viewer = new Viewer({
     get get_canvas_scale() {
-      return itemGif.get_canvas_scale
+      return get_canvas_scale
     },
     drawWhileLoading: options.draw_while_loading !== false,
     showProgressBar: options.show_progress_bar !== false,
@@ -73,17 +80,16 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       return options.vp_w
     },
     get c_w() {
-      return options.c_w || gif.width || itemGif.data.header.width
+      return gif.width || itemGif.data.header.width
     },
     get c_h() {
-      return options.c_h || gif.height || itemGif.data.header.height
+      return gif.height || itemGif.data.header.height
     },
     get gif() {
       return gif
     }
   })
 
-  viewer.init()
   // canvas
 
   // player
@@ -103,7 +109,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const HANDER: Hander = {
     hdr: (_hdr) => {
       itemGif.data.header = _hdr
-      viewer.setSizes()
+      viewer.onImgHeader(_hdr)
     },
     // I guess that's all for now.
     app: (appBlock) => {
@@ -131,7 +137,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       itemGif.data.eof = block
       //toolbar.style.display = '';
       player.pushFrame()
-      viewer.setSizes()
       if (!loadError) {
         player.play()
       }
@@ -221,7 +226,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get_current_frame: () => player.current_frame(),
 
     get_canvas: () => viewer.canvas,
-    get_canvas_scale: itemGif.get_canvas_scale,
+    get_canvas_scale: get_canvas_scale,
     get_loading: getLoading,
     get_auto_play: () => options,
     load_url,

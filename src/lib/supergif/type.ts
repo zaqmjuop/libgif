@@ -42,8 +42,6 @@ export interface VP {
   vp_h: number
   vp_l: number
   vp_t: number
-  c_w: number
-  c_h: number
 }
 export interface Options {
   is_vp?: boolean

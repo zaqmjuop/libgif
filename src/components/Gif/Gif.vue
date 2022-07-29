@@ -2,8 +2,8 @@
   <img
     :src="src"
     :rel:animated_src="src"
-    width="360"
-    height="360"
+    width="200"
+    height="200"
     rel:auto_play="1"
     rel:rubbable="1"
     ref="img"

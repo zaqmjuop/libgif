@@ -162,8 +162,8 @@ export class Player extends Emitter<['complete']> {
       this.delay = gce.delayTime
     }
 
-    const width = this.quote.viewer.canvas.width
-    const height = this.quote.viewer.canvas.width
+    const width = this.quote.viewer.utilCanvas.width
+    const height = this.quote.viewer.utilCanvas.width
 
     if (this.quote.gifData.imgs.length) {
       // 保存上一帧
@@ -185,9 +185,6 @@ export class Player extends Emitter<['complete']> {
         data: this.quote.viewer.utilCtx.getImageData(0, 0, width, height),
         delay: this.delay || -1
       }
-    }
-    if (this.frameGroup.length === 1) {
-      this.quote.viewer.initCtxScale() // 调整画布缩放
     }
   }
 }
