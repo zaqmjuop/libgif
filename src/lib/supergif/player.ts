@@ -6,7 +6,6 @@ interface PlayerQuote {
   overrideLoopMode: boolean
   gifData: Gif89aData
   loopDelay: number
-  auto_play: boolean | undefined
   viewer: Viewer
 }
 // Disposal method indicates the way in which the graphic is to be treated after being displayed.
@@ -91,10 +90,6 @@ export class Player extends Emitter<['complete']> {
   pause = () => {
     this.playing = false
   }
-  init() {
-    this.quote.viewer.resize()
-    this.quote.auto_play ? this.play() : this.putFrame(0)
-  }
   current_frame() {
     return this.i
   }
@@ -127,7 +122,7 @@ export class Player extends Emitter<['complete']> {
       this.quote.viewer.putImageData(imgData, img.leftPos, img.topPos)
     }
 
-    this.quote.viewer.loadingRender(!!this.quote.auto_play)
+    this.quote.viewer.loadingRender()
 
     this.lastImg = img
   }
@@ -175,7 +170,7 @@ export class Player extends Emitter<['complete']> {
       })
       // this.quote.viewer.pushFrame(this.delay)
     }
-    if(this.frameGroup.length === 1){
+    if (this.frameGroup.length === 1) {
       this.quote.viewer.initCtxScale() // 调整画布缩放
     }
   }

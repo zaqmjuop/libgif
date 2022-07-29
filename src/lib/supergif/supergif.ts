@@ -31,8 +31,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   let loadError = ''
 
   const gif = options.gif
-  const auto_play =
-    options.auto_play || gif.getAttribute('rel:auto_play') !== '0'
   let itemGif = new ItemGif(
     { max_width: options.max_width },
     { width: gif.width, height: gif.height }
@@ -92,7 +90,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const player = new Player({
     overrideLoopMode: options.loop_mode !== false,
     loopDelay: options.loop_delay || 0,
-    auto_play,
     get gifData() {
       return itemGif.data
     },
@@ -136,7 +133,8 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       player.pushFrame()
       viewer.setSizes()
       if (!loadError) {
-        player.init()
+        viewer.resize()
+        player.play()
       }
       emitter.emit('load', gif)
     }

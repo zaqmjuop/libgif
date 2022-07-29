@@ -48,7 +48,6 @@ export interface VP {
 export interface Options {
   is_vp?: boolean
   gif: HTMLImageElement
-  auto_play?: boolean
   on_end?: (gif: HTMLImageElement) => void
   loop_delay?: number
   loop_mode?: boolean

@@ -36,6 +36,13 @@ export class Viewer {
   get showProgressBar() {
     return this.drawWhileLoading && this.quote.showProgressBar
   }
+  loadingRender() {
+    // We could use the on-page canvas directly, except that we draw a progress
+    // bar for each image chunk (not just the final image).
+    if (this.drawWhileLoading) {
+      this.utilCanvas && this.ctx.drawImage(this.utilCanvas, 0, 0) // 真正的视图画布
+    }
+  }
   init() {
     const parent = this.quote.gif.parentNode
     this.canvas.id = '重构'
@@ -151,14 +158,6 @@ export class Viewer {
     const scale = this.quote.get_canvas_scale()
     this.ctx.scale(scale, scale)
     this.ctx_scale = scale
-  }
-  loadingRender(auto_play: boolean) {
-    // We could use the on-page canvas directly, except that we draw a progress
-    // bar for each image chunk (not just the final image).
-    if (this.drawWhileLoading) {
-      this.utilCanvas && this.ctx.drawImage(this.utilCanvas, 0, 0) // 真正的视图画布
-      this.drawWhileLoading = auto_play
-    }
   }
   putImageData = (data: ImageData, left: number, top: number) => {
     this.utilCtx.putImageData(data, left, top)
