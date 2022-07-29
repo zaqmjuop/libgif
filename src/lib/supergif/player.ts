@@ -76,10 +76,10 @@ export class Player extends Emitter<['complete']> {
     if (typeof flag === 'number') {
       this.i = flag
     }
-    if (this.i < 0 || this.i >= this.quote.viewer.frames.length) {
+    if (this.i < 0 || this.i >= this.frameGroup.length) {
       this.i = 0
     }
-    const data = this.quote.viewer.frames[this.i].data
+    const data = this.frameGroup[this.i].data
     this.quote.viewer.onPutFrame({ flag: this.i, data })
   }
 
@@ -141,8 +141,7 @@ export class Player extends Emitter<['complete']> {
         // no composited frame to restore to. In this case, restore to background instead.
         // 如果到目前为止我们处理了包括第一帧在内的每一帧，那么我们就没有要还原的合成帧。在这种情况下，请改为还原到背景。
         if (this.disposalRestoreFromIdx >= 0) {
-          const data =
-            this.quote.viewer.frames[this.disposalRestoreFromIdx].data
+          const data = this.frameGroup[this.disposalRestoreFromIdx].data
           this.quote.viewer.utilCtx.putImageData(data, 0, 0)
         } else {
           this.quote.viewer.restoreBackgroundColor(this.lastImg)
@@ -165,16 +164,17 @@ export class Player extends Emitter<['complete']> {
 
     const width = this.quote.viewer.canvas.width
     const height = this.quote.viewer.canvas.width
-    // 保存上一帧
-    this.frameGroup.push({
-      width,
-      height,
-      leftPos: 0,
-      topPos: 0,
-      data: this.quote.viewer.utilCtx.getImageData(0, 0, width, height),
-      delay: this.delay || -1
-    })
+
     if (this.quote.gifData.imgs.length) {
+      // 保存上一帧
+      this.frameGroup.push({
+        width,
+        height,
+        leftPos: 0,
+        topPos: 0,
+        data: this.quote.viewer.utilCtx.getImageData(0, 0, width, height),
+        delay: this.delay || -1
+      })
       this.quote.viewer.pushFrame(this.delay)
     }
   }
