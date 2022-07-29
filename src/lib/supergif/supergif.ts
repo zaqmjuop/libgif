@@ -32,23 +32,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     { max_width: options.max_width },
     { width: gif.width, height: gif.height }
   )
-  const get_canvas_scale = () => {
-    const imgWidth = itemGif.data.header.width
-    const domWidth = gif.getAttribute('width')
-    let scale = 0.8
-    // if (domWidth && imgWidth) {
-    //   scale = parseInt(domWidth) / imgWidth 
-    // }
-    console.log(scale)
-    return scale
-  }
   // global func
   // global func
   // canvas
   const viewer = new Viewer({
-    get get_canvas_scale() {
-      return get_canvas_scale
-    },
     drawWhileLoading: options.draw_while_loading !== false,
     showProgressBar: options.show_progress_bar !== false,
     progressBarHeight:
@@ -226,7 +213,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     get_current_frame: () => player.current_frame(),
 
     get_canvas: () => viewer.canvas,
-    get_canvas_scale: get_canvas_scale,
     get_loading: getLoading,
     get_auto_play: () => options,
     load_url,

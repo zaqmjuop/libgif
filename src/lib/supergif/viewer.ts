@@ -1,7 +1,6 @@
 import { Frame, Hander, Header, ImgBlock, Offset, Rect } from './type'
 
 interface ViewerQuote {
-  get_canvas_scale: () => number
   showProgressBar: boolean
   progressBarHeight: number
   progressBarBackgroundColor: string
