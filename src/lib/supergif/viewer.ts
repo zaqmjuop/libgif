@@ -28,8 +28,6 @@ export class Viewer {
   ctx_scaled = false
   drawWhileLoading: boolean
   opacity = 255
-  frames: Frame[] = []
-  public frameOffsets: Offset[] = []
   constructor(quote: ViewerQuote) {
     this.quote = quote
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
@@ -131,30 +129,6 @@ export class Viewer {
         lastImg.height
       )
   }
-  setFrameOffset = (flag: number, offset: Offset) => {
-    if (!this.frameOffsets[flag]) {
-      this.frameOffsets[flag] = offset
-      return
-    }
-    if (typeof offset.x !== 'undefined') {
-      this.frameOffsets[flag].x = offset.x
-    }
-    if (typeof offset.y !== 'undefined') {
-      this.frameOffsets[flag].y = offset.y
-    }
-  }
-  pushFrame(delay: number | null) {
-    this.frames.push({
-      data: this.utilCtx.getImageData(
-        0,
-        0,
-        this.canvas.width,
-        this.canvas.height
-      ),
-      delay: delay || -1
-    })
-    this.frameOffsets.push({ x: 0, y: 0 })
-  }
   imgBlockToImageData = (
     img: ImgBlock & { ct: number[][]; transparency: number | null }
   ) => {
@@ -194,12 +168,11 @@ export class Viewer {
     this.utilCtx.putImageData(data, left, top)
   }
 
-  onPutFrame = (e: { flag: number; data: ImageData }) => {
+  onPutFrame = (e: { flag: number } & Frame & Rect) => {
     if (this.utilCanvas) {
-      const offset = this.frameOffsets[e.flag]
       const data = e.data
 
-      this.utilCanvas.getContext('2d')?.putImageData(data, offset.x, offset.y)
+      this.utilCanvas.getContext('2d')?.putImageData(data, e.leftPos, e.topPos)
     }
     this.ctx.globalCompositeOperation = 'copy'
     this.ctx.drawImage(this.utilCanvas, 0, 0)

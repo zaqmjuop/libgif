@@ -79,8 +79,8 @@ export class Player extends Emitter<['complete']> {
     if (this.i < 0 || this.i >= this.frameGroup.length) {
       this.i = 0
     }
-    const data = this.frameGroup[this.i].data
-    this.quote.viewer.onPutFrame({ flag: this.i, data })
+    const frame = this.frameGroup[this.i]
+    this.quote.viewer.onPutFrame({ flag: this.i, ...frame })
   }
 
   play = () => {
@@ -175,7 +175,7 @@ export class Player extends Emitter<['complete']> {
         data: this.quote.viewer.utilCtx.getImageData(0, 0, width, height),
         delay: this.delay || -1
       })
-      this.quote.viewer.pushFrame(this.delay)
+      // this.quote.viewer.pushFrame(this.delay)
     }
   }
 }

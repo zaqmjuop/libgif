@@ -165,7 +165,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     try {
       gifParser.parse(stream)
     } catch (err) {
-      viewer.frames = []
       player.frameGroup = []
       viewer.doLoadError('parse')
     }
@@ -175,7 +174,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   })
   loader.on('error', (message: string) => {
     loadError = message
-    viewer.frames = []
     player.frameGroup = []
     viewer.doLoadError(message)
   })
@@ -191,7 +189,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       { max_width: options.max_width },
       { width: gif.width, height: gif.height }
     )
-    viewer.frames = []
     player.frameGroup = []
     player.delay = null
     player.lastImg = void 0
@@ -233,11 +230,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     load_url,
     load,
     load_raw,
-    set_frame_offset: viewer.setFrameOffset,
     get frames() {
-      return viewer.frames
+      return player.frameGroup
     },
-    get_length: () => viewer.frames.length,
+    get_length: () => player.frameGroup.length,
     on: emitter.on,
     off: emitter.off
   }
