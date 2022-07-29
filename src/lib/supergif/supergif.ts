@@ -133,7 +133,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       player.pushFrame()
       viewer.setSizes()
       if (!loadError) {
-        viewer.resize()
         player.play()
       }
       emitter.emit('load', gif)

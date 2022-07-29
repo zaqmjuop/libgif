@@ -76,6 +76,7 @@ export class Viewer {
     const scale = this.quote.get_canvas_scale()
     this.canvas.width = w * scale
     this.canvas.height = h * scale
+    this.ctx.scale(scale, scale)
     this.toolbar.style.minWidth = w * scale + 'px'
     this.utilCanvas.width = w
     this.utilCanvas.height = h
@@ -83,11 +84,10 @@ export class Viewer {
     this.utilCanvas.style.height = h + 'px'
     this.utilCanvas.getContext('2d')?.setTransform(1, 0, 0, 1, 0, 0)
   }
-  resize = () => {
-    if (!(this.quote.c_w && this.quote.c_h)) {
-      const zoom = this.quote.get_canvas_scale()
-      this.ctx.scale(zoom, zoom)
-    }
+  initCtxScale() {
+    const scale = this.quote.get_canvas_scale()
+    this.ctx.scale(scale, scale)
+    this.ctx_scale = scale
   }
   doShowProgress(percent: number) {
     if (percent > 1 || percent < 0 || !this.showProgressBar) return
@@ -125,14 +125,8 @@ export class Viewer {
     this.ctx.lineTo(w, 0)
     this.ctx.stroke()
   }
-  restoreBackgroundColor(lastImg?: Rect & Partial<ImgBlock>) {
-    lastImg &&
-      this.utilCtx.clearRect(
-        lastImg.leftPos,
-        lastImg.topPos,
-        lastImg.width,
-        lastImg.height
-      )
+  restoreBackgroundColor(rect: Rect) {
+    this.utilCtx.clearRect(rect.leftPos, rect.topPos, rect.width, rect.height)
   }
   imgBlockToImageData = (
     img: ImgBlock & { ct: number[][]; transparency: number | null }
@@ -153,11 +147,6 @@ export class Viewer {
       }
     })
     return imgData
-  }
-  initCtxScale() {
-    const scale = this.quote.get_canvas_scale()
-    this.ctx.scale(scale, scale)
-    this.ctx_scale = scale
   }
   putImageData = (data: ImageData, left: number, top: number) => {
     this.utilCtx.putImageData(data, left, top)

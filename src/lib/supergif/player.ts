@@ -25,6 +25,7 @@ export class Player extends Emitter<['complete']> {
 
   lastImg?: Rect & Partial<ImgBlock>
   frameGroup: Array<Frame & Rect> = []
+  background?: Frame & Rect
   readonly quote: PlayerQuote
 
   constructor(quote: PlayerQuote) {
@@ -123,8 +124,6 @@ export class Player extends Emitter<['complete']> {
     }
 
     this.quote.viewer.loadingRender()
-
-    this.lastImg = img
   }
   disposal(method: number | null) {
     switch (method) {
@@ -137,15 +136,23 @@ export class Player extends Emitter<['complete']> {
           const data = this.frameGroup[this.disposalRestoreFromIdx].data
           this.quote.viewer.utilCtx.putImageData(data, 0, 0)
         } else {
-          this.quote.viewer.restoreBackgroundColor(this.lastImg)
+          this.restoreBackgroundColor()
         }
         break
       case DisposalMethod.backgroundColor:
-        // Restore to background color
-        // Browser implementations historically restore to transparent; we do the same.
-        // http://www.wizards-toolkit.org/discourse-server/viewtopic.php?f=1&t=21172#p86079
-        this.quote.viewer.restoreBackgroundColor(this.lastImg)
+        this.restoreBackgroundColor()
         break
+    }
+  }
+  restoreBackgroundColor() {
+    if (this.background) {
+      const { leftPos, topPos, width, height } = this.background
+      this.quote.viewer.restoreBackgroundColor({
+        leftPos,
+        topPos,
+        width,
+        height
+      })
     }
   }
 
@@ -169,6 +176,15 @@ export class Player extends Emitter<['complete']> {
         delay: this.delay || -1
       })
       // this.quote.viewer.pushFrame(this.delay)
+    } else {
+      this.background = {
+        width,
+        height,
+        leftPos: 0,
+        topPos: 0,
+        data: this.quote.viewer.utilCtx.getImageData(0, 0, width, height),
+        delay: this.delay || -1
+      }
     }
     if (this.frameGroup.length === 1) {
       this.quote.viewer.initCtxScale() // 调整画布缩放
