@@ -127,8 +127,6 @@ export class Player extends Emitter<['complete']> {
       this.quote.viewer.putImageData(imgData, img.leftPos, img.topPos)
     }
 
-    this.quote.viewer.initCtxScale() // 调整画布缩放
-
     this.quote.viewer.loadingRender(!!this.quote.auto_play)
 
     this.lastImg = img
@@ -176,6 +174,9 @@ export class Player extends Emitter<['complete']> {
         delay: this.delay || -1
       })
       // this.quote.viewer.pushFrame(this.delay)
+    }
+    if(this.frameGroup.length === 1){
+      this.quote.viewer.initCtxScale() // 调整画布缩放
     }
   }
 }

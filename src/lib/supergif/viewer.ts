@@ -24,8 +24,7 @@ export class Viewer {
   readonly utilCtx: CanvasRenderingContext2D
   readonly toolbar = document.createElement('div')
   readonly quote: ViewerQuote
-  initialized = false
-  ctx_scaled = false
+  ctx_scale = 1
   drawWhileLoading: boolean
   opacity = 255
   constructor(quote: ViewerQuote) {
@@ -63,7 +62,6 @@ export class Viewer {
     }
 
     this.setSizes()
-    this.initialized = true
   }
   setSizes() {
     const w = this.quote.c_w
@@ -88,7 +86,7 @@ export class Viewer {
     if (percent > 1 || percent < 0 || !this.showProgressBar) return
     let height = this.quote.progressBarHeight
     let mid, top, width
-    const scale = this.ctx_scaled ? this.quote.get_canvas_scale() : 1
+    const scale = this.ctx_scale
     if (this.quote.is_vp) {
       top = (this.quote.vp_t + this.quote.vp_h - height) / scale
       mid = this.quote.vp_l / scale + percent * (this.quote.vp_w / scale)
@@ -150,11 +148,9 @@ export class Viewer {
     return imgData
   }
   initCtxScale() {
-    if (!this.ctx_scaled) {
-      const scale = this.quote.get_canvas_scale()
-      this.ctx.scale(scale, scale)
-      this.ctx_scaled = true
-    }
+    const scale = this.quote.get_canvas_scale()
+    this.ctx.scale(scale, scale)
+    this.ctx_scale = scale
   }
   loadingRender(auto_play: boolean) {
     // We could use the on-page canvas directly, except that we draw a progress
