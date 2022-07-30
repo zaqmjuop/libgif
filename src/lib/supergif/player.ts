@@ -114,16 +114,18 @@ export class Player extends Emitter<['complete']> {
   }
 
   doImg = (img: ImgBlock) => {
+    // gce
     const gce = this.currentGce
     if (gce) {
       this.disposal(gce.disposalMethod)
     }
-
+    const transparency =
+      gce && gce.transparencyGiven ? gce.transparencyIndex : null
+    const delayTime = (gce && gce.delayTime) || 10
+    // img
     const colorTable = img.lctFlag
       ? img.lct
       : this.quote.gifData.header.globalColorTable // TODO: What if neither exists? 调用系统颜色表
-    const transparency =
-      gce && gce.transparencyGiven ? gce.transparencyIndex : null
     //Get existing pixels for img region after applying disposal method
     const imgData = this.quote.viewer.imgBlockToImageData({
       ct: colorTable as color[],
