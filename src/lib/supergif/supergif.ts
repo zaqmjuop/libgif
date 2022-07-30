@@ -30,14 +30,7 @@ const SuperGif = (opts: Options) => {
   // global func
   // global func
   // canvas
-  const viewer = new Viewer({
-    get c_w() {
-      return gif.width || itemGif.data.header.logicalScreenWidth
-    },
-    get c_h() {
-      return gif.height || itemGif.data.header.logicalScreenHeight
-    }
-  })
+  const viewer = new Viewer()
   viewer.mount(gif)
   // canvas
 

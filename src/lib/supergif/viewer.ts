@@ -1,10 +1,4 @@
 import { color, Frame, Header, ImgBlock, Rect } from './type'
-
-interface ViewerQuote {
-  c_w: number
-  c_h: number
-}
-
 export class Viewer {
   $el?: HTMLImageElement
   readonly canvas = document.createElement('canvas') // 缩放滤镜后的模样
@@ -12,12 +6,10 @@ export class Viewer {
   readonly utilCanvas = document.createElement('canvas') // 图片文件原始模样
   readonly utilCtx: CanvasRenderingContext2D
   readonly toolbar = document.createElement('div')
-  readonly quote: ViewerQuote
   opacity = 255
   zoomW = 1
   zoomH = 1
-  constructor(quote: ViewerQuote) {
-    this.quote = quote
+  constructor() {
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
     this.utilCtx = this.utilCanvas.getContext('2d') as CanvasRenderingContext2D
   }
@@ -82,7 +74,7 @@ export class Viewer {
   }
   doShowProgress(percent: number) {
     if (percent > 1 || percent < 0 || !this.showProgressBar) return
-    
+
     let height = 4
     const top = (this.canvas.height - height) / this.zoomH
     const mid = (percent * this.canvas.width) / this.zoomW
