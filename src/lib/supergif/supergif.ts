@@ -25,8 +25,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   }
   if (options.vp_w && options.vp_h) options.is_vp = true
 
-  let loadError = ''
-
   const gif = options.gif
   let itemGif = new ItemGif(
     { max_width: options.max_width },
@@ -122,10 +120,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     eof: (block) => {
       itemGif.data.eof = block
-      //toolbar.style.display = '';
-      if (!loadError) {
-        player.play()
-      }
+      player.play()
       emitter.emit('load', gif)
     }
   } as const
@@ -144,10 +139,8 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   gifParser.on('pte', HANDER.pte)
   gifParser.on('unknown', HANDER.unknown)
 
+  // loader
   const loader = new Loader()
-  loader.on('loadstart', () => {})
-  // XXX: There's probably a better way to handle catching exceptions when
-  // callbacks are involved.
   loader.on('load', (data: string | Uint8Array) => {
     const stream = new Stream(data)
     try {
@@ -161,11 +154,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     e.lengthComputable && viewer.doShowProgress(e.loaded / e.total)
   })
   loader.on('error', (message: string) => {
-    loadError = message
     player.frameGroup = []
     viewer.doLoadError(message)
   })
-  // loader
+
   const getSrc = () => gif.getAttribute('rel:animated_src') || gif.src
 
   const getLoading = () => {
@@ -199,6 +191,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     load_setup()
     load_url(getSrc())
   }
+  // loader
 
   return {
     player,
