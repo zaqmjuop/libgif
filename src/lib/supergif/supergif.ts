@@ -4,7 +4,18 @@ import { Loader } from './loader'
 import { Gif89aDecoder } from './gif89aDecoder'
 import { Player } from './player'
 import { Stream } from './stream'
-import { GCExtBlock, Gif89aData, Hander, Header, Options, VP } from './type'
+import {
+  AppExtBlock,
+  Block,
+  ComExtBlock,
+  GCExtBlock, 
+  Header,
+  ImgBlock,
+  Options,
+  PTExtBlock,
+  UnknownExtBlock,
+  VP
+} from './type'
 import { Viewer } from './viewer'
 
 const SuperGif = (opts: Options & Partial<VP>) => {
@@ -88,56 +99,54 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   })
   player.on('complete', () => emitter.emit('complete', gif))
   // player
-  // loader
+  // decoder
   const decoder = new Gif89aDecoder()
 
-  const HANDER: Hander = {
-    hdr: (_hdr) => {
-      itemGif.data.header = _hdr
-      viewer.onImgHeader(_hdr)
-    },
-    // I guess that's all for now.
-    app: (appBlock) => {
-      itemGif.data.app = appBlock
-    },
-    gce: (gce: GCExtBlock) => {
-      itemGif.data.gces[itemGif.data.imgs.length] = gce
-      player.onGCE(gce)
-      // We don't have much to do with the rest of GCE.
-    },
-    img: (imageBlock) => {
-      itemGif.data.imgs.push(imageBlock)
-      player.doImg(imageBlock)
-    },
-    com: (block) => {
-      itemGif.data.exts.push(block)
-    },
-    pte: (block) => {
-      itemGif.data.exts.push(block)
-    },
-    unknown: (block) => {
-      itemGif.data.exts.push(block)
-    },
-    eof: (block) => {
-      itemGif.data.eof = block
-      player.play()
-      emitter.emit('load', gif)
-    }
-  } as const
   const withProgress = (fn: Function) => {
     return (...args) => {
       fn(...args)
       viewer.doShowProgress(decoder.pos / decoder.len)
     }
   }
-  decoder.on('hdr', withProgress(HANDER.hdr))
-  decoder.on('gce', HANDER.gce)
-  decoder.on('com', HANDER.com)
-  decoder.on('app', HANDER.app)
-  decoder.on('img', withProgress(HANDER.img))
-  decoder.on('eof', withProgress(HANDER.eof))
-  decoder.on('pte', HANDER.pte)
-  decoder.on('unknown', HANDER.unknown)
+  decoder.on(
+    'hdr',
+    withProgress((_hdr: Header) => {
+      itemGif.data.header = _hdr
+      viewer.onImgHeader(_hdr)
+    })
+  )
+  decoder.on('app', (appBlock: AppExtBlock) => {
+    itemGif.data.app = appBlock
+  })
+  decoder.on('gce', (gce: GCExtBlock) => {
+    itemGif.data.gces[itemGif.data.imgs.length] = gce
+    player.onGCE(gce)
+  })
+  decoder.on(
+    'img',
+    withProgress((img: ImgBlock) => {
+      itemGif.data.imgs.push(img)
+      player.doImg(img)
+    })
+  )
+  decoder.on('com', (block: ComExtBlock) => {
+    itemGif.data.exts.push(block)
+  })
+  decoder.on('pte', (block: PTExtBlock) => {
+    itemGif.data.exts.push(block)
+  })
+  decoder.on('unknown', (block: UnknownExtBlock) => {
+    itemGif.data.exts.push(block)
+  })
+  decoder.on(
+    'eof',
+    withProgress((block: Block) => {
+      itemGif.data.eof = block
+      player.play()
+      emitter.emit('load', gif)
+    })
+  )
+  // /decoder
 
   // loader
   const load_setup = () => {
@@ -183,7 +192,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     if (getLoading()) return
     load_url(gif.getAttribute('rel:animated_src') || gif.src)
   }
-  // loader
+  // /loader
 
   return {
     player,

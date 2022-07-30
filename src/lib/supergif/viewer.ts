@@ -1,4 +1,4 @@
-import { color, Frame, Hander, Header, ImgBlock, Offset, Rect } from './type'
+import { color, Frame, Header, ImgBlock, Rect } from './type'
 
 interface ViewerQuote {
   showProgressBar: boolean

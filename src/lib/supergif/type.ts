@@ -15,17 +15,6 @@ export interface Rect {
 
 export type color = [number, number, number]
 
-export interface Hander {
-  readonly hdr: (block: Header) => void
-  readonly gce: (block: GCExtBlock) => void
-  readonly com: (block: ComExtBlock) => void
-  readonly app: (block: NetscapeExtBlock | UnknownAppExtBlock) => void
-  readonly img: (block: ImgBlock) => void
-  readonly eof: (block: Block) => void
-  readonly pte: (block: PTExtBlock) => void
-  readonly unknown: (block: UnknownExtBlock) => void
-}
-
 export interface Header {
   readonly signature: string
   readonly version: string

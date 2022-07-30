@@ -1,17 +1,7 @@
 import { Emitter } from './Emitter'
 import { lzwDecode } from './lzwDecode'
 import { bitsToNum, byteToBitArr, Stream } from './stream'
-import {
-  AppExtBlock,
-  Block,
-  ExtBlock,
-  Hander,
-  Header,
-  ImgBlock,
-  PTExtBlock,
-  UnknownAppExtBlock,
-  color
-} from './type'
+import { AppExtBlock, Block, ExtBlock, Header, ImgBlock, color } from './type'
 
 // The actual parsing; returns an object with properties.
 
