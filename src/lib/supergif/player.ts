@@ -42,10 +42,6 @@ export class Player extends Emitter<['complete']> {
     this.quote = quote
   }
 
-  get disposalRestoreFromIdx() {
-    return this.frameGroup.length - 1
-  }
-
   /**
    * Gets the index of the frame "up next".
    * @returns {number}
@@ -153,20 +149,19 @@ export class Player extends Emitter<['complete']> {
   disposal(method: number | null) {
     switch (method) {
       case DisposalMethod.previous:
-        // Restore to previous
-        // If we disposed every frame including first frame up to this point, then we have
-        // no composited frame to restore to. In this case, restore to background instead.
-        // 如果到目前为止我们处理了包括第一帧在内的每一帧，那么我们就没有要还原的合成帧。在这种情况下，请改为还原到背景。
-        if (this.disposalRestoreFromIdx >= 0) {
-          const data = this.frameGroup[this.disposalRestoreFromIdx].data
-          this.quote.viewer.utilCtx.putImageData(data, 0, 0)
-        } else {
-          this.restoreBackgroundColor()
-        }
+        this.restorePrevious()
         break
       case DisposalMethod.backgroundColor:
         this.restoreBackgroundColor()
         break
+    }
+  }
+  restorePrevious() {
+    const prevFrame = this.frameGroup[this.frameGroup.length - 1]
+    if (prevFrame) {
+      this.quote.viewer.utilCtx.putImageData(prevFrame.data, 0, 0)
+    } else {
+      this.restoreBackgroundColor()
     }
   }
   restoreBackgroundColor() {
