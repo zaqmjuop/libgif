@@ -1,10 +1,6 @@
 import { color, Frame, Header, ImgBlock, Rect } from './type'
 
 interface ViewerQuote {
-  showProgressBar: boolean
-  progressBarHeight: number
-  progressBarBackgroundColor: string
-  progressBarForegroundColor: string
   is_vp: boolean
   vp_t: number
   vp_h: number
@@ -13,7 +9,6 @@ interface ViewerQuote {
   c_w: number
   c_h: number
   gif: HTMLImageElement
-  drawWhileLoading: boolean
 }
 
 export class Viewer {
@@ -24,7 +19,6 @@ export class Viewer {
   readonly utilCtx: CanvasRenderingContext2D
   readonly toolbar = document.createElement('div')
   readonly quote: ViewerQuote
-  drawWhileLoading: boolean
   opacity = 255
   zoomW = 1
   zoomH = 1
@@ -32,10 +26,9 @@ export class Viewer {
     this.quote = quote
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
     this.utilCtx = this.utilCanvas.getContext('2d') as CanvasRenderingContext2D
-    this.drawWhileLoading = quote.drawWhileLoading
   }
   get showProgressBar() {
-    return this.drawWhileLoading && this.quote.showProgressBar
+    return this.quote.gif.getAttribute('progress_bar') !== 'none'
   }
 
   onImgHeader(hdr: Header) {
@@ -89,7 +82,7 @@ export class Viewer {
   }
   doShowProgress(percent: number) {
     if (percent > 1 || percent < 0 || !this.showProgressBar) return
-    let height = this.quote.progressBarHeight * this.zoomH
+    let height = 4 * this.zoomH
     let mid, top, width
     const scale = this.zoomW
     if (this.quote.is_vp) {
@@ -102,12 +95,10 @@ export class Viewer {
     height = height / scale
     width = this.canvas.width / scale
 
-    this.ctx.fillStyle =
-      this.quote.progressBarBackgroundColor || this.ctx.fillStyle
+    this.ctx.fillStyle = `rgba(255,255,255,0.4)`
     this.ctx.fillRect(mid, top, width - mid, height)
 
-    this.ctx.fillStyle =
-      this.quote.progressBarForegroundColor || this.ctx.fillStyle
+    this.ctx.fillStyle = `rgba(0,123,255,0.8)`
     this.ctx.fillRect(0, top, mid, height)
   }
   doLoadError = (originOfError: string) => {
@@ -164,8 +155,6 @@ export class Viewer {
   loadingRender() {
     // We could use the on-page canvas directly, except that we draw a progress
     // bar for each image chunk (not just the final image).
-    if (this.drawWhileLoading) {
-      this.utilCanvas && this.ctx.drawImage(this.utilCanvas, 0, 0) // 真正的视图画布
-    }
+    this.utilCanvas && this.ctx.drawImage(this.utilCanvas, 0, 0) // 真正的视图画布
   }
 }

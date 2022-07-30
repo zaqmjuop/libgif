@@ -8,7 +8,7 @@ import {
   AppExtBlock,
   Block,
   ComExtBlock,
-  GCExtBlock, 
+  GCExtBlock,
   Header,
   ImgBlock,
   Options,
@@ -37,29 +37,11 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   if (options.vp_w && options.vp_h) options.is_vp = true
 
   const gif = options.gif
-  let itemGif = new ItemGif(
-    { max_width: options.max_width },
-    { width: gif.width, height: gif.height }
-  )
+  let itemGif = new ItemGif({}, { width: gif.width, height: gif.height })
   // global func
   // global func
   // canvas
   const viewer = new Viewer({
-    drawWhileLoading: options.draw_while_loading !== false,
-    showProgressBar: options.show_progress_bar !== false,
-    progressBarHeight:
-      typeof options.progressbar_height === 'number'
-        ? options.progressbar_height
-        : 25,
-    progressBarBackgroundColor:
-      typeof options.progressbar_background_color === 'string'
-        ? options.progressbar_background_color
-        : 'rgba(255,255,255,0.4)',
-    progressBarForegroundColor: options.hasOwnProperty(
-      'progressbar_foreground_color'
-    )
-      ? options.progressbar_foreground_color || ''
-      : 'rgba(255,0,22,.8)',
     get is_vp() {
       return !!options.is_vp
     },
@@ -150,10 +132,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
   // loader
   const load_setup = () => {
-    itemGif = new ItemGif(
-      { max_width: options.max_width },
-      { width: gif.width, height: gif.height }
-    )
+    itemGif = new ItemGif({}, { width: gif.width, height: gif.height })
     player.frameGroup = []
     player.delay = null
   }

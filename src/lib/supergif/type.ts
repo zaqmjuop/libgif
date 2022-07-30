@@ -42,12 +42,6 @@ export interface Options {
   on_end?: (gif: HTMLImageElement) => void
   loop_delay?: number
   loop_mode?: boolean
-  draw_while_loading?: boolean
-  show_progress_bar?: boolean
-  progressbar_height?: number
-  progressbar_background_color?: string
-  progressbar_foreground_color?: string
-  max_width?: number
 }
 
 export interface Block {
