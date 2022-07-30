@@ -132,6 +132,15 @@ export class Player extends Emitter<['complete']> {
       transparency,
       ...img
     })
+    const hdr = this.quote.gifData.header
+    const frame: Frame & Rect = {
+      data: imgData,
+      delay: delayTime,
+      leftPos: img.leftPos,
+      topPos: img.topPos,
+      width: hdr.logicalScreenWidth,
+      height: hdr.logicalScreenHeight
+    }
 
     if (imgData) {
       // 绘制当前帧
