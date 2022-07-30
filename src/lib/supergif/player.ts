@@ -68,7 +68,7 @@ export class Player extends Emitter<['complete']> {
   private goOn = () => {
     if (!this.playing) return
     this.putFrameBy(1)
-    const delay = (this.delay || 1.666) * 10
+    const delay = this.frameGroup[this.i].delay
     const isComplete = this.getNextFrameNo() === 0
     return isComplete
       ? setTimeout(this.complete, delay + this.quote.loopDelay)
@@ -110,7 +110,6 @@ export class Player extends Emitter<['complete']> {
 
   onGCE(gce: GCExtBlock) {
     this.currentGce = gce
-    this.pushFrame()
   }
 
   doImg = (img: ImgBlock) => {
@@ -121,7 +120,7 @@ export class Player extends Emitter<['complete']> {
     }
     const transparency =
       gce && gce.transparencyGiven ? gce.transparencyIndex : null
-    const delayTime = (gce && gce.delayTime) || 10
+    const delayTime = (gce && gce.delayTime) || 100 // 如果没有gce那么默认帧间隔是100ms
     // img
     const colorTable = img.lctFlag
       ? img.lct
@@ -141,10 +140,11 @@ export class Player extends Emitter<['complete']> {
       width: hdr.logicalScreenWidth,
       height: hdr.logicalScreenHeight
     }
+    this.frameGroup.push(frame)
 
     if (imgData) {
       // 绘制当前帧
-      this.quote.viewer.putImageData(imgData, img.leftPos, img.topPos)
+      this.quote.viewer.putImageData(frame.data, frame.leftPos, frame.topPos)
     }
 
     this.quote.viewer.loadingRender()
@@ -178,27 +178,5 @@ export class Player extends Emitter<['complete']> {
       width: hdr.logicalScreenWidth,
       height: hdr.logicalScreenHeight
     })
-  }
-
-  pushFrame() {
-    const gce = this.quote.gifData.gces[this.quote.gifData.gces.length - 1]
-    if (gce) {
-      this.delay = gce.delayTime
-    }
-
-    const width = this.quote.viewer.utilCanvas.width
-    const height = this.quote.viewer.utilCanvas.width
-
-    if (this.quote.gifData.imgs.length) {
-      // 保存上一帧
-      this.frameGroup.push({
-        width,
-        height,
-        leftPos: 0,
-        topPos: 0,
-        data: this.quote.viewer.utilCtx.getImageData(0, 0, width, height),
-        delay: this.delay || -1
-      })
-    }
   }
 }

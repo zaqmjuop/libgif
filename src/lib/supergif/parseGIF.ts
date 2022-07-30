@@ -120,7 +120,7 @@ export class GifParser extends Emitter<typeof EMITS> {
       const userInput = !!bits.shift()
       const transparencyGiven = !!bits.shift()
 
-      const delayTime = this.st.readUnsigned()
+      const delayTime = this.st.readUnsigned()*10
 
       const transparencyIndex = this.st.readByte()
 

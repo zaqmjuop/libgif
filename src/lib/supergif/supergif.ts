@@ -123,7 +123,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     eof: (block) => {
       itemGif.data.eof = block
       //toolbar.style.display = '';
-      player.pushFrame()
       if (!loadError) {
         player.play()
       }
