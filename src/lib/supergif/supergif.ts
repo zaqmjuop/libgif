@@ -103,8 +103,8 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       itemGif.data.app = appBlock
     },
     gce: (gce: GCExtBlock) => {
-      itemGif.data.gces.push(gce)
-      player.onGCE()
+      itemGif.data.gces[itemGif.data.imgs.length] = gce
+      player.onGCE(gce)
       // We don't have much to do with the rest of GCE.
     },
     img: (imageBlock) => {

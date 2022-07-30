@@ -2,6 +2,7 @@ import {
   background,
   color,
   Frame,
+  GCExtBlock,
   Gif89aData,
   Header,
   ImgBlock,
@@ -33,6 +34,7 @@ export class Player extends Emitter<['complete']> {
 
   lastImg?: Rect & Partial<ImgBlock>
   frameGroup: Array<Frame & Rect> = []
+  currentGce?: GCExtBlock
   readonly quote: PlayerQuote
 
   constructor(quote: PlayerQuote) {
@@ -106,12 +108,13 @@ export class Player extends Emitter<['complete']> {
     this.putFrame()
   }
 
-  onGCE() {
+  onGCE(gce: GCExtBlock) {
+    this.currentGce = gce
     this.pushFrame()
   }
 
   doImg = (img: ImgBlock) => {
-    const gce = this.quote.gifData.gces[this.quote.gifData.gces.length - 1]
+    const gce = this.currentGce
     if (gce) {
       this.disposal(gce.disposalMethod)
     }
@@ -134,6 +137,7 @@ export class Player extends Emitter<['complete']> {
     }
 
     this.quote.viewer.loadingRender()
+    this.currentGce = void 0
   }
   disposal(method: number | null) {
     switch (method) {
