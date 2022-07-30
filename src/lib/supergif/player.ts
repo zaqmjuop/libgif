@@ -1,4 +1,4 @@
-import { background, Frame, Gif89aData, Header, ImgBlock, Rect } from './type'
+import { background, color, Frame, Gif89aData, Header, ImgBlock, Rect } from './type'
 import { Emitter } from './Emitter'
 import { Viewer } from './viewer'
 
@@ -98,23 +98,26 @@ export class Player extends Emitter<['complete']> {
     this.putFrame()
   }
 
-  doImg = (img: ImgBlock) => {
+  onGCE() {
+    this.pushFrame()
+
     const gce = this.quote.gifData.gces[this.quote.gifData.gces.length - 1]
     if (gce) {
       this.disposal(gce.disposalMethod)
     }
-    // else, Undefined/Do not dispose.
-    // frame contains final pixel data from the last frame; do nothing
+  }
 
-    //ct = color table, globalColorTable = global color table
-    const ct = img.lctFlag
+  doImg = (img: ImgBlock) => {
+    const gce = this.quote.gifData.gces[this.quote.gifData.gces.length - 1]
+
+    const colorTable = img.lctFlag
       ? img.lct
       : this.quote.gifData.header.globalColorTable // TODO: What if neither exists? 调用系统颜色表
     const transparency =
       gce && gce.transparencyGiven ? gce.transparencyIndex : null
     //Get existing pixels for img region after applying disposal method
     const imgData = this.quote.viewer.imgBlockToImageData({
-      ct: ct as number[][],
+      ct: colorTable as color[],
       transparency,
       ...img
     })

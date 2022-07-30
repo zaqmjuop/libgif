@@ -95,7 +95,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
   const HANDER: Hander = {
     hdr: (_hdr) => {
-      console.log(_hdr)
       itemGif.data.header = _hdr
       viewer.onImgHeader(_hdr)
     },
@@ -105,7 +104,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     gce: (gce: GCExtBlock) => {
       itemGif.data.gces.push(gce)
-      player.pushFrame()
+      player.onGCE()
       // We don't have much to do with the rest of GCE.
     },
     img: (imageBlock) => {
