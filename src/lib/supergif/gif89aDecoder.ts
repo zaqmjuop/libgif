@@ -25,7 +25,7 @@ const EMITS = [
   'pte',
   'unknown'
 ] as const
-export class GifParser extends Emitter<typeof EMITS> {
+export class Gif89aDecoder extends Emitter<typeof EMITS> {
   private st: Stream | null = null
 
   public get pos() {
@@ -104,14 +104,14 @@ export class GifParser extends Emitter<typeof EMITS> {
 
   private parseExt = (block: Block) => {
     if (!this.st) return
-    const parseGCExt = (block: ExtBlock) => { 
-    /**
-     * Graphic Control Extension 可选，作用范围是紧跟其后的一个img
-     *   透明度: transparencyGiven && colorTable[transparencyIndex]
-     *   操作函数：disposalMethod
-     *   帧时间：delayTime 如果没值，是10ms
-     *
-     */
+    const parseGCExt = (block: ExtBlock) => {
+      /**
+       * Graphic Control Extension 可选，作用范围是紧跟其后的一个img
+       *   透明度: transparencyGiven && colorTable[transparencyIndex]
+       *   操作函数：disposalMethod
+       *   帧时间：delayTime 如果没值，是10ms
+       *
+       */
       if (!this.st) return
       const blockSize = this.st.readByte() // Always 4
       const bits = byteToBitArr(this.st.readByte())
@@ -120,7 +120,7 @@ export class GifParser extends Emitter<typeof EMITS> {
       const userInput = !!bits.shift()
       const transparencyGiven = !!bits.shift()
 
-      const delayTime = this.st.readUnsigned()*10
+      const delayTime = this.st.readUnsigned() * 10
 
       const transparencyIndex = this.st.readByte()
 
@@ -226,7 +226,6 @@ export class GifParser extends Emitter<typeof EMITS> {
   }
 
   private parseImg = (block: Block) => {
- 
     if (!this.st) return
     const deinterlace = (pixels: number[], width: number) => {
       // Of course this defeats the purpose of interlacing. And it's *probably*
@@ -252,7 +251,7 @@ export class GifParser extends Emitter<typeof EMITS> {
 
       return newPixels
     }
-   /**
+    /**
      * 有用的信息
      * leftPos、topPos、width、height
      * interlaced隔行的

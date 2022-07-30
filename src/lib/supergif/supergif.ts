@@ -1,7 +1,7 @@
 import { Emitter } from './Emitter'
 import { ItemGif } from './itemGif'
 import { Loader } from './loader'
-import { GifParser } from './parseGIF'
+import { Gif89aDecoder } from './gif89aDecoder'
 import { Player } from './player'
 import { Stream } from './stream'
 import { GCExtBlock, Gif89aData, Hander, Header, Options, VP } from './type'
@@ -89,7 +89,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   player.on('complete', () => emitter.emit('complete', gif))
   // player
   // loader
-  const gifParser = new GifParser()
+  const decoder = new Gif89aDecoder()
 
   const HANDER: Hander = {
     hdr: (_hdr) => {
@@ -127,17 +127,17 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   const withProgress = (fn: Function) => {
     return (...args) => {
       fn(...args)
-      viewer.doShowProgress(gifParser.pos / gifParser.len)
+      viewer.doShowProgress(decoder.pos / decoder.len)
     }
   }
-  gifParser.on('hdr', withProgress(HANDER.hdr))
-  gifParser.on('gce', HANDER.gce)
-  gifParser.on('com', HANDER.com)
-  gifParser.on('app', HANDER.app)
-  gifParser.on('img', withProgress(HANDER.img))
-  gifParser.on('eof', withProgress(HANDER.eof))
-  gifParser.on('pte', HANDER.pte)
-  gifParser.on('unknown', HANDER.unknown)
+  decoder.on('hdr', withProgress(HANDER.hdr))
+  decoder.on('gce', HANDER.gce)
+  decoder.on('com', HANDER.com)
+  decoder.on('app', HANDER.app)
+  decoder.on('img', withProgress(HANDER.img))
+  decoder.on('eof', withProgress(HANDER.eof))
+  decoder.on('pte', HANDER.pte)
+  decoder.on('unknown', HANDER.unknown)
 
   // loader
   const load_setup = () => {
@@ -154,7 +154,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     load_setup()
     const stream = new Stream(data)
     try {
-      gifParser.parse(stream)
+      decoder.parse(stream)
     } catch (err) {
       viewer.doLoadError('parse')
     }
@@ -167,7 +167,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     viewer.doLoadError(message)
   })
 
-  const getLoading = () => loader.loading || gifParser.loading
+  const getLoading = () => loader.loading || decoder.loading
 
   const load_url = (url: string) => {
     if (getLoading()) return
