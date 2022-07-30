@@ -140,30 +140,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   gifParser.on('unknown', HANDER.unknown)
 
   // loader
-  const loader = new Loader()
-  loader.on('load', (data: string | Uint8Array) => {
-    const stream = new Stream(data)
-    try {
-      gifParser.parse(stream)
-    } catch (err) {
-      player.frameGroup = []
-      viewer.doLoadError('parse')
-    }
-  })
-  loader.on('progress', (e: ProgressEvent<EventTarget>) => {
-    e.lengthComputable && viewer.doShowProgress(e.loaded / e.total)
-  })
-  loader.on('error', (message: string) => {
-    player.frameGroup = []
-    viewer.doLoadError(message)
-  })
-
-  const getSrc = () => gif.getAttribute('rel:animated_src') || gif.src
-
-  const getLoading = () => {
-    return loader.loading || gifParser.loading
-  }
-
   const load_setup = () => {
     itemGif = new ItemGif(
       { max_width: options.max_width },
@@ -173,21 +149,42 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     player.delay = null
   }
 
+  const loader = new Loader()
+  loader.on('load', (data: string | Uint8Array) => {
+    load_setup()
+    const stream = new Stream(data)
+    try {
+      gifParser.parse(stream)
+    } catch (err) {
+      viewer.doLoadError('parse')
+    }
+  })
+  loader.on('progress', (e: ProgressEvent<EventTarget>) => {
+    e.lengthComputable && viewer.doShowProgress(e.loaded / e.total)
+  })
+  loader.on('error', (message: string) => {
+    load_setup()
+    viewer.doLoadError(message)
+  })
+
+  const getSrc = () => gif.getAttribute('rel:animated_src') || gif.src
+
+  const getLoading = () => {
+    return loader.loading || gifParser.loading
+  }
+
   const load_url = (url: string) => {
     if (getLoading()) return
-    load_setup()
     loader.load_url(url)
   }
 
   const load_raw = (data: string | Uint8Array) => {
     if (getLoading()) return
-    load_setup()
     loader.load_raw(data)
   }
 
   const load = () => {
     if (getLoading()) return
-    load_setup()
     load_url(getSrc())
   }
   // loader
