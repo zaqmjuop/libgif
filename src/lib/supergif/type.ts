@@ -30,14 +30,7 @@ export interface Header {
   readonly globalColorTable: color[] | undefined
 }
 
-export interface VP {
-  vp_w: number
-  vp_h: number
-  vp_l: number
-  vp_t: number
-}
 export interface Options {
-  is_vp?: boolean
   gif: HTMLImageElement
   on_end?: (gif: HTMLImageElement) => void
   loop_delay?: number

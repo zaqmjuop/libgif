@@ -13,28 +13,17 @@ import {
   ImgBlock,
   Options,
   PTExtBlock,
-  UnknownExtBlock,
-  VP
+  UnknownExtBlock
 } from './type'
 import { Viewer } from './viewer'
 
-const SuperGif = (opts: Options & Partial<VP>) => {
+const SuperGif = (opts: Options) => {
   const EMITS = ['loadstart', 'load', 'progress', 'error', 'complete'] as const
   const emitter = new Emitter<typeof EMITS>()
-  const options: Options & VP = Object.assign(
-    {
-      //viewport position
-      vp_l: 0,
-      vp_t: 0,
-      vp_w: 0,
-      vp_h: 0
-    },
-    opts
-  )
+  const options: Options = Object.assign({}, opts)
   for (let i in opts) {
     options[i] = opts[i]
   }
-  if (options.vp_w && options.vp_h) options.is_vp = true
 
   const gif = options.gif
   let itemGif = new ItemGif({}, { width: gif.width, height: gif.height })
@@ -42,21 +31,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
   // global func
   // canvas
   const viewer = new Viewer({
-    get is_vp() {
-      return !!options.is_vp
-    },
-    get vp_t() {
-      return options.vp_t
-    },
-    get vp_h() {
-      return options.vp_h
-    },
-    get vp_l() {
-      return options.vp_l
-    },
-    get vp_w() {
-      return options.vp_w
-    },
     get c_w() {
       return gif.width || itemGif.data.header.logicalScreenWidth
     },

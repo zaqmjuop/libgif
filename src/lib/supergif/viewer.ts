@@ -1,13 +1,8 @@
 import { color, Frame, Header, ImgBlock, Rect } from './type'
 
 interface ViewerQuote {
-  is_vp: boolean
-  vp_t: number
-  vp_h: number
-  vp_l: number
-  vp_w: number
   c_w: number
-  c_h: number 
+  c_h: number
 }
 
 export class Viewer {
@@ -61,7 +56,7 @@ export class Viewer {
   }
 
   onImgHeader(hdr: Header) {
-    if(!this.$el){
+    if (!this.$el) {
       return
     }
     const attrWidth = this.$el.getAttribute('width')
@@ -87,18 +82,13 @@ export class Viewer {
   }
   doShowProgress(percent: number) {
     if (percent > 1 || percent < 0 || !this.showProgressBar) return
-    let height = 4 * this.zoomH
-    let mid, top, width
-    const scale = this.zoomW
-    if (this.quote.is_vp) {
-      top = (this.quote.vp_t + this.quote.vp_h - height) / scale
-      mid = this.quote.vp_l / scale + percent * (this.quote.vp_w / scale)
-    } else {
-      top = (this.canvas.height - height) / scale
-      mid = (percent * this.canvas.width) / scale
-    }
-    height = height / scale
-    width = this.canvas.width / scale
+    
+    let height = 4
+    const top = (this.canvas.height - height) / this.zoomH
+    const mid = (percent * this.canvas.width) / this.zoomW
+
+    height = height / this.zoomH
+    const width = this.canvas.width / this.zoomW
 
     this.ctx.fillStyle = `rgba(255,255,255,0.4)`
     this.ctx.fillRect(mid, top, width - mid, height)
