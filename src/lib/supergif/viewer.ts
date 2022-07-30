@@ -83,7 +83,7 @@ export class Viewer {
     this.utilCanvas.height = hdr.logicalScreenHeight
     this.utilCanvas.style.width = hdr.logicalScreenWidth + 'px'
     this.utilCanvas.style.height = hdr.logicalScreenHeight + 'px'
-    this.utilCanvas.getContext('2d')?.setTransform(1, 0, 0, 1, 0, 0)
+    this.utilCtx.setTransform(1, 0, 0, 1, 0, 0)
   }
   doShowProgress(percent: number) {
     if (percent > 1 || percent < 0 || !this.showProgressBar) return
