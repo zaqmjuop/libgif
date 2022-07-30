@@ -167,11 +167,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     viewer.doLoadError(message)
   })
 
-  const getSrc = () => gif.getAttribute('rel:animated_src') || gif.src
-
-  const getLoading = () => {
-    return loader.loading || gifParser.loading
-  }
+  const getLoading = () => loader.loading || gifParser.loading
 
   const load_url = (url: string) => {
     if (getLoading()) return
@@ -185,7 +181,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
   const load = () => {
     if (getLoading()) return
-    load_url(getSrc())
+    load_url(gif.getAttribute('rel:animated_src') || gif.src)
   }
   // loader
 
