@@ -8,8 +8,6 @@ interface Quote {
 export class ItemGif extends Emitter {
   readonly quote: Quote
   delay: null | number = null
-
-  lastImg?: Rect & Partial<ImgBlock>
   frameGroup: Frame[] = []
   data: Gif89aData
   constructor(quote: Quote, rect: { width: number; height: number }) {

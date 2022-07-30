@@ -171,7 +171,6 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     )
     player.frameGroup = []
     player.delay = null
-    player.lastImg = void 0
   }
 
   const load_url = (url: string) => {

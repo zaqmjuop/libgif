@@ -31,8 +31,6 @@ export class Player extends Emitter<['complete']> {
   forward = true
   playing = true
   delay: null | number = null
-
-  lastImg?: Rect & Partial<ImgBlock>
   frameGroup: Array<Frame & Rect> = []
   currentGce?: GCExtBlock
   readonly quote: PlayerQuote
