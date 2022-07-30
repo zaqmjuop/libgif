@@ -24,15 +24,15 @@ export interface Hander {
 }
 
 export interface Header {
-  readonly sig: string
-  readonly ver: string
-  readonly width: number
-  readonly height: number
-  readonly gctFlag: boolean
-  readonly colorRes: number
-  readonly sorted: boolean
-  readonly gctSize: number
-  readonly bgColor: number
+  readonly signature: string
+  readonly version: string
+  readonly logicalScreenWidth: number
+  readonly logicalScreenHeight: number
+  readonly globalColorTableFlag: boolean
+  readonly ColorResolution: number
+  readonly sortFlag: boolean
+  readonly ColorTableSize: number
+  readonly backgroundColorIndex: number
   readonly pixelAspectRatio: number
   readonly gct: number[][] | undefined
 }
@@ -121,3 +121,6 @@ export interface Gif89aData {
 }
 export type valuesType<T> = T extends readonly (infer U)[] ? U : never
 export type func = (...args: any[]) => any
+export type background = Rect & {
+  backgroundColor: string
+}

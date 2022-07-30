@@ -67,10 +67,10 @@ const SuperGif = (opts: Options & Partial<VP>) => {
       return options.vp_w
     },
     get c_w() {
-      return gif.width || itemGif.data.header.width
+      return gif.width || itemGif.data.header.logicalScreenWidth
     },
     get c_h() {
-      return gif.height || itemGif.data.header.height
+      return gif.height || itemGif.data.header.logicalScreenHeight
     },
     get gif() {
       return gif
@@ -95,6 +95,7 @@ const SuperGif = (opts: Options & Partial<VP>) => {
 
   const HANDER: Hander = {
     hdr: (_hdr) => {
+      console.log(_hdr)
       itemGif.data.header = _hdr
       viewer.onImgHeader(_hdr)
     },

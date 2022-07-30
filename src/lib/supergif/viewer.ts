@@ -49,9 +49,9 @@ export class Viewer {
       const domWidth = this.quote.gif.getAttribute('width')
       if (domWidth) {
         w = parseInt(domWidth)
-        zoomW = w / hdr.width
+        zoomW = w / hdr.logicalScreenWidth
       } else {
-        w = hdr.width
+        w = hdr.logicalScreenWidth
         zoomW = 1
       }
       this.canvas.width = w
@@ -61,9 +61,9 @@ export class Viewer {
       const domHeight = this.quote.gif.getAttribute('height')
       if (domHeight) {
         h = parseInt(domHeight)
-        zoomH = h / hdr.height
+        zoomH = h / hdr.logicalScreenHeight
       } else {
-        h = hdr.height
+        h = hdr.logicalScreenHeight
         zoomH = 1
       }
       this.canvas.height = h
@@ -80,10 +80,10 @@ export class Viewer {
       this.ctx.scale(zoomW, zoomH)
       this.zoomW = zoomW
       this.zoomH = zoomH
-      this.utilCanvas.width = hdr.width
-      this.utilCanvas.height = hdr.height
-      this.utilCanvas.style.width = hdr.width + 'px'
-      this.utilCanvas.style.height = hdr.height + 'px'
+      this.utilCanvas.width = hdr.logicalScreenWidth
+      this.utilCanvas.height = hdr.logicalScreenHeight
+      this.utilCanvas.style.width = hdr.logicalScreenWidth + 'px'
+      this.utilCanvas.style.height = hdr.logicalScreenHeight + 'px'
       this.utilCanvas.getContext('2d')?.setTransform(1, 0, 0, 1, 0, 0)
     }
   }

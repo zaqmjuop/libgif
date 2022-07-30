@@ -1,4 +1,4 @@
-import { Frame, Gif89aData, ImgBlock, Rect } from './type'
+import { background, Frame, Gif89aData, Header, ImgBlock, Rect } from './type'
 import { Emitter } from './Emitter'
 import { Viewer } from './viewer'
 
@@ -25,7 +25,7 @@ export class Player extends Emitter<['complete']> {
 
   lastImg?: Rect & Partial<ImgBlock>
   frameGroup: Array<Frame & Rect> = []
-  background?: Frame & Rect
+  background?: background
   readonly quote: PlayerQuote
 
   constructor(quote: PlayerQuote) {
@@ -178,13 +178,22 @@ export class Player extends Emitter<['complete']> {
       // this.quote.viewer.pushFrame(this.delay)
     } else {
       this.background = {
-        width,
-        height,
+        width: 0,
+        height: 0,
         leftPos: 0,
         topPos: 0,
-        data: this.quote.viewer.utilCtx.getImageData(0, 0, width, height),
-        delay: this.delay || -1
+        backgroundColor: 'hdr.colorRes'
       }
+    }
+  }
+  onImgHeader(hdr: Header) {
+    console.log(hdr)
+    this.background = {
+      width: hdr.logicalScreenWidth,
+      height: hdr.logicalScreenHeight,
+      leftPos: 0,
+      topPos: 0,
+      backgroundColor: 'hdr.colorRes'
     }
   }
 }

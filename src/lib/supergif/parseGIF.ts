@@ -64,31 +64,31 @@ export class GifParser extends Emitter<typeof EMITS> {
 
   private parseHeader = () => {
     if (!this.st) return
-    const sig = this.st.read(3)
-    const ver = this.st.read(3)
-    if (sig !== 'GIF') throw new Error('Not a GIF file.') // XXX: This should probably be handled more nicely.
-    const width = this.st.readUnsigned()
-    const height = this.st.readUnsigned()
+    const signature = this.st.read(3)
+    const version = this.st.read(3)
+    if (signature !== 'GIF') throw new Error('Not a GIF file.') // XXX: This should probably be handled more nicely.
+    const logicalScreenWidth = this.st.readUnsigned()
+    const logicalScreenHeight = this.st.readUnsigned()
 
     const bits = byteToBitArr(this.st.readByte())
-    const gctFlag = !!bits.shift()
-    const colorRes = bitsToNum(bits.splice(0, 3))
-    const sorted = !!bits.shift()
-    const gctSize = bitsToNum(bits.splice(0, 3))
+    const globalColorTableFlag = !!bits.shift()
+    const ColorResolution = bitsToNum(bits.splice(0, 3))
+    const sortFlag = !!bits.shift()
+    const ColorTableSize = bitsToNum(bits.splice(0, 3))
 
-    const bgColor = this.st.readByte()
+    const backgroundColorIndex = this.st.readByte()
     const pixelAspectRatio = this.st.readByte() // if not 0, aspectRatio = (pixelAspectRatio + 15) / 64
-    const gct = gctFlag ? this.parseCT(1 << (gctSize + 1)) : undefined
+    const gct = globalColorTableFlag ? this.parseCT(1 << (ColorTableSize + 1)) : undefined
     const header: Header = {
-      sig,
-      ver,
-      width,
-      height,
-      gctFlag,
-      colorRes,
-      sorted,
-      gctSize,
-      bgColor,
+      signature,
+      version,
+      logicalScreenWidth,
+      logicalScreenHeight,
+      globalColorTableFlag,
+      ColorResolution,
+      sortFlag,
+      ColorTableSize,
+      backgroundColorIndex,
       pixelAspectRatio,
       gct
     }

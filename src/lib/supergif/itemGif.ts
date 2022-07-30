@@ -16,7 +16,7 @@ export class ItemGif extends Emitter {
     super()
     this.quote = quote
     this.data = {
-      header: { width: rect.width, height: rect.height } as Header,
+      header: { logicalScreenWidth: rect.width, logicalScreenHeight: rect.height } as Header,
       gces: [],
       imgs: [],
       exts: []
