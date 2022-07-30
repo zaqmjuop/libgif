@@ -12,6 +12,9 @@ export interface Rect {
   width: number
   height: number
 }
+
+export type color = [number, number, number]
+
 export interface Hander {
   readonly hdr: (block: Header) => void
   readonly gce: (block: GCExtBlock) => void
@@ -33,8 +36,9 @@ export interface Header {
   readonly sortFlag: boolean
   readonly ColorTableSize: number
   readonly backgroundColorIndex: number
+  readonly backgroundColor: color | null
   readonly pixelAspectRatio: number
-  readonly gct: number[][] | undefined
+  readonly globalColorTable: color[] | undefined
 }
 
 export interface VP {

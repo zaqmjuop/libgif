@@ -25,7 +25,6 @@ export class Player extends Emitter<['complete']> {
 
   lastImg?: Rect & Partial<ImgBlock>
   frameGroup: Array<Frame & Rect> = []
-  background?: background
   readonly quote: PlayerQuote
 
   constructor(quote: PlayerQuote) {
@@ -107,8 +106,10 @@ export class Player extends Emitter<['complete']> {
     // else, Undefined/Do not dispose.
     // frame contains final pixel data from the last frame; do nothing
 
-    //ct = color table, gct = global color table
-    const ct = img.lctFlag ? img.lct : this.quote.gifData.header.gct // TODO: What if neither exists? 调用系统颜色表
+    //ct = color table, globalColorTable = global color table
+    const ct = img.lctFlag
+      ? img.lct
+      : this.quote.gifData.header.globalColorTable // TODO: What if neither exists? 调用系统颜色表
     const transparency =
       gce && gce.transparencyGiven ? gce.transparencyIndex : null
     //Get existing pixels for img region after applying disposal method
@@ -145,15 +146,14 @@ export class Player extends Emitter<['complete']> {
     }
   }
   restoreBackgroundColor() {
-    if (this.background) {
-      const { leftPos, topPos, width, height } = this.background
-      this.quote.viewer.restoreBackgroundColor({
-        leftPos,
-        topPos,
-        width,
-        height
-      })
-    }
+    const hdr = this.quote.gifData.header
+    this.quote.viewer.restoreBackgroundColor({
+      backgroundColor: hdr.backgroundColor || undefined,
+      leftPos: 0,
+      topPos: 0,
+      width: hdr.logicalScreenWidth,
+      height: hdr.logicalScreenHeight
+    })
   }
 
   pushFrame() {
@@ -175,25 +175,6 @@ export class Player extends Emitter<['complete']> {
         data: this.quote.viewer.utilCtx.getImageData(0, 0, width, height),
         delay: this.delay || -1
       })
-      // this.quote.viewer.pushFrame(this.delay)
-    } else {
-      this.background = {
-        width: 0,
-        height: 0,
-        leftPos: 0,
-        topPos: 0,
-        backgroundColor: 'hdr.colorRes'
-      }
-    }
-  }
-  onImgHeader(hdr: Header) {
-    console.log(hdr)
-    this.background = {
-      width: hdr.logicalScreenWidth,
-      height: hdr.logicalScreenHeight,
-      leftPos: 0,
-      topPos: 0,
-      backgroundColor: 'hdr.colorRes'
     }
   }
 }

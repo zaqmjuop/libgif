@@ -9,7 +9,8 @@ import {
   Header,
   ImgBlock,
   PTExtBlock,
-  UnknownAppExtBlock
+  UnknownAppExtBlock,
+  color
 } from './type'
 
 // The actual parsing; returns an object with properties.
@@ -40,14 +41,14 @@ export class GifParser extends Emitter<typeof EMITS> {
   }
 
   // LZW (GIF-specific)
-  private parseCT = (entries: number) => {
+  private parseColorTable = (entries: number) => {
     if (!this.st) return
     // Each entry is 3 bytes, for RGB.
-    const ct: number[][] = []
+    const colorTable: color[] = []
     for (let i = 0; i < entries; i++) {
-      ct.push(this.st.readBytes(3))
+      colorTable.push(this.st.readBytes(3) as color)
     }
-    return ct
+    return colorTable
   }
 
   private readSubBlocks = () => {
@@ -78,7 +79,12 @@ export class GifParser extends Emitter<typeof EMITS> {
 
     const backgroundColorIndex = this.st.readByte()
     const pixelAspectRatio = this.st.readByte() // if not 0, aspectRatio = (pixelAspectRatio + 15) / 64
-    const gct = globalColorTableFlag ? this.parseCT(1 << (ColorTableSize + 1)) : undefined
+    const globalColorTable = globalColorTableFlag
+      ? this.parseColorTable(1 << (ColorTableSize + 1))
+      : undefined
+    const backgroundColor = globalColorTable
+      ? globalColorTable[backgroundColorIndex]
+      : null
     const header: Header = {
       signature,
       version,
@@ -89,8 +95,9 @@ export class GifParser extends Emitter<typeof EMITS> {
       sortFlag,
       ColorTableSize,
       backgroundColorIndex,
+      backgroundColor,
       pixelAspectRatio,
-      gct
+      globalColorTable
     }
     this.emit('hdr', header)
   }
@@ -250,7 +257,7 @@ export class GifParser extends Emitter<typeof EMITS> {
     const reserved = bits.splice(0, 2)
     const lctSize = bitsToNum(bits.splice(0, 3))
 
-    const lct = lctFlag ? this.parseCT(1 << (lctSize + 1)) : undefined
+    const lct = lctFlag ? this.parseColorTable(1 << (lctSize + 1)) : undefined
 
     const lzwMinCodeSize = this.st.readByte()
 

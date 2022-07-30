@@ -1,4 +1,4 @@
-import { Frame, Hander, Header, ImgBlock, Offset, Rect } from './type'
+import { color, Frame, Hander, Header, ImgBlock, Offset, Rect } from './type'
 
 interface ViewerQuote {
   showProgressBar: boolean
@@ -123,8 +123,13 @@ export class Viewer {
     this.ctx.lineTo(w, 0)
     this.ctx.stroke()
   }
-  restoreBackgroundColor(rect: Rect) {
-    this.utilCtx.clearRect(rect.leftPos, rect.topPos, rect.width, rect.height)
+  restoreBackgroundColor(e: { backgroundColor?: color } & Rect) {
+    if (e.backgroundColor) {
+      this.utilCtx.fillStyle = `rgb(${e.backgroundColor.join(',')} )`
+      this.utilCtx.fillRect(e.leftPos, e.topPos, e.width, e.height)
+    } else {
+      this.utilCtx.clearRect(e.leftPos, e.topPos, e.width, e.height)
+    }
   }
   imgBlockToImageData = (
     img: ImgBlock & { ct: number[][]; transparency: number | null }
