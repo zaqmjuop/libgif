@@ -5,7 +5,6 @@ export class Viewer {
   readonly ctx: CanvasRenderingContext2D
   readonly utilCanvas = document.createElement('canvas') // 图片文件原始模样
   readonly utilCtx: CanvasRenderingContext2D
-  readonly toolbar = document.createElement('div')
   opacity = 255
   zoomW = 1
   zoomH = 1
@@ -32,17 +31,15 @@ export class Viewer {
     this.$el = element
     const div = document.createElement('div')
     div.style.display = 'inline-block'
+    
     const w = element.width
-    this.canvas.width = w
     const h = element.height
+    this.canvas.id = '重构'
+    this.canvas.style.display = 'block'
+    this.canvas.width = w
     this.canvas.height = h
 
-    this.toolbar.style.width = w + 'px'
-    div.className = 'jsgif'
-    this.toolbar.className = 'jsgif_toolbar'
-    this.canvas.id = '重构'
     div.appendChild(this.canvas)
-    div.appendChild(this.toolbar)
     parent.insertBefore(div, element)
     parent.removeChild(element)
   }
