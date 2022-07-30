@@ -7,13 +7,12 @@ interface ViewerQuote {
   vp_l: number
   vp_w: number
   c_w: number
-  c_h: number
-  gif: HTMLImageElement
+  c_h: number 
 }
 
 export class Viewer {
+  $el?: HTMLImageElement
   readonly canvas = document.createElement('canvas') // 缩放滤镜后的模样
-
   readonly ctx: CanvasRenderingContext2D
   readonly utilCanvas = document.createElement('canvas') // 图片文件原始模样
   readonly utilCtx: CanvasRenderingContext2D
@@ -28,57 +27,63 @@ export class Viewer {
     this.utilCtx = this.utilCanvas.getContext('2d') as CanvasRenderingContext2D
   }
   get showProgressBar() {
-    return this.quote.gif.getAttribute('progress_bar') !== 'none'
+    return this.$el?.getAttribute('progress_bar') !== 'none'
+  }
+
+  get isMounted() {
+    return !!this.$el
+  }
+
+  mount(element: HTMLImageElement) {
+    if (this.isMounted) {
+      return
+    }
+    const parent = element.parentNode
+    if (!parent) {
+      return
+    }
+    this.$el = element
+    const div = document.createElement('div')
+    div.style.display = 'inline-block'
+    const w = element.width
+    this.canvas.width = w
+    const h = element.height
+    this.canvas.height = h
+
+    this.toolbar.style.width = w + 'px'
+    div.className = 'jsgif'
+    this.toolbar.className = 'jsgif_toolbar'
+    this.canvas.id = '重构'
+    div.appendChild(this.canvas)
+    div.appendChild(this.toolbar)
+    parent.insertBefore(div, element)
+    parent.removeChild(element)
   }
 
   onImgHeader(hdr: Header) {
-    const parent = this.quote.gif.parentNode
-
-    if (parent) {
-      // init
-      const div = document.createElement('div')
-      let w = 0
-      let zoomW = 1
-      const domWidth = this.quote.gif.getAttribute('width')
-      if (domWidth) {
-        w = parseInt(domWidth)
-        zoomW = w / hdr.logicalScreenWidth
-      } else {
-        w = hdr.logicalScreenWidth
-        zoomW = 1
-      }
-      this.canvas.width = w
-      div.setAttribute('width', w.toString())
-      let h = 0
-      let zoomH = 1
-      const domHeight = this.quote.gif.getAttribute('height')
-      if (domHeight) {
-        h = parseInt(domHeight)
-        zoomH = h / hdr.logicalScreenHeight
-      } else {
-        h = hdr.logicalScreenHeight
-        zoomH = 1
-      }
-      this.canvas.height = h
-      div.setAttribute('height', h.toString())
-      this.toolbar.style.width = w + 'px'
-      div.className = 'jsgif'
-      this.toolbar.className = 'jsgif_toolbar'
-      this.canvas.id = '重构'
-      div.appendChild(this.canvas)
-      div.appendChild(this.toolbar)
-      parent.insertBefore(div, this.quote.gif)
-      parent.removeChild(this.quote.gif)
-      // setSize
-      this.ctx.scale(zoomW, zoomH)
-      this.zoomW = zoomW
-      this.zoomH = zoomH
-      this.utilCanvas.width = hdr.logicalScreenWidth
-      this.utilCanvas.height = hdr.logicalScreenHeight
-      this.utilCanvas.style.width = hdr.logicalScreenWidth + 'px'
-      this.utilCanvas.style.height = hdr.logicalScreenHeight + 'px'
-      this.utilCanvas.getContext('2d')?.setTransform(1, 0, 0, 1, 0, 0)
+    if(!this.$el){
+      return
     }
+    const attrWidth = this.$el.getAttribute('width')
+    const width = attrWidth ? parseInt(attrWidth) : hdr.logicalScreenWidth
+    const zoomW = width / hdr.logicalScreenWidth
+
+    const attrHeight = this.$el.getAttribute('height')
+    const height = attrHeight ? parseInt(attrHeight) : hdr.logicalScreenHeight
+    const zoomH = height / hdr.logicalScreenHeight
+
+    this.canvas.width = width
+    this.canvas.height = height
+
+    // setSize
+    this.ctx.scale(zoomW, zoomH)
+    this.zoomW = zoomW
+    this.zoomH = zoomH
+    this.utilCanvas.width = hdr.logicalScreenWidth
+    this.utilCanvas.height = hdr.logicalScreenHeight
+    this.utilCanvas.style.width = hdr.logicalScreenWidth + 'px'
+    this.utilCanvas.style.height = hdr.logicalScreenHeight + 'px'
+    this.utilCanvas.getContext('2d')?.setTransform(1, 0, 0, 1, 0, 0)
   }
   doShowProgress(percent: number) {
     if (percent > 1 || percent < 0 || !this.showProgressBar) return

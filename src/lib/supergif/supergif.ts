@@ -62,12 +62,9 @@ const SuperGif = (opts: Options & Partial<VP>) => {
     },
     get c_h() {
       return gif.height || itemGif.data.header.logicalScreenHeight
-    },
-    get gif() {
-      return gif
     }
   })
-
+  viewer.mount(gif)
   // canvas
 
   // player
