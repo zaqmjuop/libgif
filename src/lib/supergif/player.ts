@@ -1,4 +1,12 @@
-import { background, color, Frame, Gif89aData, Header, ImgBlock, Rect } from './type'
+import {
+  background,
+  color,
+  Frame,
+  Gif89aData,
+  Header,
+  ImgBlock,
+  Rect
+} from './type'
 import { Emitter } from './Emitter'
 import { Viewer } from './viewer'
 
@@ -100,15 +108,13 @@ export class Player extends Emitter<['complete']> {
 
   onGCE() {
     this.pushFrame()
-
-    const gce = this.quote.gifData.gces[this.quote.gifData.gces.length - 1]
-    if (gce) {
-      this.disposal(gce.disposalMethod)
-    }
   }
 
   doImg = (img: ImgBlock) => {
     const gce = this.quote.gifData.gces[this.quote.gifData.gces.length - 1]
+    if (gce) {
+      this.disposal(gce.disposalMethod)
+    }
 
     const colorTable = img.lctFlag
       ? img.lct
