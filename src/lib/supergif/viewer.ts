@@ -17,7 +17,7 @@ export class Viewer {
   }
 
   get isMounted() {
-    return !!this.$el
+    return !!this.canvas.parentNode?.parentNode
   }
 
   mount(element: HTMLImageElement) {
@@ -31,7 +31,7 @@ export class Viewer {
     this.$el = element
     const div = document.createElement('div')
     div.style.display = 'inline-block'
-    
+
     const w = element.width
     const h = element.height
     this.canvas.id = '重构'
@@ -44,17 +44,17 @@ export class Viewer {
     parent.removeChild(element)
   }
 
-  onImgHeader(hdr: Header) {
+  adapt(imgSize: { width: number; height: number }) {
     if (!this.$el) {
       return
     }
     const attrWidth = this.$el.getAttribute('width')
-    const width = attrWidth ? parseInt(attrWidth) : hdr.logicalScreenWidth
-    const zoomW = width / hdr.logicalScreenWidth
+    const width = attrWidth ? parseInt(attrWidth) : imgSize.width
+    const zoomW = width / imgSize.width
 
     const attrHeight = this.$el.getAttribute('height')
-    const height = attrHeight ? parseInt(attrHeight) : hdr.logicalScreenHeight
-    const zoomH = height / hdr.logicalScreenHeight
+    const height = attrHeight ? parseInt(attrHeight) : imgSize.height
+    const zoomH = height / imgSize.height
 
     this.canvas.width = width
     this.canvas.height = height
@@ -63,13 +63,13 @@ export class Viewer {
     this.ctx.scale(zoomW, zoomH)
     this.zoomW = zoomW
     this.zoomH = zoomH
-    this.utilCanvas.width = hdr.logicalScreenWidth
-    this.utilCanvas.height = hdr.logicalScreenHeight
-    this.utilCanvas.style.width = hdr.logicalScreenWidth + 'px'
-    this.utilCanvas.style.height = hdr.logicalScreenHeight + 'px'
+    this.utilCanvas.width = imgSize.width
+    this.utilCanvas.height = imgSize.height
+    this.utilCanvas.style.width = imgSize.width + 'px'
+    this.utilCanvas.style.height = imgSize.height + 'px'
     this.utilCtx.setTransform(1, 0, 0, 1, 0, 0)
   }
-  doShowProgress(percent: number) {
+  drawProgress(percent: number) {
     if (percent > 1 || percent < 0 || !this.showProgressBar) return
 
     let height = 2
@@ -85,7 +85,8 @@ export class Viewer {
     this.ctx.fillStyle = `rgba(0,123,255,0.8)`
     this.ctx.fillRect(0, top, mid, height)
   }
-  doLoadError = (originOfError: string) => {
+  drawError = (originOfError: string) => {
+    console.error(originOfError)
     this.ctx.fillStyle = 'black'
     const w = this.canvas.width
     const h = this.canvas.height
@@ -97,14 +98,6 @@ export class Viewer {
     this.ctx.moveTo(0, h)
     this.ctx.lineTo(w, 0)
     this.ctx.stroke()
-  }
-  restoreBackgroundColor(e: { backgroundColor?: color } & Rect) {
-    if (e.backgroundColor) {
-      this.utilCtx.fillStyle = `rgb(${e.backgroundColor.join(',')} )`
-      this.utilCtx.fillRect(e.leftPos, e.topPos, e.width, e.height)
-    } else {
-      this.utilCtx.clearRect(e.leftPos, e.topPos, e.width, e.height)
-    }
   }
   imgBlockToImageData = (
     img: ImgBlock & { ct: number[][]; transparency: number | null }
@@ -126,19 +119,22 @@ export class Viewer {
     })
     return imgData
   }
-
-  onPutFrame = (e: { flag: number } & Frame & Rect) => {
-    const data = e.data
-    this.utilCtx.putImageData(data, e.leftPos, e.topPos)
-    this.ctx.globalCompositeOperation = 'copy'
-    this.ctx.drawImage(this.utilCanvas, 0, 0)
+  putDraft(
+    picture: ImageData | color | null,
+    left: number = 0,
+    top: number = 0
+  ) {
+    const { width, height } = this.utilCanvas
+    if (!picture) {
+      this.utilCtx.clearRect(0, 0, width, height)
+    } else if (picture instanceof ImageData) {
+      this.utilCtx.putImageData(picture, left, top)
+    } else {
+      this.utilCtx.fillStyle = `rgb(${picture.join(',')} )`
+      this.utilCtx.fillRect(0, 0, width, height)
+    }
   }
-  putImageData = (data: ImageData, left: number, top: number) => {
-    this.utilCtx.putImageData(data, left, top)
-  }
-  loadingRender() {
-    // We could use the on-page canvas directly, except that we draw a progress
-    // bar for each image chunk (not just the final image).
-    this.utilCanvas && this.ctx.drawImage(this.utilCanvas, 0, 0) // 真正的视图画布
+  drawDraft() {
+    this.ctx.drawImage(this.utilCanvas, 0, 0) // 真正的视图画布
   }
 }

@@ -83,7 +83,8 @@ export class Player extends Emitter<['complete']> {
       this.i = 0
     }
     const frame = this.frameGroup[this.i]
-    this.quote.viewer.onPutFrame({ flag: this.i, ...frame })
+    this.quote.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
+    this.quote.viewer.drawDraft()
   }
 
   play = () => {
@@ -138,38 +139,31 @@ export class Player extends Emitter<['complete']> {
 
     if (imgData) {
       // 绘制当前帧
-      this.quote.viewer.putImageData(frame.data, frame.leftPos, frame.topPos)
+      this.quote.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
     }
 
-    this.quote.viewer.loadingRender()
+    this.quote.viewer.drawDraft()
     this.currentGce = void 0
   }
   disposal(method: number | null) {
+    const restoreFrame = (flag: number) => {
+      const frame = this.frameGroup[flag]
+      if (frame) {
+        this.quote.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
+      } else {
+        this.quote.viewer.putDraft(
+          this.quote.gifData.header.backgroundColor || null
+        )
+      }
+    }
+
     switch (method) {
       case DisposalMethod.previous:
-        this.restorePrevious()
+        restoreFrame(this.frameGroup.length - 1)
         break
       case DisposalMethod.backgroundColor:
-        this.restoreBackgroundColor()
+        restoreFrame(-1)
         break
     }
-  }
-  restorePrevious() {
-    const prevFrame = this.frameGroup[this.frameGroup.length - 1]
-    if (prevFrame) {
-      this.quote.viewer.utilCtx.putImageData(prevFrame.data, 0, 0)
-    } else {
-      this.restoreBackgroundColor()
-    }
-  }
-  restoreBackgroundColor() {
-    const hdr = this.quote.gifData.header
-    this.quote.viewer.restoreBackgroundColor({
-      backgroundColor: hdr.backgroundColor || undefined,
-      leftPos: 0,
-      topPos: 0,
-      width: hdr.logicalScreenWidth,
-      height: hdr.logicalScreenHeight
-    })
   }
 }

@@ -51,14 +51,17 @@ const SuperGif = (opts: Options) => {
   const withProgress = (fn: Function) => {
     return (...args) => {
       fn(...args)
-      viewer.doShowProgress(decoder.pos / decoder.len)
+      viewer.drawProgress(decoder.pos / decoder.len)
     }
   }
   decoder.on(
     'hdr',
     withProgress((_hdr: Header) => {
       itemGif.data.header = _hdr
-      viewer.onImgHeader(_hdr)
+      viewer.adapt({
+        width: _hdr.logicalScreenWidth,
+        height: _hdr.logicalScreenHeight
+      })
     })
   )
   decoder.on('app', (appBlock: AppExtBlock) => {
@@ -108,15 +111,15 @@ const SuperGif = (opts: Options) => {
     try {
       decoder.parse(stream)
     } catch (err) {
-      viewer.doLoadError('parse')
+      viewer.drawError('parse')
     }
   })
   loader.on('progress', (e: ProgressEvent<EventTarget>) => {
-    e.lengthComputable && viewer.doShowProgress(e.loaded / e.total)
+    e.lengthComputable && viewer.drawProgress(e.loaded / e.total)
   })
   loader.on('error', (message: string) => {
     load_setup()
-    viewer.doLoadError(message)
+    viewer.drawError(message)
   })
 
   const getLoading = () => loader.loading || decoder.loading
