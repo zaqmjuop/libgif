@@ -98,26 +98,14 @@ export class Viewer {
     this.ctx.moveTo(0, h)
     this.ctx.lineTo(w, 0)
     this.ctx.stroke()
-  }
-  imgBlockToImageData = (
-    img: ImgBlock & { ct: number[][]; transparency: number | null }
-  ) => {
-    const imgData = this.utilCtx.getImageData(
-      img.leftPos,
-      img.topPos,
-      img.width,
-      img.height
-    ) //apply color table colors
-    img.pixels.forEach((pixel, i) => {
-      // imgData.data === [R,G,B,A,R,G,B,A,...]
-      if (pixel !== img.transparency && img.ct) {
-        imgData.data[i * 4 + 0] = img.ct[pixel][0]
-        imgData.data[i * 4 + 1] = img.ct[pixel][1]
-        imgData.data[i * 4 + 2] = img.ct[pixel][2]
-        imgData.data[i * 4 + 3] = this.opacity // Opaque.
-      }
-    })
-    return imgData
+  } 
+  getDraft(rect: Rect) {
+    return this.utilCtx.getImageData(
+      rect.leftPos,
+      rect.topPos,
+      rect.width,
+      rect.height
+    )
   }
   putDraft(
     picture: ImageData | color | null,

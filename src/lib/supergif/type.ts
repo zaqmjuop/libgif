@@ -47,7 +47,7 @@ export interface ImgBlock extends Block, Rect {
   sorted: boolean | undefined
   reserved: boolean[]
   lctSize: number
-  lct: number[][] | undefined
+  lct: color[] | undefined
   lzwMinCodeSize: number
   pixels: number[]
 }

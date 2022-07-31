@@ -33,6 +33,7 @@ export class Player extends Emitter<['complete']> {
   delay: null | number = null
   frameGroup: Array<Frame & Rect> = []
   currentGce?: GCExtBlock
+  opacity = 255
   readonly quote: PlayerQuote
 
   constructor(quote: PlayerQuote) {
@@ -121,11 +122,21 @@ export class Player extends Emitter<['complete']> {
       ? img.lct
       : this.quote.gifData.header.globalColorTable // TODO: What if neither exists? 调用系统颜色表
     //Get existing pixels for img region after applying disposal method
-    const imgData = this.quote.viewer.imgBlockToImageData({
-      ct: colorTable as color[],
-      transparency,
-      ...img
-    })
+
+    let imgData: ImageData = this.quote.viewer.getDraft(img)
+    if (colorTable) {
+      // imgData= this.quote.viewer.getDraft(img)
+      img.pixels.forEach((pixel, i) => {
+        // imgData.data === [R,G,B,A,R,G,B,A,...]
+        if (pixel !== transparency) {
+          imgData.data[i * 4 + 0] = colorTable[pixel][0]
+          imgData.data[i * 4 + 1] = colorTable[pixel][1]
+          imgData.data[i * 4 + 2] = colorTable[pixel][2]
+          imgData.data[i * 4 + 3] = this.opacity // Opaque.
+        }
+      })
+    }
+
     const hdr = this.quote.gifData.header
     const frame: Frame & Rect = {
       data: imgData,
