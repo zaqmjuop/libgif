@@ -3,19 +3,7 @@ import { Loader } from './loader'
 import { Gif89aDecoder } from './gif89aDecoder'
 import { Player } from './player'
 import { Stream } from './stream'
-import {
-  AppExtBlock,
-  Block,
-  ComExtBlock,
-  Frame,
-  GCExtBlock,
-  Header,
-  ImgBlock,
-  Options,
-  PTExtBlock,
-  Rect,
-  UnknownExtBlock
-} from './type'
+import { AppExtBlock, Block, Frame, Header, Options, Rect } from './type'
 import { Viewer } from './viewer'
 
 const SuperGif = (opts: Options) => {

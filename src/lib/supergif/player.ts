@@ -1,4 +1,4 @@
-import { Frame, GCExtBlock, ImgBlock, Rect } from './type'
+import { Frame, Rect } from './type'
 import { Emitter } from './Emitter'
 import { Viewer } from './viewer'
 
@@ -13,7 +13,7 @@ export class Player extends Emitter<['complete']> {
   forward = true
   playing = true
   delay: null | number = null
-  frameGroup: Array<Frame & Rect> = [] 
+  frameGroup: Array<Frame & Rect> = []
   opacity = 255
   readonly quote: PlayerQuote
 
