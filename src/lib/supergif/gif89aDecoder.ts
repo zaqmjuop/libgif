@@ -16,7 +16,7 @@ import {
 // The actual parsing; returns an object with properties.
 
 const EMITS = [
-  'header', 
+  'header',
   'com',
   'app',
   'frame',
@@ -164,7 +164,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
         transparencyIndex,
         terminator
       }
-      this.graphControll = graphControllExt 
+      this.graphControll = graphControllExt
     }
 
     const parseComExt = (block: ExtBlock) => {
@@ -456,9 +456,12 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     if (block.type !== 'complete') setTimeout(this.parseBlock, 0)
   }
 
-  public parse = (st: Stream) => {
+  public parse = (st: Stream, config?: { opacity: number }) => {
     if (this.st) return
     this.st = st
+    if (config) {
+      this.opacity = config.opacity
+    }
     this.parseHeader()
     setTimeout(this.parseBlock, 0)
   }

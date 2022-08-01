@@ -13,8 +13,7 @@ export class Player extends Emitter<['complete']> {
   forward = true
   playing = true
   delay: null | number = null
-  frameGroup: Array<Frame & Rect> = []
-  currentGce?: GCExtBlock
+  frameGroup: Array<Frame & Rect> = [] 
   opacity = 255
   readonly quote: PlayerQuote
 
