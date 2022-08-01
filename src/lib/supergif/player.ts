@@ -1,13 +1,4 @@
-import {
-  background,
-  color,
-  Frame,
-  GCExtBlock,
-  Gif89aData,
-  Header,
-  ImgBlock,
-  Rect
-} from './type'
+import { Frame, GCExtBlock, Gif89aData, ImgBlock, Rect } from './type'
 import { Emitter } from './Emitter'
 import { Viewer } from './viewer'
 

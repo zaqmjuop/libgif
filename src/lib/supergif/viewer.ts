@@ -1,4 +1,4 @@
-import { color, Frame, Header, ImgBlock, Rect } from './type'
+import { Rect, rgb } from './type'
 export class Viewer {
   $el?: HTMLImageElement
   readonly canvas = document.createElement('canvas') // 缩放滤镜后的模样
@@ -98,7 +98,7 @@ export class Viewer {
     this.ctx.moveTo(0, h)
     this.ctx.lineTo(w, 0)
     this.ctx.stroke()
-  } 
+  }
   getDraft(rect: Rect) {
     return this.utilCtx.getImageData(
       rect.leftPos,
@@ -108,7 +108,7 @@ export class Viewer {
     )
   }
   putDraft(
-    picture: ImageData | color | null,
+    picture: ImageData | rgb | null,
     left: number = 0,
     top: number = 0
   ) {

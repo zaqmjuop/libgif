@@ -1,7 +1,7 @@
 import { Emitter } from './Emitter'
 import { lzwDecode } from './lzwDecode'
 import { bitsToNum, byteToBitArr, Stream } from './stream'
-import { AppExtBlock, Block, ExtBlock, Header, ImgBlock, color } from './type'
+import { AppExtBlock, Block, ExtBlock, Header, ImgBlock, rgb } from './type'
 
 // The actual parsing; returns an object with properties.
 
@@ -34,9 +34,9 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
   private parseColorTable = (entries: number) => {
     if (!this.st) return
     // Each entry is 3 bytes, for RGB.
-    const colorTable: color[] = []
+    const colorTable: rgb[] = []
     for (let i = 0; i < entries; i++) {
-      colorTable.push(this.st.readBytes(3) as color)
+      colorTable.push(this.st.readBytes(3) as rgb)
     }
     return colorTable
   }

@@ -13,7 +13,7 @@ export interface Rect {
   height: number
 }
 
-export type color = [number, number, number]
+export type rgb = [number, number, number]
 
 export interface Header {
   readonly signature: string
@@ -25,9 +25,9 @@ export interface Header {
   readonly sortFlag: boolean
   readonly ColorTableSize: number
   readonly backgroundColorIndex: number
-  readonly backgroundColor: color | null
+  readonly backgroundColor: rgb | null
   readonly pixelAspectRatio: number
-  readonly globalColorTable: color[] | undefined
+  readonly globalColorTable: rgb[] | undefined
 }
 
 export interface Options {
@@ -47,7 +47,7 @@ export interface ImgBlock extends Block, Rect {
   sorted: boolean | undefined
   reserved: boolean[]
   lctSize: number
-  lct: color[] | undefined
+  lct: rgb[] | undefined
   lzwMinCodeSize: number
   pixels: number[]
 }
