@@ -1,5 +1,5 @@
 <template>
-  <img
+  <div
     :src="src"
     :rel:animated_src="src"
     width="300"
@@ -23,8 +23,8 @@ const img = ref<HTMLImageElement | null>(null)
 onMounted(() => {
   if (img.value) {
     rub.value = supergif({ gif: img.value })
-    rub.value.load(() => {})
-    console.log({ rub })
+    rub.value.load()
+    console.log(rub?.value)
   }
 })
 </script>

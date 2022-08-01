@@ -1,7 +1,7 @@
 <template>
   <div>
     <Gif :src="src" />
-    <img
+    <div
       :src="src"
       :rel:animated_src="src"
       width="360"
@@ -23,7 +23,5 @@ const rub = ref<ReturnType<typeof libgif> | null>(null)
 onMounted(() => {
   rub.value = libgif({ gif: img.value })
   rub.value.load(() => {})
-  console.log({rub})
-  window.rub = rub.value
 })
 </script>

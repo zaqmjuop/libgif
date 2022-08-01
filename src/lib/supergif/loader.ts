@@ -28,7 +28,6 @@ export class Loader extends Emitter<typeof EMITS> {
     }
 
     h.onloadstart = () => {
-      console.log(this._loading, url)
       this.emit('loadstart')
     }
     h.onload = (e) => {
