@@ -1,7 +1,15 @@
 import { Emitter } from './Emitter'
 import { lzwDecode } from './lzwDecode'
 import { bitsToNum, byteToBitArr, Stream } from './stream'
-import { AppExtBlock, Block, ExtBlock, Header, ImgBlock, rgb } from './type'
+import {
+  AppExtBlock,
+  Block,
+  ExtBlock,
+  GCExtBlock,
+  Header,
+  ImgBlock,
+  rgb
+} from './type'
 
 // The actual parsing; returns an object with properties.
 
@@ -16,7 +24,18 @@ const EMITS = [
   'unknown'
 ] as const
 export class Gif89aDecoder extends Emitter<typeof EMITS> {
+  private readonly utilCanvas = document.createElement('canvas') // 图片文件原始模样
+  private readonly utilCtx: CanvasRenderingContext2D
   private st: Stream | null = null
+  private header?: Header
+  private graphControll?: GCExtBlock
+  private imgs: ImgBlock[] = []
+  private app?: AppExtBlock
+  private exts: ExtBlock[] = []
+  constructor() {
+    super()
+    this.utilCtx = this.utilCanvas.getContext('2d') as CanvasRenderingContext2D
+  }
 
   public get pos() {
     return this.st?.pos || 0
@@ -89,6 +108,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       pixelAspectRatio,
       globalColorTable
     }
+    this.header = header
     this.emit('hdr', header)
   }
 
@@ -115,7 +135,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       const transparencyIndex = this.st.readByte()
 
       const terminator = this.st.readByte()
-      this.emit('gce', {
+      const graphControllExt = {
         ...block,
         reserved,
         disposalMethod,
@@ -124,13 +144,17 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
         delayTime,
         transparencyIndex,
         terminator
-      })
+      }
+      this.graphControll = graphControllExt
+      this.emit('gce', graphControllExt)
     }
 
     const parseComExt = (block: ExtBlock) => {
       if (!this.st) return
       const comment = this.readSubBlocks()
-      this.emit('com', { ...block, comment })
+      const comExt = { ...block, comment }
+      this.exts.push(comExt)
+      this.emit('com', comExt)
     }
 
     const parsePTExt = (block: ExtBlock) => {
@@ -139,7 +163,9 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       const blockSize = this.st.readByte() // Always 12
       const ptHeader = this.st.readBytes(12)
       const ptData = this.readSubBlocks()
-      this.emit('pte', { ...block, ptHeader, ptData })
+      const pteExt = { ...block, ptHeader, ptData }
+      this.exts.push(pteExt)
+      this.emit('pte', pteExt)
     }
 
     const parseAppExt = (block: ExtBlock) => {
@@ -150,19 +176,23 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
         const unknown = this.st.readByte() // ??? Always 1? What is this?
         const iterations = this.st.readUnsigned()
         const terminator = this.st.readByte()
-        this.emit('app', {
+        const appExt = {
           ...block,
           unknown,
           iterations,
           terminator,
           identifier: 'NETSCAPE'
-        })
+        }
+        this.app = appExt
+        this.emit('app', appExt)
       }
 
       const parseUnknownAppExt = (block: AppExtBlock) => {
         const appData = this.readSubBlocks()
+        const appExt = { ...block, appData, identifier: block.identifier }
+        this.app = appExt
         // FIXME: This won't work if a handler wants to match on any identifier.
-        this.emit('app', { ...block, appData, identifier: block.identifier })
+        this.emit('app', appExt)
       }
 
       const blockSize = this.st.readByte() // Always 11
@@ -181,8 +211,9 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
 
     const parseUnknownExt = (block: ExtBlock) => {
       const data = this.readSubBlocks()
-      const unknownExtBlock = { ...block, data }
-      this.emit('unknown', unknownExtBlock)
+      const unknownExt = { ...block, data }
+      this.exts.push(unknownExt)
+      this.emit('unknown', unknownExt)
     }
 
     const label = this.st.readByte()
@@ -287,6 +318,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       lzwMinCodeSize,
       pixels
     }
+    this.imgs.push(img)
     this.emit('img', img)
   }
 
