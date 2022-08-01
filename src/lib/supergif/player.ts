@@ -11,10 +11,11 @@ export class Player extends Emitter<['complete']> {
   private i = -1
   iterationCount = 0
   forward = true
-  playing = true
+  playing = false
   delay: null | number = null
   frameGroup: Array<Frame & Rect> = []
   opacity = 255
+  timestamp = 0
   readonly quote: PlayerQuote
 
   constructor(quote: PlayerQuote) {
@@ -65,11 +66,15 @@ export class Player extends Emitter<['complete']> {
       this.i = 0
     }
     const frame = this.frameGroup[this.i]
+
     this.quote.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
     this.quote.viewer.drawDraft()
   }
 
   play = () => {
+    if (this.playing) {
+      return
+    }
     this.playing = true
     this.goOn()
   }
@@ -87,8 +92,6 @@ export class Player extends Emitter<['complete']> {
 
   onFrame = (frame: Frame & Rect) => {
     this.frameGroup.push(frame)
-    // 绘制当前帧
-    this.quote.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
-    this.quote.viewer.drawDraft()
+    this.play()
   }
 }
