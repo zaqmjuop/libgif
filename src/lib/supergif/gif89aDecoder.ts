@@ -447,7 +447,13 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       case ';':
         block.type = 'complete'
         this.st = null
-        this.emit('complete', block)
+        const res = {
+          ...block,
+          header: this.header,
+          frameGroup: this.frameGroup,
+          opacity: this.opacity
+        }
+        this.emit('complete', res)
         break
       default:
         throw new Error('Unknown block: 0x' + block.sentinel.toString(16)) // TODO: Pad this with a 0.
