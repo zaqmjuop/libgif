@@ -42,13 +42,9 @@ const SuperGif = (opts: Options) => {
   decoder.on(
     'header',
     withProgress((_hdr: Header) => {
-      viewer.adapt({
-        width: _hdr.logicalScreenWidth,
-        height: _hdr.logicalScreenHeight
-      })
+      player.onHeader(_hdr)
     })
   )
-  decoder.on('app', (appBlock: AppExtBlock) => {})
   decoder.on(
     'frame',
     withProgress((frame: Frame & Rect) => {
@@ -58,21 +54,15 @@ const SuperGif = (opts: Options) => {
   decoder.on(
     'complete',
     withProgress((block: Block) => {
-      player.play()
       emitter.emit('load', gif)
     })
   )
   // /decoder
 
   // loader
-  const load_setup = () => {
-    player.frameGroup = []
-    player.delay = null
-  }
 
   const loader = new Loader()
   loader.on('load', (data: string | Uint8Array) => {
-    load_setup()
     const stream = new Stream(data)
     try {
       decoder.parse(stream)
@@ -84,7 +74,7 @@ const SuperGif = (opts: Options) => {
     e.lengthComputable && viewer.drawProgress(e.loaded / e.total)
   })
   loader.on('error', (message: string) => {
-    load_setup()
+    player.onError()
     viewer.drawError(message)
   })
 
@@ -138,4 +128,9 @@ export default SuperGif
  * 读取字符
  * 解析
  * 播放
+ * 
+ * TODO 
+ * 立即终止下载或解析，并切换下一个url
+ * png编码
+ * 解码器 web worker 计算
  */

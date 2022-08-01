@@ -1,4 +1,4 @@
-import { Frame, Rect } from './type'
+import { Frame, Header, Rect } from './type'
 import { Emitter } from './Emitter'
 import { Viewer } from './viewer'
 
@@ -90,8 +90,31 @@ export class Player extends Emitter<['complete']> {
     this.putFrame()
   }
 
+  resetState = () => {
+    this.i = -1
+    this.iterationCount = 0
+    this.forward = true
+    this.playing = false
+    this.delay = null
+    this.frameGroup = []
+    this.opacity = 255
+    this.timestamp = 0
+  }
+
+  onHeader = (header: Header) => {
+    this.resetState()
+    this.quote.viewer.adapt({
+      width: header.logicalScreenWidth,
+      height: header.logicalScreenHeight
+    })
+  }
+
   onFrame = (frame: Frame & Rect) => {
     this.frameGroup.push(frame)
     this.play()
+  }
+
+  onError = () => {
+    this.resetState()
   }
 }
