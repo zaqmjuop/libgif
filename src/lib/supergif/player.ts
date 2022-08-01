@@ -1,21 +1,12 @@
-import { Frame, GCExtBlock, Gif89aData, ImgBlock, Rect } from './type'
+import { Frame, GCExtBlock, ImgBlock, Rect } from './type'
 import { Emitter } from './Emitter'
 import { Viewer } from './viewer'
 
 interface PlayerQuote {
   overrideLoopMode: boolean
-  gifData: Gif89aData
   loopDelay: number
   viewer: Viewer
 }
-// Disposal method indicates the way in which the graphic is to be treated after being displayed.
-enum DisposalMethod {
-  ignore = 0, // No disposal specified. The decoder is not required to take any action.
-  skip = 1, // Do not dispose. The graphic is to be left in place.
-  backgroundColor = 2, //  Restore to background color. The area used by the graphic must be restored to the background color.
-  previous = 3 // Restore to previous. The decoder is required to restore the area overwritten by the graphic with what was there prior to rendering the graphic.
-} // Importantly, "previous" means the frame state after the last disposal of method 0, 1, or 2.
-
 export class Player extends Emitter<['complete']> {
   private i = -1
   iterationCount = 0
@@ -95,77 +86,10 @@ export class Player extends Emitter<['complete']> {
     this.putFrame()
   }
 
-  onGCE(gce: GCExtBlock) {
-    this.currentGce = gce
-  }
-
-  doImg = (img: ImgBlock) => {
-    // gce
-    const gce = this.currentGce
-    if (gce) {
-      this.disposal(gce.disposalMethod)
-    }
-    const transparency =
-      gce && gce.transparencyGiven ? gce.transparencyIndex : null
-    const delayTime = (gce && gce.delayTime) || 100 // 如果没有gce那么默认帧间隔是100ms
-    // img
-    const colorTable = img.lctFlag
-      ? img.lct
-      : this.quote.gifData.header.globalColorTable // TODO: What if neither exists? 调用系统颜色表
-    //Get existing pixels for img region after applying disposal method
-
-    let imgData: ImageData = this.quote.viewer.getDraft(img)
-    if (colorTable) {
-      // imgData= this.quote.viewer.getDraft(img)
-      img.pixels.forEach((pixel, i) => {
-        // imgData.data === [R,G,B,A,R,G,B,A,...]
-        if (pixel !== transparency) {
-          imgData.data[i * 4 + 0] = colorTable[pixel][0]
-          imgData.data[i * 4 + 1] = colorTable[pixel][1]
-          imgData.data[i * 4 + 2] = colorTable[pixel][2]
-          imgData.data[i * 4 + 3] = this.opacity // Opaque.
-        }
-      })
-    }
-
-    const hdr = this.quote.gifData.header
-    const frame: Frame & Rect = {
-      data: imgData,
-      delay: delayTime,
-      leftPos: img.leftPos,
-      topPos: img.topPos,
-      width: hdr.logicalScreenWidth,
-      height: hdr.logicalScreenHeight
-    }
+  onFrame = (frame: Frame & Rect) => {
     this.frameGroup.push(frame)
-
-    if (imgData) {
-      // 绘制当前帧
-      this.quote.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
-    }
-
+    // 绘制当前帧
+    this.quote.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
     this.quote.viewer.drawDraft()
-    this.currentGce = void 0
-  }
-  disposal(method: number | null) {
-    const restoreFrame = (flag: number) => {
-      const frame = this.frameGroup[flag]
-      if (frame) {
-        this.quote.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
-      } else {
-        this.quote.viewer.putDraft(
-          this.quote.gifData.header.backgroundColor || null
-        )
-      }
-    }
-
-    switch (method) {
-      case DisposalMethod.previous:
-        restoreFrame(this.frameGroup.length - 1)
-        break
-      case DisposalMethod.backgroundColor:
-        restoreFrame(-1)
-        break
-    }
   }
 }

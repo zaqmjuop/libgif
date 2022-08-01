@@ -39,7 +39,7 @@ export interface Options {
 
 export interface Block {
   readonly sentinel: number
-  type: 'ext' | 'img' | 'eof' | ''
+  type: 'ext' | 'img' | 'complete' | ''
 }
 export interface ImgBlock extends Block, Rect {
   lctFlag: boolean | undefined
@@ -91,14 +91,6 @@ export interface GCExtBlock extends ExtBlock {
   terminator: number
 }
 
-export interface Gif89aData {
-  header: Header
-  gces: GCExtBlock[]
-  imgs: ImgBlock[]
-  app?: AppExtBlock
-  exts: ExtBlock[]
-  eof?: Block
-}
 export type valuesType<T> = T extends readonly (infer U)[] ? U : never
 export type func = (...args: any[]) => any
 export type background = Rect & {

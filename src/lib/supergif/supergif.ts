@@ -1,5 +1,4 @@
 import { Emitter } from './Emitter'
-import { ItemGif } from './itemGif'
 import { Loader } from './loader'
 import { Gif89aDecoder } from './gif89aDecoder'
 import { Player } from './player'
@@ -8,11 +7,13 @@ import {
   AppExtBlock,
   Block,
   ComExtBlock,
+  Frame,
   GCExtBlock,
   Header,
   ImgBlock,
   Options,
   PTExtBlock,
+  Rect,
   UnknownExtBlock
 } from './type'
 import { Viewer } from './viewer'
@@ -26,7 +27,6 @@ const SuperGif = (opts: Options) => {
   }
 
   const gif = options.gif
-  let itemGif = new ItemGif({}, { width: gif.width, height: gif.height })
   // global func
   // global func
   // canvas
@@ -38,9 +38,6 @@ const SuperGif = (opts: Options) => {
   const player = new Player({
     overrideLoopMode: options.loop_mode !== false,
     loopDelay: options.loop_delay || 0,
-    get gifData() {
-      return itemGif.data
-    },
     viewer
   })
   player.on('complete', () => emitter.emit('complete', gif))
@@ -55,42 +52,24 @@ const SuperGif = (opts: Options) => {
     }
   }
   decoder.on(
-    'hdr',
+    'header',
     withProgress((_hdr: Header) => {
-      itemGif.data.header = _hdr
       viewer.adapt({
         width: _hdr.logicalScreenWidth,
         height: _hdr.logicalScreenHeight
       })
     })
   )
-  decoder.on('app', (appBlock: AppExtBlock) => {
-    itemGif.data.app = appBlock
-  })
-  decoder.on('gce', (gce: GCExtBlock) => {
-    itemGif.data.gces[itemGif.data.imgs.length] = gce
-    player.onGCE(gce)
-  })
+  decoder.on('app', (appBlock: AppExtBlock) => {})
   decoder.on(
-    'img',
-    withProgress((img: ImgBlock) => {
-      itemGif.data.imgs.push(img)
-      player.doImg(img)
+    'frame',
+    withProgress((frame: Frame & Rect) => {
+      player.onFrame(frame)
     })
   )
-  decoder.on('com', (block: ComExtBlock) => {
-    itemGif.data.exts.push(block)
-  })
-  decoder.on('pte', (block: PTExtBlock) => {
-    itemGif.data.exts.push(block)
-  })
-  decoder.on('unknown', (block: UnknownExtBlock) => {
-    itemGif.data.exts.push(block)
-  })
   decoder.on(
-    'eof',
+    'complete',
     withProgress((block: Block) => {
-      itemGif.data.eof = block
       player.play()
       emitter.emit('load', gif)
     })
@@ -99,7 +78,6 @@ const SuperGif = (opts: Options) => {
 
   // loader
   const load_setup = () => {
-    itemGif = new ItemGif({}, { width: gif.width, height: gif.height })
     player.frameGroup = []
     player.delay = null
   }

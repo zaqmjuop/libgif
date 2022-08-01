@@ -5,36 +5,46 @@ import {
   AppExtBlock,
   Block,
   ExtBlock,
+  Frame,
   GCExtBlock,
   Header,
   ImgBlock,
+  Rect,
   rgb
 } from './type'
 
 // The actual parsing; returns an object with properties.
 
 const EMITS = [
-  'hdr',
-  'gce',
+  'header', 
   'com',
   'app',
-  'img',
-  'eof',
+  'frame',
+  'complete',
   'pte',
   'unknown'
 ] as const
+
+// Disposal method indicates the way in which the graphic is to be treated after being displayed.
+enum DisposalMethod {
+  ignore = 0, // No disposal specified. The decoder is not required to take any action.
+  skip = 1, // Do not dispose. The graphic is to be left in place.
+  backgroundColor = 2, //  Restore to background color. The area used by the graphic must be restored to the background color.
+  previous = 3 // Restore to previous. The decoder is required to restore the area overwritten by the graphic with what was there prior to rendering the graphic.
+} // Importantly, "previous" means the frame state after the last disposal of method 0, 1, or 2.
 export class Gif89aDecoder extends Emitter<typeof EMITS> {
-  private readonly utilCanvas = document.createElement('canvas') // 图片文件原始模样
-  private readonly utilCtx: CanvasRenderingContext2D
+  private readonly canvas = document.createElement('canvas') // 图片文件原始模样
+  private readonly ctx: CanvasRenderingContext2D
   private st: Stream | null = null
   private header?: Header
   private graphControll?: GCExtBlock
-  private imgs: ImgBlock[] = []
-  private app?: AppExtBlock
+  public app?: AppExtBlock
   private exts: ExtBlock[] = []
+  private opacity = 255
+  frameGroup: Array<Frame & Rect> = []
   constructor() {
     super()
-    this.utilCtx = this.utilCanvas.getContext('2d') as CanvasRenderingContext2D
+    this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
   }
 
   public get pos() {
@@ -109,7 +119,16 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       globalColorTable
     }
     this.header = header
-    this.emit('hdr', header)
+    this.setCanvasSize(header.logicalScreenWidth, header.logicalScreenHeight)
+    this.emit('header', header)
+  }
+
+  private setCanvasSize(width: number, height: number) {
+    this.canvas.width = width
+    this.canvas.height = height
+    this.canvas.style.width = width + 'px'
+    this.canvas.style.height = height + 'px'
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0)
   }
 
   private parseExt = (block: Block) => {
@@ -145,8 +164,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
         transparencyIndex,
         terminator
       }
-      this.graphControll = graphControllExt
-      this.emit('gce', graphControllExt)
+      this.graphControll = graphControllExt 
     }
 
     const parseComExt = (block: ExtBlock) => {
@@ -318,8 +336,93 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       lzwMinCodeSize,
       pixels
     }
-    this.imgs.push(img)
-    this.emit('img', img)
+    this.parseFrame(img)
+  }
+
+  private parseFrame = (img: ImgBlock) => {
+    // graphControll
+    const graphControll = this.graphControll
+    if (graphControll) {
+      this.disposal(graphControll.disposalMethod)
+    }
+    const transparency =
+      graphControll && graphControll.transparencyGiven
+        ? graphControll.transparencyIndex
+        : null
+    const delayTime = (graphControll && graphControll.delayTime) || 100 //  默认间隔100ms
+    const colorTable = img.lctFlag
+      ? img.lct
+      : (this.header?.globalColorTable as rgb[]) // TODO: What if neither exists? 调用系统颜色表
+    //Get existing pixels for img region after applying disposal method
+
+    const imgData: ImageData = this.getDraft(img)
+    if (colorTable) {
+      img.pixels.forEach((pixel, i) => {
+        if (pixel !== transparency) {
+          imgData.data[i * 4 + 0] = colorTable[pixel][0]
+          imgData.data[i * 4 + 1] = colorTable[pixel][1]
+          imgData.data[i * 4 + 2] = colorTable[pixel][2]
+          imgData.data[i * 4 + 3] = this.opacity // Opaque.
+        }
+      })
+    }
+    const frame: Frame & Rect = {
+      data: imgData,
+      delay: delayTime,
+      leftPos: img.leftPos,
+      topPos: img.topPos,
+      width: this.canvas.width,
+      height: this.canvas.height
+    }
+    this.frameGroup.push(frame)
+
+    this.graphControll = void 0
+    this.emit('frame', frame)
+  }
+
+  private disposal(method: number | null) {
+    const restoreFrame = (flag: number) => {
+      const frame = this.frameGroup[flag]
+      if (frame) {
+        this.putDraft(frame.data, frame.leftPos, frame.topPos)
+      } else {
+        this.putDraft(this.header?.backgroundColor || null)
+      }
+    }
+
+    switch (method) {
+      case DisposalMethod.previous:
+        restoreFrame(this.frameGroup.length - 1)
+        break
+      case DisposalMethod.backgroundColor:
+        restoreFrame(-1)
+        break
+    }
+  }
+
+  private putDraft = (
+    picture: ImageData | rgb | null,
+    left: number = 0,
+    top: number = 0
+  ) => {
+    const { width, height } = this.canvas
+    if (!picture) {
+      this.ctx.clearRect(0, 0, width, height)
+    } else if (picture instanceof ImageData) {
+      this.ctx.putImageData(picture, left, top)
+    } else {
+      this.ctx.fillStyle = `rgb(${picture.join(',')} )`
+      this.ctx.fillRect(0, 0, width, height)
+    }
+  }
+
+  private getDraft = (rect: Rect) => {
+    return this.ctx.getImageData(
+      rect.leftPos,
+      rect.topPos,
+      rect.width,
+      rect.height
+    )
   }
 
   private parseBlock = () => {
@@ -342,15 +445,15 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
         this.parseImg(block)
         break
       case ';':
-        block.type = 'eof'
+        block.type = 'complete'
         this.st = null
-        this.emit('eof', block)
+        this.emit('complete', block)
         break
       default:
         throw new Error('Unknown block: 0x' + block.sentinel.toString(16)) // TODO: Pad this with a 0.
     }
 
-    if (block.type !== 'eof') setTimeout(this.parseBlock, 0)
+    if (block.type !== 'complete') setTimeout(this.parseBlock, 0)
   }
 
   public parse = (st: Stream) => {
