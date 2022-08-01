@@ -11,8 +11,7 @@ export class Player extends Emitter<['complete']> {
   private i = -1
   iterationCount = 0
   forward = true
-  playing = false
-  delay: null | number = null
+  playing = false 
   frameGroup: Array<Frame & Rect> = []
   opacity = 255
   timestamp = 0
@@ -95,7 +94,6 @@ export class Player extends Emitter<['complete']> {
     this.iterationCount = 0
     this.forward = true
     this.playing = false
-    this.delay = null
     this.frameGroup = []
     this.opacity = 255
     this.timestamp = 0
