@@ -1,6 +1,6 @@
 import { Rect, rgb } from './type'
 export class Viewer {
-  $el?: HTMLImageElement
+  $el?: HTMLElement
   readonly canvas = document.createElement('canvas') // 缩放滤镜后的模样
   readonly ctx: CanvasRenderingContext2D
   readonly draftCanvas = document.createElement('canvas') // 图片文件原始模样
@@ -20,7 +20,7 @@ export class Viewer {
     return !!this.canvas.parentNode?.parentNode
   }
 
-  mount(element: HTMLImageElement) {
+  mount(element: HTMLElement) {
     if (this.isMounted) {
       return
     }
@@ -32,8 +32,8 @@ export class Viewer {
     const div = document.createElement('div')
     div.style.display = 'inline-block'
 
-    const w = element.width
-    const h = element.height
+    const w = Number(element.getAttribute('width')) || 0
+    const h = Number(element.getAttribute('height')) || 0
     this.canvas.id = '重构'
     this.canvas.style.display = 'block'
     this.canvas.width = w
