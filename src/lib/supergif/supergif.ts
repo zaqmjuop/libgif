@@ -1,6 +1,7 @@
 import { Emitter } from './Emitter'
 import { Loader } from './loader'
 import { Gif89aDecoder } from './gif89aDecoder'
+import { PngDecoder } from './pngDecoder'
 import { Player } from './player'
 import { Stream } from './stream'
 import { AppExtBlock, Block, Frame, Header, Options, Rect } from './type'
@@ -28,7 +29,8 @@ const SuperGif = (opts: Options) => {
   player.on('complete', () => emitter.emit('complete', gif))
   // player
   // decoder
-  const decoder = new Gif89aDecoder()
+  // const decoder = new Gif89aDecoder()
+  const decoder = new PngDecoder()
 
   const withProgress = (fn: Function) => {
     return (...args) => {
