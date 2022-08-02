@@ -1,27 +1,10 @@
 <template>
   <div>
     <Gif :src="src" />
-    <div
-      :src="src"
-      :rel:animated_src="src"
-      width="360"
-      height="360"
-      rel:auto_play="1"
-      rel:rubbable="1"
-      ref="img"
-    />
   </div>
 </template>
 <script lang="ts" setup>
 import Gif from '@/components/Gif/Gif.vue'
 import { GIFS, SRCS } from './metaData'
-import libgif from '@/lib/libgif'
-import { onMounted, ref } from 'vue'
 const src = GIFS[3]
-const img = ref<HTMLImageElement | null>(null)
-const rub = ref<ReturnType<typeof libgif> | null>(null)
-onMounted(() => {
-  rub.value = libgif({ gif: img.value })
-  rub.value.load(() => {})
-})
 </script>

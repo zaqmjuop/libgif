@@ -10,9 +10,6 @@ const SuperGif = (opts: Options) => {
   const EMITS = ['loadstart', 'load', 'progress', 'error', 'complete'] as const
   const emitter = new Emitter<typeof EMITS>()
   const options: Options = Object.assign({}, opts)
-  for (let i in opts) {
-    options[i] = opts[i]
-  }
 
   const gif = options.gif
   // global func
