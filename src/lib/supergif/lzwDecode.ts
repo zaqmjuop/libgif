@@ -63,13 +63,10 @@ export const lzwDecode = (minCodeSize: number, data: string | Uint8Array) => {
       // If we're at the prev code and codeSize is 12, the next code will be a clearCode, and it'll be 12 bits long.
       codeSize++
     }
-    if(pos >= data.length * 8) {
-      console.info('没有结束码的', output)
+    if (pos >= data.length * 8) {
+      console.info('没有结束码的')
       break
     }
   }
-
-  // I don't know if this is technically an error, but some GIFs do it.
-  //if (Math.ceil(pos / 8) !== data.length) throw new Error('Extraneous LZW bytes.');
   return output
 }
