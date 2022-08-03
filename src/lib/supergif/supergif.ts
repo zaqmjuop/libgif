@@ -29,8 +29,8 @@ const SuperGif = (opts: Options) => {
   player.on('complete', () => emitter.emit('complete', gif))
   // player
   // decoder
-  // const decoder = new Gif89aDecoder()
-  const decoder = new PngDecoder()
+  const decoder = new Gif89aDecoder()
+  // const decoder = new PngDecoder()
 
   const withProgress = (fn: Function) => {
     return (...args) => {
@@ -127,8 +127,8 @@ export default SuperGif
  * 读取字符
  * 解析
  * 播放
- * 
- * TODO 
+ *
+ * TODO
  * 立即终止下载或解析，并切换下一个url
  * png编码
  * 解码器 web worker 计算

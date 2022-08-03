@@ -1,6 +1,6 @@
 <template>
   <div>
-    <Gif :src="PNGS[2]" />
+    <Gif :src="SRCS[0]" />
   </div>
 </template>
 <script lang="ts" setup>
