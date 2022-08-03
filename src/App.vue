@@ -1,9 +1,9 @@
 <template>
   <div>
-    <Gif :src="SRCS[0]" />
+    <Gif :src="src" v-for="src in GIFS" :key="src"/>
   </div>
 </template>
 <script lang="ts" setup>
 import Gif from '@/components/Gif/Gif.vue'
-import { GIFS, SRCS, PNGS } from './metaData'
+import { GIFS,  PNGS } from './metaData'
 </script>

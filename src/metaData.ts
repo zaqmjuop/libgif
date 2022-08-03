@@ -9,12 +9,10 @@ import smoke from '@/assets/smoke.png'
 import tech from '@/assets/tech.png'
 import earth from '@/assets/earth.gif'
 import img5 from '@/assets/img5.gif'
-
-export const SRCS = [
-  coug3,
-  'https://img.zcool.cn/community/01584659ccc891a801218e18e4097e.gif',
-  'https://img.zcool.cn/community/0197d259ccc891a8012053f8cb26e3.gif'
-] as const
+import gif1 from '@/assets/gif1.gif'
+import gif2 from '@/assets/gif2.gif'
+import gif3 from '@/assets/gif3.gif'
+ 
 export const IMGS = [
   'https://fengyuanchen.github.io/cropper/images/picture.jpg',
   'https://avatars2.githubusercontent.com/u/15681693?s=460&v=4',
@@ -25,13 +23,7 @@ export const IMGS = [
   'http://cdn.xyxiao.cn/Portrait_1.jpg',
   'http://cdn.xyxiao.cn/Portrait_2.jpg'
 ]
-export const GIFS = [
-  'https://img.zcool.cn/community/01317959ccc891a801218e18bf778e.gif',
-  'https://img.zcool.cn/community/01584659ccc891a801218e18e4097e.gif',
-  'https://img.zcool.cn/community/0197d259ccc891a8012053f8cb26e3.gif',
-  earth,
-  img5
-]
+export const GIFS = [ coug3,gif1, gif2, gif3, earth, img5]
 export const PNGS = [catgirl, garena, parallels_cpu, smoke, tech]
 export const WEBPS = [宏凯冲击, 克利奥帕特拉, 樱花崩坏]
 export const CHECKINDEX = 0
