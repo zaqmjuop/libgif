@@ -1,4 +1,4 @@
-import { Emitter } from './Emitter'
+import { Emitter } from '../utils/Emitter'
 import { bitsToNum, byteToBitArr, Stream } from './stream'
 import {
   AppExtBlock,
@@ -10,7 +10,7 @@ import {
   ImgBlock,
   Rect,
   rgb
-} from './type'
+} from '../type'
 
 export class PngDecoder extends Emitter {
   private readonly canvas = document.createElement('canvas') // 图片文件原始模样

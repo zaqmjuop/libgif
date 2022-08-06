@@ -11,7 +11,7 @@
 </template>
 <script lang="ts" setup>
 import { defineProps, reactive, onMounted, ref } from 'vue'
-import supergif from '@/lib/supergif/supergif'
+import supergif from '@/../lib/libgif'
 
 const prop = defineProps({
   src: {
@@ -28,4 +28,3 @@ onMounted(() => {
   }
 })
 </script>
-<style lang="scss" scoped></style>

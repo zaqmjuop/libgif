@@ -1,4 +1,4 @@
-import { Emitter } from './Emitter'
+import { Emitter } from '../utils/Emitter'
 import { lzwDecode } from './lzwDecode'
 import { bitsToNum, byteToBitArr, Stream } from './stream'
 import {
@@ -11,7 +11,7 @@ import {
   ImgBlock,
   Rect,
   rgb
-} from './type'
+} from '../type'
 
 // The actual parsing; returns an object with properties.
 

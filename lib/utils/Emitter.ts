@@ -1,5 +1,5 @@
 import mitt from 'mitt'
-import { valuesType, func } from './type'
+import { valuesType, func } from '../type'
 export class Emitter<T extends string[] | readonly string[] = string[]> {
   protected readonly emitter = mitt<Record<valuesType<T>, unknown>>()
   public on(type: valuesType<T>, func: func) {

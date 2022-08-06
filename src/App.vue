@@ -4,6 +4,6 @@
   </div>
 </template>
 <script lang="ts" setup>
-import Gif from '@/components/Gif/Gif.vue'
+import Gif from '@/Gif.vue'
 import { GIFS,  PNGS } from './metaData'
 </script>

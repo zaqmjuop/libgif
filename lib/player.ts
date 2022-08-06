@@ -1,5 +1,5 @@
 import { Frame, Header, Rect } from './type'
-import { Emitter } from './Emitter'
+import { Emitter } from './utils/Emitter'
 import { Viewer } from './viewer'
 
 interface PlayerQuote {
