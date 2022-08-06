@@ -3,14 +3,14 @@
   "version": "0.0.1",
   "author": "zaqmjuop <zaqmjuop@gmail.com> (https://github.com/zaqmjuop)",
   "files": [
-    "dist"
+    "./dist/libgif.es.js",
+    "./dist/libgif.d.ts"
   ],
-  "main": "./dist/libgif.umd.js",
-  "module": "./dist/libgif.es.js",
+  "main": "./dist/libgif.es.js",
+  "typings": "index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/libgif.es.js",
-      "require": "./dist/libgif.umd.js"
+      "import": "./dist/libgif.es.js"
     }
   },
   "scripts": {
@@ -27,6 +27,7 @@
     "@vitejs/plugin-vue": "^1.9.3",
     "typescript": "^4.4.3",
     "vite": "^2.6.4",
+    "vite-plugin-dts": "^1.4.1",
     "vue-tsc": "^0.3.0"
   },
   "description": "refactor from libgif",
