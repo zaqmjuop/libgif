@@ -80,18 +80,26 @@ const SuperGif = (opts: Options) => {
   const getLoading = () => loader.loading || decoder.loading
 
   const load_url = (url: string) => {
+    if (!url) {
+      return console.warn(`cant accept gif url with '${url}'`)
+    }
     if (getLoading()) return
     loader.load_url(url)
   }
 
   const load_raw = (data: string | Uint8Array) => {
+    if (!data.length) {
+      return console.warn(`raw data is empty`)
+    }
     if (getLoading()) return
     loader.load_raw(data)
   }
 
   const load = () => {
     if (getLoading()) return
-    load_url(gif.getAttribute('rel:animated_src') || gif.src)
+    load_url(
+      gif.getAttribute('rel:animated_src') || gif.getAttribute('src') || ''
+    )
   }
   // /loader
 

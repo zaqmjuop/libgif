@@ -31,7 +31,7 @@ export interface Header {
 }
 
 export interface Options {
-  gif: HTMLImageElement
+  gif: HTMLElement
   on_end?: (gif: HTMLImageElement) => void
   loop_delay?: number
   loop_mode?: boolean
