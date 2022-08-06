@@ -1,15 +1,16 @@
 {
-  "name": "supergif",
+  "name": "@zaqmjuop/libgif",
   "version": "0.0.1",
+  "author": "zaqmjuop <zaqmjuop@gmail.com> (https://github.com/zaqmjuop)",
   "files": [
     "dist"
   ],
-  "main": "./dist/supergif.umd.js",
-  "module": "./dist/supergif.es.js",
+  "main": "./dist/libgif.umd.js",
+  "module": "./dist/libgif.es.js",
   "exports": {
     ".": {
-      "import": "./dist/supergif.es.js",
-      "require": "./dist/supergif.umd.js"
+      "import": "./dist/libgif.es.js",
+      "require": "./dist/libgif.umd.js"
     }
   },
   "scripts": {
@@ -27,5 +28,17 @@
     "typescript": "^4.4.3",
     "vite": "^2.6.4",
     "vue-tsc": "^0.3.0"
-  }
+  },
+  "description": "refactor from libgif",
+  "directories": {
+    "lib": "lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitee.com:1060007045/libgif.git"
+  },
+  "keywords": [
+    "gif"
+  ],
+  "license": "MIT"
 }

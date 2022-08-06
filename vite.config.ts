@@ -11,9 +11,9 @@ export default defineConfig({
   plugins: [vue()],
   build: {
     lib: {
-      entry: path.resolve(__dirname, 'lib/supergif.ts'),
-      name: 'supergif',
-      fileName: (format) => `supergif.${format}.js`
+      entry: path.resolve(__dirname, 'lib/libgif.ts'),
+      name: 'libgif',
+      fileName: (format) => `libgif.${format}.js`
     },
     rollupOptions: {
       // 确保外部化处理那些你不想打包进库的依赖

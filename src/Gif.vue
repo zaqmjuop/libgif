@@ -11,18 +11,18 @@
 </template>
 <script lang="ts" setup>
 import { defineProps, reactive, onMounted, ref } from 'vue'
-import supergif from 'lib/supergif'
+import libgif from 'lib/libgif'
 
 const prop = defineProps({
   src: {
     type: String
   }
 })
-const rub = ref<ReturnType<typeof supergif> | null>(null)
+const rub = ref<ReturnType<typeof libgif> | null>(null)
 const img = ref<HTMLImageElement | null>(null)
 onMounted(() => {
   if (img.value) {
-    rub.value = supergif({ gif: img.value })
+    rub.value = libgif({ gif: img.value })
     rub.value.load()
     console.log(rub?.value)
   }

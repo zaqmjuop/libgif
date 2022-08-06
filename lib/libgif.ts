@@ -7,7 +7,7 @@ import { Stream } from './decoders/stream'
 import { AppExtBlock, Block, Frame, Header, Options, Rect } from './type'
 import { Viewer } from './viewer'
 
-const SuperGif = (opts: Options) => {
+const libgif = (opts: Options) => {
   const EMITS = ['loadstart', 'load', 'progress', 'error', 'complete'] as const
   const emitter = new Emitter<typeof EMITS>()
   const options: Options = Object.assign({}, opts)
@@ -129,7 +129,7 @@ const SuperGif = (opts: Options) => {
   }
 }
 
-export default SuperGif
+export default libgif
 /**
  * 下载
  * 读取字符
