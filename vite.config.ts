@@ -2,6 +2,7 @@ import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import path from 'path'
 
+console.log(__dirname)
 // https://vitejs.dev/config/
 export default defineConfig({
   resolve: {
@@ -10,7 +11,7 @@ export default defineConfig({
   plugins: [vue()],
   build: {
     lib: {
-      entry: path.resolve(__dirname, 'lib/main.js'),
+      entry: path.resolve(__dirname, 'lib/supergif.ts'),
       name: 'supergif',
       fileName: (format) => `supergif.${format}.js`
     },

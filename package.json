@@ -1,6 +1,17 @@
 {
   "name": "supergif",
-  "version": "0.0.0",
+  "version": "0.0.1",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/supergif.umd.js",
+  "module": "./dist/supergif.es.js",
+  "exports": {
+    ".": {
+      "import": "./dist/supergif.es.js",
+      "require": "./dist/supergif.umd.js"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc --noEmit && vite build",
