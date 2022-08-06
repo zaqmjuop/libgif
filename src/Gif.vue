@@ -11,7 +11,7 @@
 </template>
 <script lang="ts" setup>
 import { defineProps, reactive, onMounted, ref } from 'vue'
-import supergif from '@/../lib/libgif'
+import supergif from 'lib/supergif'
 
 const prop = defineProps({
   src: {
