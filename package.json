@@ -3,11 +3,10 @@
   "version": "0.0.5",
   "author": "zaqmjuop <zaqmjuop@gmail.com> (https://github.com/zaqmjuop)",
   "files": [
-    "./dist/libgif.es.js",
-    "./dist/libgif.d.ts"
+    "dist"
   ],
   "main": "./dist/libgif.es.js",
-  "typings": "index.d.ts",
+  "typings": "./dist/libgif.d.ts",
   "exports": {
     ".": {
       "import": "./dist/libgif.es.js"
@@ -15,20 +14,16 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc --noEmit && vite build",
+    "build": "vite build && tsc lib/libgif.ts --declaration --emitDeclarationOnly --declarationDir dist -t ES2020 --moduleResolution node",
     "serve": "vite preview"
   },
   "dependencies": {
-    "mitt": "^3.0.0",
-    "vue": "^3.2.16"
+    "mitt": "^3.0.0"
   },
   "devDependencies": {
     "@types/node": "^18.6.4",
-    "@vitejs/plugin-vue": "^1.9.3",
     "typescript": "^4.4.3",
-    "vite": "^2.6.4",
-    "vite-plugin-dts": "^1.4.1",
-    "vue-tsc": "^0.3.0"
+    "vite": "^2.6.4"
   },
   "description": "refactor from libgif",
   "directories": {

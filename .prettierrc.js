@@ -9,7 +9,7 @@ module.exports = {
   useTabs: false,
   overrides: [
     {
-      files: ['src/**/*.vue'],
+      files: [],
       options: {
         printWidth: 80,
         htmlWhitespaceSensitivity: 'ignore'

@@ -12,17 +12,23 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
-    "lib": ["esnext", "dom", "ES2020"],
+    "lib": [
+      "esnext",
+      "dom",
+      "ES2020",
+      "scripthost"
+    ],
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": [
+        "src/*"
+      ]
     }
   },
   "include": [
     "src/**/*.ts",
     "src/**/*.d.ts",
     "src/**/*.tsx",
-    "src/**/*.vue",
     "src/env.d.ts",
     "src/types/*.d.ts"
   ]

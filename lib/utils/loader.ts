@@ -37,9 +37,9 @@ export class Loader extends Emitter<typeof EMITS> {
       // emulating response field for IE9
       if (!('response' in h)) {
         Object.assign(this, {
-          response: new window.VBArray(h.responseText)
+          response: new window.VBArray(h.responseText as any)
             .toArray()
-            .map(String.fromCharCode)
+            .map(String.fromCharCode as any)
             .join('')
         })
       }
