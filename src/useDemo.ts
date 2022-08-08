@@ -17,4 +17,5 @@ export default <T extends any>(lib: T, root: HTMLElement) => {
   const container = document.getElementById(id) 
   const rub = (lib as any)({ gif: container! })
   rub.load()
+  return rub
 }
