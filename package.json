@@ -30,12 +30,13 @@
   "directories": {
     "lib": "lib"
   },
-  "repository": {
-    "type": "git",
-    "url": "git@gitee.com:1060007045/libgif.git"
-  },
   "keywords": [
     "gif"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/zaqmjuop/libgif.git"
+  },
+  "homepage": "https://github.com/zaqmjuop/libgif",
   "license": "MIT"
 }
