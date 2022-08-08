@@ -4,17 +4,17 @@ import { Viewer } from './viewer'
 
 interface PlayerQuote {
   overrideLoopMode: boolean
-  loopDelay: number
   viewer: Viewer
 }
 export class Player extends Emitter<['complete']> {
   private i = -1
   iterationCount = 0
   forward = true
-  playing = false 
+  playing = false
   frameGroup: Array<Frame & Rect> = []
   opacity = 255
   timestamp = 0
+  t = 0
   readonly quote: PlayerQuote
 
   constructor(quote: PlayerQuote) {
@@ -46,9 +46,11 @@ export class Player extends Emitter<['complete']> {
     this.putFrameBy(1)
     const delay = this.frameGroup[this.i].delay
     const isComplete = this.getNextFrameNo() === 0
-    return isComplete
-      ? setTimeout(this.complete, delay + this.quote.loopDelay)
-      : setTimeout(this.goOn, delay)
+    clearTimeout(this.t)
+    this.t = isComplete
+      ? window.setTimeout(this.complete, delay)
+      : window.setTimeout(this.goOn, delay)
+    return
   }
 
   putFrameBy = (amount: number) => {
@@ -90,6 +92,7 @@ export class Player extends Emitter<['complete']> {
   }
 
   resetState = () => {
+    clearTimeout(this.t)
     this.i = -1
     this.iterationCount = 0
     this.forward = true

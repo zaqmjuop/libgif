@@ -23,7 +23,6 @@ const libgif = (opts: Options) => {
   // player
   const player = new Player({
     overrideLoopMode: options.loop_mode !== false,
-    loopDelay: options.loop_delay || 0,
     viewer
   })
   player.on('complete', () => emitter.emit('complete', gif))
