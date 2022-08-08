@@ -82,7 +82,7 @@ export class Viewer {
     this.ctx.fillStyle = `rgba(255,255,255,0.4)`
     this.ctx.fillRect(mid, top, width - mid, height)
 
-    this.ctx.fillStyle = `rgba(0,123,255,0.8)`
+    this.ctx.fillStyle = `rgba(0,123,255,0.4)`
     this.ctx.fillRect(0, top, mid, height)
   }
   drawError = (originOfError: string) => {
