@@ -72,7 +72,7 @@ export class Viewer {
   drawProgress(percent: number) {
     if (percent > 1 || percent < 0 || !this.showProgressBar) return
 
-    let height = 2
+    let height = 1
     const top = (this.canvas.height - height) / this.zoomH
     const mid = (percent * this.canvas.width) / this.zoomW
 
