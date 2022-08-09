@@ -1,7 +1,7 @@
  
 import { GIFS } from './metaData'
 export default <T extends any>(lib: T, root: HTMLElement) => {
-  const src = GIFS[1]
+  const src = GIFS[0]
   const id = Math.random().toString().slice(2)
   root.innerHTML = `
   <div
