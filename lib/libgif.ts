@@ -1,13 +1,17 @@
 import { Emitter } from './utils/Emitter'
 import { Loader } from './utils/loader'
 import { Gif89aDecoder } from './decoders/gif89aDecoder'
-import { PngDecoder } from './decoders/pngDecoder'
 import { Player } from './player'
 import { Stream } from './decoders/stream'
 import { AppExtBlock, Block, Frame, Header, Options, Rect } from './type'
 import { Viewer } from './viewer'
+import Worker from './worker.ts?worker'
 
 const libgif = (opts: Options) => {
+  const worker = new Worker()
+  worker.addEventListener('message', (e) => {
+    console.log('libgif', e)
+  })
   const EMITS = ['loadstart', 'load', 'progress', 'error', 'complete'] as const
   const emitter = new Emitter<typeof EMITS>()
   const options: Options = Object.assign({}, opts)
