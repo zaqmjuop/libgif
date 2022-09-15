@@ -64,7 +64,6 @@ export const lzwDecode = (minCodeSize: number, data: string | Uint8Array) => {
       codeSize++
     }
     if (pos >= data.length * 8) {
-      console.info('没有结束码的')
       break
     }
   }
