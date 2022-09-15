@@ -6,8 +6,10 @@ import { Stream } from './decoders/stream'
 import { AppExtBlock, Block, Frame, Header, Options, Rect } from './type'
 import { Viewer } from './viewer'
 import Worker from './worker.ts?worker'
+import { __DEV__ } from './utils/metaData'
 
 const libgif = (opts: Options) => {
+  let t = 0
   const worker = new Worker()
   worker.addEventListener('message', (e) => {
     console.log('libgif', e)
@@ -56,6 +58,7 @@ const libgif = (opts: Options) => {
   decoder.on(
     'complete',
     withProgress((block: Block) => {
+      __DEV__ && console.log('decode time:', Date.now() - t)
       emitter.emit('load', gif)
     })
   )
@@ -66,6 +69,7 @@ const libgif = (opts: Options) => {
   const loader = new Loader()
   loader.on('load', (data: string | Uint8Array) => {
     const stream = new Stream(data)
+    __DEV__ && (t = Date.now())
     try {
       decoder.parse(stream)
     } catch (err) {
