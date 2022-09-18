@@ -320,7 +320,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
 
     const lzwData: string = this.readSubBlocks() as string
 
-    let pixels: number[] = !__DEV__ ? lzwDecode(lzwMinCodeSize, lzwData) : await lzw({ minCodeSize: lzwMinCodeSize, data: lzwData })
+    let pixels: number[] = !__DEV__ ? lzwDecode(lzwMinCodeSize, lzwData) : await lzw(lzwMinCodeSize, lzwData)
 
     __DEV__ && (console.log(`lzwDecode time: ${Date.now() - t}`))
     // Move

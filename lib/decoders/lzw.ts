@@ -1,15 +1,16 @@
 import LZWWorker from './lzwWorker.ts?worker'
 import { idGetter } from '../utils/idGetter'
-import { LZWPayload } from 'lib/type'
+import { lzwDecode } from './lzwDecode'
 const lzwWorker = new LZWWorker()
 
 const getTraceId = idGetter()
 
+type paramType = Parameters<typeof lzwDecode>
 
-export const lzw = async (payload: LZWPayload) => {
+
+export const lzw = async (...args: paramType) => {
   const traceId = getTraceId()
   const promise = new Promise<number[]>((resolve, reject) => {
-    lzwWorker.postMessage({ ...payload, traceId })
     const resolveCallback = (e: MessageEvent<{ traceId: number, data: number[] }>) => {
       if (e.data.traceId === traceId) {
         lzwWorker.removeEventListener('message', resolveCallback)
@@ -17,6 +18,7 @@ export const lzw = async (payload: LZWPayload) => {
       }
     }
     lzwWorker.addEventListener('message', resolveCallback)
+    lzwWorker.postMessage({ args, traceId })
   })
   return promise
 }

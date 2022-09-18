@@ -98,7 +98,3 @@ export type background = Rect & {
 }
 
 export type gifData = string | Uint8Array
-
-export interface LZWPayload {
-  minCodeSize: number, data: gifData
-}

@@ -1,7 +1,8 @@
 import { lzwDecode } from './lzwDecode'
-import { LZWPayload } from '../type'
 
-self.addEventListener('message', (e: MessageEvent<LZWPayload & { traceId: number }>) => {
-  const res = lzwDecode(e.data.minCodeSize, e.data.data)
-  self.postMessage({ traceId: e.data.traceId, data: res })
+type paramType = Parameters<typeof lzwDecode>
+
+self.addEventListener('message', (e: MessageEvent<{ traceId: number, args: paramType }>) => {
+  const { traceId, args } = e.data
+  self.postMessage({ traceId, data: lzwDecode(...args) })
 }) 
