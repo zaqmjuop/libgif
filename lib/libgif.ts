@@ -35,7 +35,6 @@ const libgif = (opts: Options) => {
   // player
   // decoder
   const decoder = new Gif89aDecoder()
-  // const decoder = new PngDecoder()
 
   const withProgress = (fn: Function) => {
     return (...args) => {
@@ -77,33 +76,39 @@ const libgif = (opts: Options) => {
     viewer.drawError(message)
   })
 
+
+  // /loader
   const getLoading = () => loader.loading || decoder.loading
+
+  const decode = (data: gifData) => {
+    if (getLoading()) return
+    try {
+      const stream = new Stream(data)
+      __DEV__ && (t = Date.now())
+      return decoder.parse(stream)
+    } catch (err) {
+      viewer.drawError(`load raw error with【${data.slice(0, 8)}】`)
+    }
+  }
 
   const load_url = async (url: string) => {
     if (getLoading()) return
     try {
       const data = await loader.load_url(url)
-      load_raw(data!)
+      return load_raw(data!)
     } catch {
       viewer.drawError(`load url error with【${url}】`)
     }
   }
 
   const load_raw = (data: gifData) => {
-    if (getLoading()) return
-    try {
-      const stream = new Stream(data)
-      __DEV__ && (t = Date.now())
-      decoder.parse(stream)
-    } catch (err) {
-      viewer.drawError(`load raw error with【${data.slice(0, 8)}】`)
-    }
+    return decode(data)
   }
 
   const load = () => load_url(
     gif.getAttribute('rel:animated_src') || gif.getAttribute('src') || ''
   )
-  // /loader
+
 
   return {
     player,
