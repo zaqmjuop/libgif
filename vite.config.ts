@@ -18,6 +18,7 @@ export default defineConfig({
     //   fileName: 'libgif'
     // }
   },
+  base: "libgif", // git-page 基础路径
   preview: {
     port: 8080
   }
