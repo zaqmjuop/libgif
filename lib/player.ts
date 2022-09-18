@@ -6,7 +6,7 @@ interface PlayerQuote {
   overrideLoopMode: boolean
   viewer: Viewer
 }
-export class Player extends Emitter<['complete']> {
+export class Player extends Emitter<['finish']> {
   private i = -1
   iterationCount = 0
   forward = true
@@ -31,9 +31,9 @@ export class Player extends Emitter<['complete']> {
     return (this.i + delta + this.frameGroup.length) % this.frameGroup.length
   }
 
-  private complete = () => {
+  private finish = () => {
     this.iterationCount++
-    this.emit('complete')
+    this.emit('finish')
     if (this.quote.overrideLoopMode || this.iterationCount < 1) {
       this.goOn()
     } else {
@@ -48,7 +48,7 @@ export class Player extends Emitter<['complete']> {
     const isComplete = this.getNextFrameNo() === 0
     clearTimeout(this.t)
     this.t = isComplete
-      ? window.setTimeout(this.complete, delay)
+      ? window.setTimeout(this.finish, delay)
       : window.setTimeout(this.goOn, delay)
     return
   }

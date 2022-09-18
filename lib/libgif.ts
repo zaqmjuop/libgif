@@ -14,7 +14,7 @@ const libgif = (opts: Options) => {
   worker.addEventListener('message', (e) => {
     console.log('libgif', e)
   })
-  const EMITS = ['loadstart', 'load', 'progress', 'error', 'complete'] as const
+  const EMITS = ['loadstart', 'load', 'progress', 'error', 'finish'] as const
   const emitter = new Emitter<typeof EMITS>()
   const options: Options = Object.assign({}, opts)
 
@@ -31,7 +31,7 @@ const libgif = (opts: Options) => {
     overrideLoopMode: options.loop_mode !== false,
     viewer
   })
-  player.on('complete', () => emitter.emit('complete', gif))
+  player.on('finish', () => emitter.emit('finish', gif))
   // player
   // decoder
   const decoder = new Gif89aDecoder()
