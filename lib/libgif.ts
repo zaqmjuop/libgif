@@ -5,15 +5,10 @@ import { Player } from './player'
 import { Stream } from './decoders/stream'
 import { AppExtBlock, Block, Frame, gifData, Header, Options, Rect } from './type'
 import { Viewer } from './viewer'
-import Worker from './worker.ts?worker'
 import { __DEV__ } from './utils/metaData'
 
 const libgif = (opts: Options) => {
   let t = 0
-  const worker = new Worker()
-  worker.addEventListener('message', (e) => {
-    console.log('libgif', e)
-  })
   const EMITS = ['loadstart', 'load', 'progress', 'error', 'finish'] as const
   const emitter = new Emitter<typeof EMITS>()
   const options: Options = Object.assign({}, opts)
@@ -146,5 +141,4 @@ export default libgif
  * TODO
  * 立即终止下载或解析，并切换下一个url
  * png编码
- * 解码器 web worker 计算
  */
