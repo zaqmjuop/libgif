@@ -14,7 +14,7 @@
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build && tsc lib/libgif.ts --declaration --emitDeclarationOnly --declarationDir dist -t ES2020 --moduleResolution node",
+    "build": "vite build && tsc lib/libgif.ts --declaration --emitDeclarationOnly --declarationDir dist -t ES2020 --moduleResolution node --module ES2020",
     "serve": "vite preview",
     "publish": "npm publish --access public"
   },

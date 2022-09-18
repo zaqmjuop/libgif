@@ -1,5 +1,5 @@
 import { idGetter } from '../utils/idGetter'
-import Worker from './funcWorker.ts?worker'
+// import Worker from './funcWorker.ts?worker'
 import { FUNC_MAP } from './funcWorker'
 
 const WorkerFuncGenerator = <N extends keyof typeof FUNC_MAP = ''>(
@@ -7,7 +7,10 @@ const WorkerFuncGenerator = <N extends keyof typeof FUNC_MAP = ''>(
 ) => {
   type argsType = Parameters<typeof FUNC_MAP[N]>
   type resType = ReturnType<typeof FUNC_MAP[N]>
-  const worker = new Worker()
+  const worker = new Worker(new URL('./funcWorker.ts', import.meta.url), {
+    type: 'module'
+  })
+
   const getTraceId = idGetter()
 
   const workerFunc = async (...args: argsType) => {
