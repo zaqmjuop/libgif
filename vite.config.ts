@@ -10,7 +10,7 @@ export default defineConfig({
   },
   plugins: [],
   build: {
-    outDir: "example",
+    outDir: "docs",
     // lib: {
     //   entry: path.resolve(__dirname, 'lib/libgif.ts'),
     //   name: 'libgif',
