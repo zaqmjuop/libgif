@@ -1,6 +1,7 @@
 
 import { GIFS } from './metaData'
 import libDev from '@/../lib/libgif'
+import libgif from '@zaqmjuop/libgif'
 export default () => {
   const root = document.getElementById('useDemo')!
   const src = GIFS[1]
@@ -22,7 +23,7 @@ export default () => {
     /> 
   `
   const container = document.getElementById(id)!
-  const rub = (libDev)({ gif: container })
+  const rub = (libgif)({ gif: container })
   rub.load()
 
   root.addEventListener('click', (e) => {

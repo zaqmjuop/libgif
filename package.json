@@ -5,11 +5,11 @@
   "files": [
     "dist"
   ],
-  "main": "./dist/libgif.es.js",
+  "main": "./dist/libgif.mjs",
   "typings": "./dist/libgif.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/libgif.es.js"
+      "import": "./dist/libgif.mjs"
     }
   },
   "scripts": {
