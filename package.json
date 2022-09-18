@@ -1,6 +1,6 @@
 {
   "name": "@zaqmjuop/libgif",
-  "version": "0.0.17",
+  "version": "0.0.18",
   "author": "zaqmjuop <zaqmjuop@gmail.com> (https://github.com/zaqmjuop)",
   "files": [
     "dist"
