@@ -1,6 +1,6 @@
 {
   "name": "@zaqmjuop/libgif",
-  "version": "0.0.8",
+  "version": "0.0.17",
   "author": "zaqmjuop <zaqmjuop@gmail.com> (https://github.com/zaqmjuop)",
   "files": [
     "dist"
@@ -16,7 +16,7 @@
     "dev": "vite",
     "build": "vite build && tsc lib/libgif.ts --declaration --emitDeclarationOnly --declarationDir dist -t ES2020 --moduleResolution node --module ES2020",
     "serve": "vite preview",
-    "publish": "npm publish --access public"
+    "publish": "npm config set registry=http://registry.npmjs.org && npm publish --access public"
   },
   "dependencies": {
     "@zaqmjuop/libgif": "^0.0.8",
