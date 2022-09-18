@@ -1,5 +1,5 @@
 import { Emitter } from './utils/Emitter'
-import { Loader } from './utils/loader'
+import { gifData, Loader } from './utils/loader'
 import { Gif89aDecoder } from './decoders/gif89aDecoder'
 import { Player } from './player'
 import { Stream } from './decoders/stream'
@@ -67,14 +67,7 @@ const libgif = (opts: Options) => {
   // loader
 
   const loader = new Loader()
-  loader.on('load', (data: string | Uint8Array) => {
-    const stream = new Stream(data)
-    __DEV__ && (t = Date.now())
-    try {
-      decoder.parse(stream)
-    } catch (err) {
-      viewer.drawError('parse')
-    }
+  loader.on('load', (data: gifData) => {
   })
   loader.on('progress', (e: ProgressEvent<EventTarget>) => {
     e.lengthComputable && viewer.drawProgress(e.loaded / e.total)
@@ -86,28 +79,30 @@ const libgif = (opts: Options) => {
 
   const getLoading = () => loader.loading || decoder.loading
 
-  const load_url = (url: string) => {
-    if (!url) {
-      return console.warn(`cant accept gif url with '${url}'`)
-    }
+  const load_url = async (url: string) => {
     if (getLoading()) return
-    loader.load_url(url)
+    try {
+      const data = await loader.load_url(url)
+      load_raw(data!)
+    } catch {
+      viewer.drawError(`load url error with【${url}】`)
+    }
   }
 
-  const load_raw = (data: string | Uint8Array) => {
-    if (!data.length) {
-      return console.warn(`raw data is empty`)
-    }
+  const load_raw = (data: gifData) => {
     if (getLoading()) return
-    loader.load_raw(data)
+    try {
+      const stream = new Stream(data)
+      __DEV__ && (t = Date.now())
+      decoder.parse(stream)
+    } catch (err) {
+      viewer.drawError(`load raw error with【${data.slice(0, 8)}】`)
+    }
   }
 
-  const load = () => {
-    if (getLoading()) return
-    load_url(
-      gif.getAttribute('rel:animated_src') || gif.getAttribute('src') || ''
-    )
-  }
+  const load = () => load_url(
+    gif.getAttribute('rel:animated_src') || gif.getAttribute('src') || ''
+  )
   // /loader
 
   return {
