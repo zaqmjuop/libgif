@@ -1,4 +1,4 @@
-import { gifData } from 'lib/type'
+import { gifData } from '../type'
 import { Emitter } from './Emitter'
 
 
