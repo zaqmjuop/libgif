@@ -19,7 +19,7 @@
     "publish": "npm config set registry=http://registry.npmjs.org && npm publish --access public"
   },
   "dependencies": {
-    "@zaqmjuop/libgif": "^0.0.8",
+    "@zaqmjuop/libgif": "^0.0.19",
     "mitt": "^3.0.0"
   },
   "devDependencies": {
