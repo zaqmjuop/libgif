@@ -12,6 +12,7 @@ import {
   Rect,
   rgb
 } from '../type'
+import { __DEV__ } from '../utils/metaData'
 
 // The actual parsing; returns an object with properties.
 
@@ -84,6 +85,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
 
   private parseHeader = () => {
     if (!this.st) return
+    let t = __DEV__ ? Date.now() : 0
     const signature = this.st.read(3)
     const version = this.st.read(3)
     if (signature !== 'GIF') throw new Error('Not a GIF file.') // XXX: This should probably be handled more nicely.
@@ -120,6 +122,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     }
     this.header = header
     this.setCanvasSize(header.logicalScreenWidth, header.logicalScreenHeight)
+    __DEV__ && (console.log(`parseHeader time: ${Date.now() - t}`))
     this.emit('header', header)
   }
 
@@ -266,6 +269,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
 
   private parseImg = (block: Block) => {
     if (!this.st) return
+    let t = __DEV__ ? Date.now() : 0
     const deinterlace = (pixels: number[], width: number) => {
       // Of course this defeats the purpose of interlacing. And it's *probably*
       // the least efficient way it's ever been implemented. But nevertheless...
@@ -316,9 +320,11 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     const lzwData: string = this.readSubBlocks() as string
 
     let pixels: number[] = lzwDecode(lzwMinCodeSize, lzwData)
+    __DEV__ && (console.log(`lzwDecode time: ${Date.now() - t}`))
     // Move
     if (interlaced) {
       pixels = deinterlace(pixels, width)
+      __DEV__ && (console.log(`deinterlace time: ${Date.now() - t}`))
     }
 
     const img: ImgBlock = {
@@ -336,10 +342,12 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       lzwMinCodeSize,
       pixels
     }
+    __DEV__ && (console.log(`parseImg time: ${Date.now() - t}`))
     this.parseFrame(img)
   }
 
   private parseFrame = (img: ImgBlock) => {
+    let t = __DEV__ ? Date.now() : 0
     // graphControll
     const graphControll = this.graphControll
     if (graphControll) {
@@ -377,6 +385,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     this.frameGroup.push(frame)
 
     this.graphControll = void 0
+    __DEV__ && (console.log(`parseFrame time: ${Date.now() - t}`))
     this.emit('frame', frame)
   }
 
@@ -427,6 +436,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
 
   private parseBlock = () => {
     if (!this.st) return
+    let t = __DEV__ ? Date.now() : 0
     const sentinel = this.st.readByte()
     const block: Block = {
       sentinel,
@@ -434,7 +444,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     }
 
     switch (
-      String.fromCharCode(block.sentinel) // For ease of matching
+    String.fromCharCode(block.sentinel) // For ease of matching
     ) {
       case '!':
         block.type = 'ext'
@@ -467,7 +477,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       default:
         throw new Error('Unknown block: 0x' + block.sentinel.toString(16)) // TODO: Pad this with a 0.
     }
-
+    __DEV__ && (console.log(`parseBlock time: ${Date.now() - t}, type:${block.type}`))
     if (block.type !== 'complete') setTimeout(this.parseBlock, 0)
   }
 
