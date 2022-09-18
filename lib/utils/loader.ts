@@ -1,6 +1,7 @@
+import { gifData } from 'lib/type'
 import { Emitter } from './Emitter'
 
-export type gifData = string | Uint8Array
+
 
 const EMITS = ['loadstart', 'load', 'progress', 'error'] as const
 

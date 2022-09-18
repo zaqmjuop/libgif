@@ -96,3 +96,9 @@ export type func = (...args: any[]) => any
 export type background = Rect & {
   backgroundColor: string
 }
+
+export type gifData = string | Uint8Array
+
+export interface LZWPayload {
+  minCodeSize: number, data: gifData
+}

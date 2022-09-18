@@ -1,5 +1,6 @@
 import { Emitter } from '../utils/Emitter'
 import { lzwDecode } from './lzwDecode'
+import { lzw } from './lzw'
 import { bitsToNum, byteToBitArr, Stream } from './stream'
 import {
   AppExtBlock,
@@ -267,7 +268,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     }
   }
 
-  private parseImg = (block: Block) => {
+  private parseImg = async (block: Block) => {
     if (!this.st) return
     let t = __DEV__ ? Date.now() : 0
     const deinterlace = (pixels: number[], width: number) => {
@@ -319,7 +320,8 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
 
     const lzwData: string = this.readSubBlocks() as string
 
-    let pixels: number[] = lzwDecode(lzwMinCodeSize, lzwData)
+    let pixels: number[] = !__DEV__ ? lzwDecode(lzwMinCodeSize, lzwData) : await lzw({ minCodeSize: lzwMinCodeSize, data: lzwData })
+
     __DEV__ && (console.log(`lzwDecode time: ${Date.now() - t}`))
     // Move
     if (interlaced) {
@@ -434,7 +436,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     )
   }
 
-  private parseBlock = () => {
+  private parseBlock = async () => {
     if (!this.st) return
     let t = __DEV__ ? Date.now() : 0
     const sentinel = this.st.readByte()
@@ -452,7 +454,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
         break
       case ',':
         block.type = 'img'
-        this.parseImg(block)
+        await this.parseImg(block)
         break
       case ';':
         block.type = 'complete'
