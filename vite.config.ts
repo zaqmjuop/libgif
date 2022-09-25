@@ -1,6 +1,8 @@
 import { defineConfig } from 'vite'
 import path from 'path'
 
+let buildType = 'lib'
+
 export default defineConfig({
   resolve: {
     alias: [{ find: '@', replacement: '/src' }]
@@ -16,15 +18,18 @@ export default defineConfig({
   },
   plugins: [],
   build: {
-    outDir: "dist",
-    lib: {
-      entry: path.resolve(__dirname, 'lib/libgif.ts'),
-      name: 'libgif',
-      formats: ['es'],
-      fileName: 'libgif'
-    }
+    outDir: buildType === 'lib' ? 'dist' : 'docs',
+    lib:
+      buildType === 'lib'
+        ? {
+            entry: path.resolve(__dirname, 'lib/libgif.ts'),
+            name: 'libgif',
+            formats: ['es'],
+            fileName: 'libgif'
+          }
+        : void 0
   },
-  base: "libgif", // git-page 基础路径
+  base: 'libgif', // git-page 基础路径
   preview: {
     port: 8080
   }
