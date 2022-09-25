@@ -1,5 +1,5 @@
 import { defineConfig } from 'vite'
-// import path from 'path'
+import path from 'path'
 
 export default defineConfig({
   resolve: {
@@ -10,13 +10,13 @@ export default defineConfig({
   },
   plugins: [],
   build: {
-    outDir: "docs",
-    // lib: {
-    //   entry: path.resolve(__dirname, 'lib/libgif.ts'),
-    //   name: 'libgif',
-    //   formats: ['es'],
-    //   fileName: 'libgif'
-    // }
+    outDir: "dist",
+    lib: {
+      entry: path.resolve(__dirname, 'lib/libgif.ts'),
+      name: 'libgif',
+      formats: ['es'],
+      fileName: 'libgif'
+    }
   },
   base: "libgif", // git-page 基础路径
   preview: {
