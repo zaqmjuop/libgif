@@ -7,6 +7,12 @@ export default defineConfig({
   },
   server: {
     port: 3000,
+    watch: {
+      ignored: ['!**/node_modules/@zaqmjuop/libgif/dist/libgif.mjs']
+    }
+  },
+  optimizeDeps: {
+    exclude: ['@zaqmjuop/libgif']
   },
   plugins: [],
   build: {
