@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite'
 import path from 'path'
 
-let buildType = 'lib'
+let buildType = 'docs'
 
 export default defineConfig({
   resolve: {
