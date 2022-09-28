@@ -1,3 +1,4 @@
-重构自 libgif
+重构自libgif
 
-[在线示例](https://zaqmjuop.github.io/libgif/)
+[查看在线示例](https://zaqmjuop.github.io/libgif/)
+
