@@ -3,7 +3,7 @@ const idGetter = () => {
   return () => `${id++}`
 }
 
-export const createWorker = <F extends (...agrs: any[]) => any>(func: F) => {
+export const createWorkerFunc = <F extends (...agrs: any[]) => any>(func: F) => {
   const getTraceId = idGetter()
 
   console.log('func', func.toString())
