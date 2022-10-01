@@ -6,8 +6,6 @@ const idGetter = () => {
 export const createWorker = <F extends (...agrs: any[]) => any>(func: F) => {
   const getTraceId = idGetter()
 
-  console.log('func', func.toString())
-
   const onWorkerMessage = async (
     event: MessageEvent<{ traceId: string; args: Parameters<F> }>
   ) => {
@@ -20,7 +18,6 @@ export const createWorker = <F extends (...agrs: any[]) => any>(func: F) => {
     const func = ${func.toString()};
     onmessage=${onWorkerMessage.toString()};
   `
-  console.log('response', response)
 
   const worker = new Worker(
     `data:application/javascript,${encodeURIComponent(response)}`
