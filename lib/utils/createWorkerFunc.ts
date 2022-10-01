@@ -21,8 +21,6 @@ export const createWorkerFunc = <F extends (...agrs: any[]) => any>(
     `data:application/javascript,${encodeURIComponent(response)}`
   )
 
-  console.log(response)
-
   const workerFunc = async (...args: Parameters<F>) => {
     const traceId = getTraceId()
     return new Promise<ReturnType<F>>((resolve) => {
