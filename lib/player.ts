@@ -54,7 +54,6 @@ export class Player extends Emitter<['finish']> {
   }
 
   putFrameBy = (amount: number) => {
-    // XXX: Name is confusing.
     this.i = this.i + amount
     this.putFrame()
   }
@@ -104,7 +103,7 @@ export class Player extends Emitter<['finish']> {
 
   onHeader = (header: Header) => {
     this.resetState()
-    this.quote.viewer.adapt({
+    this.quote.viewer.setDraftSize({
       width: header.logicalScreenWidth,
       height: header.logicalScreenHeight
     })

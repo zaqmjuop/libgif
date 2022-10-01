@@ -2,12 +2,18 @@ import { Rect, rgb } from './type'
 export class Viewer {
   canvas?: HTMLCanvasElement // 缩放滤镜后的模样
   ctx?: CanvasRenderingContext2D
+  readonly resizeObserver: ResizeObserver
   readonly draftCanvas = document.createElement('canvas') // 图片文件原始模样
   readonly draftCtx: CanvasRenderingContext2D
   opacity = 255
-  zoomW = 1
-  zoomH = 1
   constructor() {
+    this.resizeObserver = new ResizeObserver(() => {
+      if (!this.canvas) {
+        return
+      }
+      this.ctx?.scale(this.canvas.width / this.draftCanvas.width, this.zoomH)
+      console.log(this.draftCanvas.width, this.canvas.width)
+    })
     this.draftCtx = this.draftCanvas.getContext(
       '2d'
     ) as CanvasRenderingContext2D
@@ -16,35 +22,32 @@ export class Viewer {
     return this.canvas?.getAttribute('progress_bar') !== 'none'
   }
 
+  get zoomW() {
+    const canvasWidth = this.canvas?.width || 0
+    const draftWidth = this.draftCanvas.width
+    return canvasWidth / draftWidth
+  }
+
+  get zoomH() {
+    const canvasHeight = this.canvas?.height || 0
+    const draftHeight = this.draftCanvas.height
+    return canvasHeight / draftHeight
+  }
+
   mount(canvas: HTMLCanvasElement) {
     this.canvas = canvas
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
+    this.resizeObserver.observe(canvas)
   }
 
-  adapt(imgSize: { width: number; height: number }) {
-    if (!this.canvas) {
-      return
-    }
-    const attrWidth = this.canvas.getAttribute('width')
-    const width = attrWidth ? parseInt(attrWidth) : imgSize.width
-    const zoomW = width / imgSize.width
-
-    const attrHeight = this.canvas.getAttribute('height')
-    const height = attrHeight ? parseInt(attrHeight) : imgSize.height
-    const zoomH = height / imgSize.height
-
-    this.canvas.width = width
-    this.canvas.height = height
-
+  setDraftSize(imgSize: { width: number; height: number }) {
     // setSize
-    this.ctx?.scale(zoomW, zoomH)
-    this.zoomW = zoomW
-    this.zoomH = zoomH
     this.draftCanvas.width = imgSize.width
     this.draftCanvas.height = imgSize.height
     this.draftCanvas.style.width = imgSize.width + 'px'
     this.draftCanvas.style.height = imgSize.height + 'px'
     this.draftCtx.setTransform(1, 0, 0, 1, 0, 0)
+    this.ctx?.scale(this.zoomW, this.zoomH)
   }
   drawProgress(percent: number) {
     if (!this.canvas) {
