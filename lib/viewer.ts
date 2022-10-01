@@ -7,13 +7,7 @@ export class Viewer {
   readonly draftCtx: CanvasRenderingContext2D
   opacity = 255
   constructor() {
-    this.resizeObserver = new ResizeObserver(() => {
-      if (!this.canvas) {
-        return
-      }
-      this.ctx?.scale(this.canvas.width / this.draftCanvas.width, this.zoomH)
-      console.log(this.draftCanvas.width, this.canvas.width)
-    })
+    this.resizeObserver = new ResizeObserver(this.onResize)
     this.draftCtx = this.draftCanvas.getContext(
       '2d'
     ) as CanvasRenderingContext2D
@@ -34,6 +28,23 @@ export class Viewer {
     return canvasHeight / draftHeight
   }
 
+  private onResize() {
+    if (!this.canvas) {
+      return
+    }
+    this.ctx?.setTransform(1, 0, 0, 1, 0, 0)
+    this.ctx?.scale(this.zoomW, this.zoomH)
+  }
+
+  private getDraft(rect: Rect) {
+    return this.draftCtx.getImageData(
+      rect.leftPos,
+      rect.topPos,
+      rect.width,
+      rect.height
+    )
+  }
+
   mount(canvas: HTMLCanvasElement) {
     this.canvas = canvas
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
@@ -41,13 +52,16 @@ export class Viewer {
   }
 
   setDraftSize(imgSize: { width: number; height: number }) {
+    if (!this.canvas) {
+      return
+    }
     // setSize
     this.draftCanvas.width = imgSize.width
     this.draftCanvas.height = imgSize.height
     this.draftCanvas.style.width = imgSize.width + 'px'
     this.draftCanvas.style.height = imgSize.height + 'px'
     this.draftCtx.setTransform(1, 0, 0, 1, 0, 0)
-    this.ctx?.scale(this.zoomW, this.zoomH)
+    this.onResize()
   }
   drawProgress(percent: number) {
     if (!this.canvas) {
@@ -87,26 +101,23 @@ export class Viewer {
     this.ctx.lineTo(w, 0)
     this.ctx.stroke()
   }
-  getDraft(rect: Rect) {
-    return this.draftCtx.getImageData(
-      rect.leftPos,
-      rect.topPos,
-      rect.width,
-      rect.height
-    )
-  }
+
   putDraft(picture: ImageData | rgb | null, left: number = 0, top: number = 0) {
     const { width, height } = this.draftCanvas
     if (!picture) {
       this.draftCtx.clearRect(0, 0, width, height)
     } else if (picture instanceof ImageData) {
-      this.draftCtx.putImageData(picture, left, top)
+      this.draftCtx.putImageData(picture, left, top, 0, 0, width, height)
     } else {
       this.draftCtx.fillStyle = `rgb(${picture.join(',')} )`
       this.draftCtx.fillRect(0, 0, width, height)
     }
   }
   drawDraft() {
+    if (!this.canvas || !this.ctx) {
+      return
+    }
+    const { width, height } = this.canvas
     this.ctx?.drawImage(this.draftCanvas, 0, 0) // 真正的视图画布
   }
 }

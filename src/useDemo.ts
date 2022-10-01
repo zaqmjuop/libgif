@@ -6,8 +6,8 @@ export default () => {
   const src = GIFS[1]
   const id = Math.random().toString().slice(2)
 
-  const width = 300
-  const height = 300
+  const width = 200
+  const height = 200
 
   let scaleX = 1
   let scaleY = 1
@@ -68,10 +68,10 @@ export default () => {
     scaleYInput.oninput = onYScale
   }
 
-  setTimeout(() => {
-    scaleXInput.setAttribute('value', String(scaleX * 10 * 1.5))
-    onXScale()
-  }, 100)
+  // setTimeout(() => {
+  //   scaleXInput.setAttribute('value', String(scaleX * 10 * 1.5))
+  //   onXScale()
+  // }, 100)
 
   const rub = libDev({ gif: container })
   rub.load()
