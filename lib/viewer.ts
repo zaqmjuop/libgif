@@ -7,7 +7,9 @@ export class Viewer {
   readonly draftCtx: CanvasRenderingContext2D
   opacity = 255
   constructor() {
-    this.resizeObserver = new ResizeObserver(this.onResize)
+    this.resizeObserver = new ResizeObserver(() => {
+      this.onResize()
+    })
     this.draftCtx = this.draftCanvas.getContext(
       '2d'
     ) as CanvasRenderingContext2D
