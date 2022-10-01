@@ -1,4 +1,3 @@
-
 import { GIFS } from './metaData'
 import libDev from '@/../lib/libgif'
 import libgif from '@zaqmjuop/libgif'
@@ -7,12 +6,13 @@ export default () => {
   const src = GIFS[1]
   const id = Math.random().toString().slice(2)
 
-
   root.innerHTML = ` 
     <div style="margin: 8px 0">
-     ${GIFS.map((url, index) => `<button url="${url}">GIF${index}</button>`).join(' ')}
+     ${GIFS.map(
+       (url, index) => `<button url="${url}">GIF${index}</button>`
+     ).join(' ')}
     </div>
-    <div
+    <canvas
     id="${id}"
     src="${src}"
     rel:animated_src="${src}"
@@ -22,8 +22,8 @@ export default () => {
     rel:rubbable="1"
     /> 
   `
-  const container = document.getElementById(id)!
-  const rub = (libDev)({ gif: container })
+  const container = document.getElementById(id)! as HTMLCanvasElement
+  const rub = libDev({ gif: container })
   rub.load()
 
   root.addEventListener('click', (e) => {

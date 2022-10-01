@@ -141,4 +141,5 @@ export default libgif
  * TODO
  * 立即终止下载或解析，并切换下一个url
  * png编码
+ * 修改了canvas width height后缩放不对
  */
