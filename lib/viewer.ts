@@ -1,15 +1,18 @@
 import { Rect, rgb } from './type'
-export class Viewer {
+
+import { Emitter } from './utils/Emitter'
+export class Viewer extends Emitter<['resize']> {
   canvas?: HTMLCanvasElement // 缩放滤镜后的模样
   ctx?: CanvasRenderingContext2D
   readonly resizeObserver: ResizeObserver
   readonly draftCanvas = document.createElement('canvas') // 图片文件原始模样
   readonly draftCtx: CanvasRenderingContext2D
   opacity = 255
+  prevZoomW = 1
+  prevZoomH = 1
   constructor() {
-    this.resizeObserver = new ResizeObserver(() => {
-      this.onResize()
-    })
+    super()
+    this.resizeObserver = new ResizeObserver(this.onResize.bind(this))
     this.draftCtx = this.draftCanvas.getContext(
       '2d'
     ) as CanvasRenderingContext2D
@@ -30,12 +33,50 @@ export class Viewer {
     return canvasHeight / draftHeight
   }
 
+  private updateZoomW() {
+    const canvasWidth = this.canvas?.width || 0
+    const draftWidth = this.draftCanvas.width
+    this.prevZoomW = canvasWidth / draftWidth
+    return this.prevZoomW
+  }
+
+  private updateZoomH() {
+    const canvasWidth = this.canvas?.width || 0
+    const draftWidth = this.draftCanvas.width
+    this.prevZoomH = canvasWidth / draftWidth
+    return this.prevZoomH
+  }
+
+  // private resetCanvasScale() {
+  //   if (!this.canvas) {
+  //     return
+  //   }
+  //   this.ctx?.setTransform(1, 0, 0, 1, 0, 0)
+  //   this.ctx?.scale(this.zoomW, this.zoomH)
+  // }
+
   private onResize() {
-    if (!this.canvas) {
+    if (!this.canvas || !this.ctx) {
       return
     }
-    this.ctx?.setTransform(1, 0, 0, 1, 0, 0)
-    this.ctx?.scale(this.zoomW, this.zoomH)
+    const prevData2 = this.ctx.getImageData(
+      0,
+      0,
+      this.canvas.width,
+      this.canvas.height
+    )
+     this.ctx?.setTransform(1, 0, 0, 1, 0, 0)
+    this.ctx?.scale(this.updateZoomW(), this.updateZoomH())
+    const prevData = this.draftCtx.getImageData(
+      0,
+      0,
+      this.draftCanvas.width,
+      this.draftCanvas.height
+    )
+    this.ctx?.putImageData(prevData2, 0, 0)
+    this.ctx?.putImageData(prevData, 0, 0)
+
+    this.emit('resize')
   }
 
   private getDraft(rect: Rect) {
@@ -63,7 +104,8 @@ export class Viewer {
     this.draftCanvas.style.width = imgSize.width + 'px'
     this.draftCanvas.style.height = imgSize.height + 'px'
     this.draftCtx.setTransform(1, 0, 0, 1, 0, 0)
-    this.onResize()
+    this.ctx?.setTransform(1, 0, 0, 1, 0, 0)
+    this.ctx?.scale(this.updateZoomW(), this.updateZoomH())
   }
   drawProgress(percent: number) {
     if (!this.canvas) {

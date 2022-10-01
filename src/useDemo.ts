@@ -75,6 +75,10 @@ export default () => {
 
   const rub = libDev({ gif: container })
   rub.load()
+  console.log(rub)
+  setTimeout(() => {
+    rub.player.putFrame(33)
+  }, 400);
 
   root.addEventListener('click', (e) => {
     if (e.target instanceof HTMLElement) {

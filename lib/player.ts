@@ -42,6 +42,7 @@ export class Player extends Emitter<['finish']> {
   }
 
   private goOn = () => {
+    return
     if (!this.playing) return
     this.putFrameBy(1)
     const delay = this.frameGroup[this.i].delay
@@ -58,7 +59,7 @@ export class Player extends Emitter<['finish']> {
     this.putFrame()
   }
 
-  private putFrame(flag?: number) {
+  putFrame(flag?: number) {
     if (typeof flag === 'number') {
       this.i = flag
     }
