@@ -12,8 +12,8 @@ import {
   Rect,
   rgb
 } from '../type'
+import { createWorkerFunc } from '../utils/createWorkerFunc'
 import { __DEV__ } from '../utils/metaData'
-import { WORKER_FUNC_MAP } from './workerFuncMap'
 
 // The actual parsing; returns an object with properties.
 
@@ -34,6 +34,9 @@ enum DisposalMethod {
   backgroundColor = 2, //  Restore to background color. The area used by the graphic must be restored to the background color.
   previous = 3 // Restore to previous. The decoder is required to restore the area overwritten by the graphic with what was there prior to rendering the graphic.
 } // Importantly, "previous" means the frame state after the last disposal of method 0, 1, or 2.
+
+const workerLzwDecode = createWorkerFunc(lzwDecode)
+
 export class Gif89aDecoder extends Emitter<typeof EMITS> {
   private readonly canvas = document.createElement('canvas') // 图片文件原始模样
   private readonly ctx: CanvasRenderingContext2D
@@ -322,7 +325,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
 
     let pixels: number[] = !__DEV__
       ? lzwDecode(lzwMinCodeSize, lzwData)
-      : await WORKER_FUNC_MAP['lzwDecode'](lzwMinCodeSize, lzwData)
+      : await workerLzwDecode(lzwMinCodeSize, lzwData)
 
     __DEV__ && console.log(`lzwDecode time: ${Date.now() - t}`)
     // Move
