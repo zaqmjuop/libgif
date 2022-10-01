@@ -3,20 +3,18 @@ const idGetter = () => {
   return () => `${id++}`
 }
 
-export const createWorkerFunc = <F extends (...agrs: any[]) => any>(func: F) => {
+export const createWorkerFunc = <F extends (...agrs: any[]) => any>(
+  func: F
+) => {
   const getTraceId = idGetter()
-
-  const onWorkerMessage = async (
-    event: MessageEvent<{ traceId: string; args: Parameters<F> }>
-  ) => {
-    const { traceId, args } = event.data
-    const data = await func.apply(void 0, args)
-    self.postMessage({ traceId, data })
-  }
 
   const response = `
     const func = ${func.toString()};
-    onmessage=${onWorkerMessage.toString()};
+    onmessage= async (event) => {
+      const { traceId, args } = event.data
+      const data = await func.apply(void 0, args)
+      self.postMessage({ traceId, data })
+    };
   `
 
   const worker = new Worker(
