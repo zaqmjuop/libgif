@@ -370,7 +370,12 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       : (this.header?.globalColorTable as rgb[]) // TODO: What if neither exists? 调用系统颜色表
     //Get existing pixels for img region after applying disposal method
 
-    const imgData: ImageData = this.getDraft(img)
+    const imgData: ImageData = this.ctx.getImageData(
+      img.leftPos,
+      img.topPos,
+      img.width,
+      img.height
+    )
     if (colorTable) {
       img.pixels.forEach((pixel, i) => {
         if (pixel !== transparency) {
@@ -381,11 +386,26 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
         }
       })
     }
+    this.ctx.putImageData(
+      imgData,
+      img.leftPos,
+      img.topPos,
+      0,
+      0,
+      img.width,
+      img.height
+    )
+    const data = this.ctx.getImageData(
+      0,
+      0,
+      this.canvas.width,
+      this.canvas.height
+    )
     const frame: Frame & Rect = {
-      data: imgData,
+      data: data,
       delay: delayTime,
-      leftPos: img.leftPos,
-      topPos: img.topPos,
+      leftPos: 0,
+      topPos: 0,
       width: this.canvas.width,
       height: this.canvas.height
     }
@@ -433,6 +453,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
   }
 
   private getDraft = (rect: Rect) => {
+    console.log(rect)
     return this.ctx.getImageData(
       rect.leftPos,
       rect.topPos,

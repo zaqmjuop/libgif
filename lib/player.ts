@@ -112,7 +112,6 @@ export class Player extends Emitter<['finish']> {
 
   onFrame = (frame: Frame & Rect) => {
     this.frameGroup.push(frame)
-    this.play()
   }
 
   onError = () => {
