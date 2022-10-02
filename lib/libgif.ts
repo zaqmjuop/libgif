@@ -31,7 +31,6 @@ const libgif = (opts: Options) => {
 
   // player
   const player = new Player({
-    overrideLoopMode: options.loop_mode !== false,
     viewer
   })
   player.on('finish', () => emitter.emit('finish', gif))
@@ -60,6 +59,7 @@ const libgif = (opts: Options) => {
   decoder.on(
     'complete',
     withProgress((block: Block) => {
+      player.framsComplete = true
       __DEV__ && console.log('decode time:', Date.now() - t)
       emitter.emit('load', gif)
     })
