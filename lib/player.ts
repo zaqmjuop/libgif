@@ -15,6 +15,7 @@ export class Player extends Emitter<['finish']> {
   opacity = 255
   timestamp = 0
   t = 0
+  header = { width: 0, height: 0 }
   readonly quote: PlayerQuote
 
   constructor(quote: PlayerQuote) {
@@ -100,14 +101,16 @@ export class Player extends Emitter<['finish']> {
     this.framsComplete = false
     this.opacity = 255
     this.timestamp = 0
+    this.header = { width: 0, height: 0 }
   }
 
   onHeader = (header: Header) => {
     this.resetState()
-    this.quote.viewer.setDraftSize({
+    this.header = {
       width: header.logicalScreenWidth,
       height: header.logicalScreenHeight
-    })
+    }
+    this.quote.viewer.setDraftSize(this.header)
   }
 
   onFrame = (frame: Frame & Rect) => {
