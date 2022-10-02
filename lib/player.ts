@@ -42,7 +42,6 @@ export class Player extends Emitter<['finish']> {
   }
 
   private goOn = () => {
-    return
     if (!this.playing) return
     this.putFrameBy(1)
     const delay = this.frameGroup[this.i].delay

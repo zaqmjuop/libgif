@@ -47,6 +47,7 @@ const libgif = (opts: Options) => {
     'frame',
     withProgress((frame: Frame & Rect) => {
       player.onFrame(frame)
+      player.play()
     })
   )
   decoder.on(
