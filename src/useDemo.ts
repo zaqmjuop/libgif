@@ -68,21 +68,9 @@ export default () => {
     scaleYInput.oninput = onYScale
   }
 
-  // setTimeout(() => {
-  //   scaleXInput.setAttribute('value', String(scaleX * 10 * 1.5))
-  //   onXScale()
-  // }, 100)
-
   const rub = libDev({ gif: container })
   rub.load()
   console.log(rub)
-  // setTimeout(() => {
-  //   rub.player.putFrame(33)
-  //   setTimeout(() => {
-  //     scaleXInput.setAttribute('value', String(scaleX * 10 * 1.5))
-  //     onXScale()
-  //   }, 10)
-  // }, 400)
 
   root.addEventListener('click', (e) => {
     if (e.target instanceof HTMLElement) {

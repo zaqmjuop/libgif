@@ -354,7 +354,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
   }
 
   private parseFrame = (img: ImgBlock) => {
-    let t = __DEV__ ? Date.now() : 0
+    // let t = __DEV__ ? Date.now() : 0
     // graphControll
     const graphControll = this.graphControll
     if (graphControll) {
@@ -395,14 +395,8 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       img.width,
       img.height
     )
-    const data = this.ctx.getImageData(
-      0,
-      0,
-      this.canvas.width,
-      this.canvas.height
-    )
     const frame: Frame & Rect = {
-      data: data,
+      data: this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height),
       delay: delayTime,
       leftPos: 0,
       topPos: 0,
@@ -450,16 +444,6 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       this.ctx.fillStyle = `rgb(${picture.join(',')} )`
       this.ctx.fillRect(0, 0, width, height)
     }
-  }
-
-  private getDraft = (rect: Rect) => {
-    console.log(rect)
-    return this.ctx.getImageData(
-      rect.leftPos,
-      rect.topPos,
-      rect.width,
-      rect.height
-    )
   }
 
   private parseBlock = async () => {
