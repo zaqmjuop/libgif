@@ -3,7 +3,15 @@ import { Loader } from './utils/loader'
 import { Gif89aDecoder } from './decoders/gif89aDecoder'
 import { Player } from './player'
 import { Stream } from './decoders/stream'
-import { AppExtBlock, Block, Frame, gifData, Header, Options, Rect } from './type'
+import {
+  AppExtBlock,
+  Block,
+  Frame,
+  gifData,
+  Header,
+  Options,
+  Rect
+} from './type'
 import { Viewer } from './viewer'
 import { __DEV__ } from './utils/metaData'
 
@@ -23,7 +31,6 @@ const libgif = (opts: Options) => {
 
   // player
   const player = new Player({
-    overrideLoopMode: options.loop_mode !== false,
     viewer
   })
   player.on('finish', () => emitter.emit('finish', gif))
@@ -47,12 +54,12 @@ const libgif = (opts: Options) => {
     'frame',
     withProgress((frame: Frame & Rect) => {
       player.onFrame(frame)
-      player.play()
     })
   )
   decoder.on(
     'complete',
     withProgress((block: Block) => {
+      player.framsComplete = true
       __DEV__ && console.log('decode time:', Date.now() - t)
       emitter.emit('load', gif)
     })
@@ -62,8 +69,7 @@ const libgif = (opts: Options) => {
   // loader
 
   const loader = new Loader()
-  loader.on('load', (data: gifData) => {
-  })
+  loader.on('load', (data: gifData) => {})
   loader.on('progress', (e: ProgressEvent<EventTarget>) => {
     e.lengthComputable && viewer.drawProgress(e.loaded / e.total)
   })
@@ -71,7 +77,6 @@ const libgif = (opts: Options) => {
     player.onError()
     viewer.drawError(message)
   })
-
 
   // /loader
   const getLoading = () => loader.loading || decoder.loading
@@ -88,6 +93,11 @@ const libgif = (opts: Options) => {
   }
 
   const load_url = async (url: string) => {
+    const preload = gif.getAttribute('preload')
+    const autoplay = gif.getAttribute('autoplay')
+    if (preload === 'none' && (!autoplay || autoplay === 'none')) {
+      return
+    }
     if (getLoading()) return
     try {
       const data = await loader.load_url(url)
@@ -101,12 +111,38 @@ const libgif = (opts: Options) => {
     return decode(data)
   }
 
-  const load = () => load_url(
-    gif.getAttribute('rel:animated_src') || gif.getAttribute('src') || ''
-  )
+  const load = () => {
+    const src = gif.getAttribute('src') || ''
+    src && load_url(src)
+  }
+  load()
 
+  const controls2 = {
+    get playing() {
+      return player.playing
+    },
+    get sourceWidth() {
+      return player.header.width
+    },
+    get sourceHeight() {
+      return player.header.height
+    },
+    currentSrc: '', // 只读 地址 
+    defaultPlaybackRate: 1, // 默认播放速度
+    playbackRate: 1, // 播放速度
+    duration: 1, // 总时长 只读
+    ended: 1, // 播放完毕 只读
+    error: 1, // 错误 只读
+    initialTime: 1, //初始播放位置（以秒为单位）。 只读
+    loop: 1, // 
+    mediaGroup: [], // 连播
+    paused: true,// 指示媒体元素是否被暂停 只读
+    played: [], // 播放过的帧 只读
+    preload: 'auto',
+    readyState: 1, // 准备状态
+  }
 
-  return {
+  const controller = {
     player,
     // play controls
     play: player.play,
@@ -130,6 +166,10 @@ const libgif = (opts: Options) => {
     on: emitter.on,
     off: emitter.off
   }
+
+  ;(gif as any).controller = controller
+
+  return controller
 }
 
 export default libgif

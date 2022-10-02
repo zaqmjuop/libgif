@@ -37,13 +37,12 @@ export default () => {
     </label>
     </div>
     <canvas
-    id="${id}"
-    src="${src}"
-    rel:animated_src="${src}"
-    width="${width}"
-    height="${height}"
-    rel:auto_play="1"
-    rel:rubbable="1"
+      id="${id}"
+      src="${src}" 
+      width="${width}"
+      height="${height}" 
+      poster="poster"
+      preload="d"
     /> 
   `
   const container = document.getElementById(id)! as HTMLCanvasElement
@@ -69,7 +68,6 @@ export default () => {
   }
 
   const rub = libDev({ gif: container })
-  rub.load()
   console.log(rub)
 
   root.addEventListener('click', (e) => {

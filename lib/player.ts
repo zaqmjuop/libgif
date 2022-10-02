@@ -3,7 +3,6 @@ import { Emitter } from './utils/Emitter'
 import { Viewer } from './viewer'
 
 interface PlayerQuote {
-  overrideLoopMode: boolean
   viewer: Viewer
 }
 export class Player extends Emitter<['finish']> {
@@ -12,9 +11,11 @@ export class Player extends Emitter<['finish']> {
   forward = true
   playing = false
   frameGroup: Array<Frame & Rect> = []
+  framsComplete = false
   opacity = 255
   timestamp = 0
   t = 0
+  header = { width: 0, height: 0 }
   readonly quote: PlayerQuote
 
   constructor(quote: PlayerQuote) {
@@ -34,7 +35,7 @@ export class Player extends Emitter<['finish']> {
   private finish = () => {
     this.iterationCount++
     this.emit('finish')
-    if (this.quote.overrideLoopMode || this.iterationCount < 1) {
+    if (this.quote.viewer.canvas?.getAttribute('loop') === 'loop') {
       this.goOn()
     } else {
       this.pause()
@@ -45,7 +46,7 @@ export class Player extends Emitter<['finish']> {
     if (!this.playing) return
     this.putFrameBy(1)
     const delay = this.frameGroup[this.i].delay
-    const isComplete = this.getNextFrameNo() === 0
+    const isComplete = this.getNextFrameNo() === 0 && this.framsComplete
     clearTimeout(this.t)
     this.t = isComplete
       ? window.setTimeout(this.finish, delay)
@@ -97,20 +98,32 @@ export class Player extends Emitter<['finish']> {
     this.forward = true
     this.playing = false
     this.frameGroup = []
+    this.framsComplete = false
     this.opacity = 255
     this.timestamp = 0
+    this.header = { width: 0, height: 0 }
   }
 
   onHeader = (header: Header) => {
     this.resetState()
-    this.quote.viewer.setDraftSize({
+    this.header = {
       width: header.logicalScreenWidth,
       height: header.logicalScreenHeight
-    })
+    }
+    this.quote.viewer.setDraftSize(this.header)
   }
 
   onFrame = (frame: Frame & Rect) => {
     this.frameGroup.push(frame)
+    if (this.frameGroup.length === 1) {
+      if (this.quote.viewer.canvas?.getAttribute('autoplay') === 'autoplay') {
+        this.play()
+      } else if (
+        this.quote.viewer.canvas?.getAttribute('poster') === 'poster'
+      ) {
+        this.putFrame(0)
+      }
+    }
   }
 
   onError = () => {
