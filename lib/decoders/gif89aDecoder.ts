@@ -126,7 +126,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     }
     this.header = header
     this.setCanvasSize(header.logicalScreenWidth, header.logicalScreenHeight)
-    __DEV__ && console.log(`parseHeader time: ${Date.now() - t}`)
+    // __DEV__ && console.log(`parseHeader time: ${Date.now() - t}`)
     this.emit('header', header)
   }
 
@@ -327,11 +327,11 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       ? lzwDecode(lzwMinCodeSize, lzwData)
       : await workerLzwDecode(lzwMinCodeSize, lzwData)
 
-    __DEV__ && console.log(`lzwDecode time: ${Date.now() - t}`)
+    // __DEV__ && console.log(`lzwDecode time: ${Date.now() - t}`)
     // Move
     if (interlaced) {
       pixels = deinterlace(pixels, width)
-      __DEV__ && console.log(`deinterlace time: ${Date.now() - t}`)
+      // __DEV__ && console.log(`deinterlace time: ${Date.now() - t}`)
     }
 
     const img: ImgBlock = {
@@ -349,12 +349,12 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       lzwMinCodeSize,
       pixels
     }
-    __DEV__ && console.log(`parseImg time: ${Date.now() - t}`)
+    // __DEV__ && console.log(`parseImg time: ${Date.now() - t}`)
     this.parseFrame(img)
   }
 
   private parseFrame = (img: ImgBlock) => {
-    let t = __DEV__ ? Date.now() : 0
+    // let t = __DEV__ ? Date.now() : 0
     // graphControll
     const graphControll = this.graphControll
     if (graphControll) {
@@ -370,7 +370,12 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       : (this.header?.globalColorTable as rgb[]) // TODO: What if neither exists? 调用系统颜色表
     //Get existing pixels for img region after applying disposal method
 
-    const imgData: ImageData = this.getDraft(img)
+    const imgData: ImageData = this.ctx.getImageData(
+      img.leftPos,
+      img.topPos,
+      img.width,
+      img.height
+    )
     if (colorTable) {
       img.pixels.forEach((pixel, i) => {
         if (pixel !== transparency) {
@@ -381,18 +386,27 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
         }
       })
     }
+    this.ctx.putImageData(
+      imgData,
+      img.leftPos,
+      img.topPos,
+      0,
+      0,
+      img.width,
+      img.height
+    )
     const frame: Frame & Rect = {
-      data: imgData,
+      data: this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height),
       delay: delayTime,
-      leftPos: img.leftPos,
-      topPos: img.topPos,
+      leftPos: 0,
+      topPos: 0,
       width: this.canvas.width,
       height: this.canvas.height
     }
     this.frameGroup.push(frame)
 
     this.graphControll = void 0
-    __DEV__ && console.log(`parseFrame time: ${Date.now() - t}`)
+    // __DEV__ && console.log(`parseFrame time: ${Date.now() - t}`)
     this.emit('frame', frame)
   }
 
@@ -430,15 +444,6 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       this.ctx.fillStyle = `rgb(${picture.join(',')} )`
       this.ctx.fillRect(0, 0, width, height)
     }
-  }
-
-  private getDraft = (rect: Rect) => {
-    return this.ctx.getImageData(
-      rect.leftPos,
-      rect.topPos,
-      rect.width,
-      rect.height
-    )
   }
 
   private parseBlock = async () => {
@@ -484,8 +489,8 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       default:
         throw new Error('Unknown block: 0x' + block.sentinel.toString(16)) // TODO: Pad this with a 0.
     }
-    __DEV__ &&
-      console.log(`parseBlock time: ${Date.now() - t}, type:${block.type}`)
+    // __DEV__ &&
+    //   console.log(`parseBlock time: ${Date.now() - t}, type:${block.type}`)
     if (block.type !== 'complete') setTimeout(this.parseBlock, 0)
   }
 

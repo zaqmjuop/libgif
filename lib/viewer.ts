@@ -1,84 +1,82 @@
 import { Rect, rgb } from './type'
-export class Viewer {
-  $el?: HTMLElement
-  readonly canvas = document.createElement('canvas') // 缩放滤镜后的模样
-  readonly ctx: CanvasRenderingContext2D
+
+import { Emitter } from './utils/Emitter'
+export class Viewer extends Emitter<[]> {
+  canvas?: HTMLCanvasElement // 缩放滤镜后的模样
+  ctx?: CanvasRenderingContext2D
+  readonly resizeObserver: ResizeObserver
   readonly draftCanvas = document.createElement('canvas') // 图片文件原始模样
   readonly draftCtx: CanvasRenderingContext2D
   opacity = 255
-  zoomW = 1
-  zoomH = 1
   constructor() {
-    this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
-    this.draftCtx = this.draftCanvas.getContext('2d') as CanvasRenderingContext2D
+    super()
+    this.resizeObserver = new ResizeObserver(this.onResize.bind(this))
+    this.draftCtx = this.draftCanvas.getContext(
+      '2d'
+    ) as CanvasRenderingContext2D
   }
   get showProgressBar() {
-    return this.$el?.getAttribute('progress_bar') !== 'none'
+    return this.canvas?.getAttribute('progress_bar') !== 'none'
   }
 
-  get isMounted() {
-    return !!this.canvas.parentNode?.parentNode
+  get scale() {
+    const canvasWidth = this.canvas?.width || 0
+    const draftWidth = this.draftCanvas.width
+    const canvasHeight = this.canvas?.height || 0
+    const draftHeight = this.draftCanvas.height
+    return {
+      zoomW: canvasWidth / draftWidth,
+      zoomH: canvasHeight / draftHeight
+    }
   }
 
-  mount(element: HTMLElement) {
-    if (this.isMounted) {
-      return
-    }
-    const parent = element.parentNode
-    if (!parent) {
-      return
-    }
-    this.$el = element
-    const div = document.createElement('div')
-    div.style.display = 'inline-block'
-
-    const w = Number(element.getAttribute('width')) || 0
-    const h = Number(element.getAttribute('height')) || 0
-    this.canvas.id = '重构'
-    this.canvas.style.display = 'block'
-    this.canvas.width = w
-    this.canvas.height = h
-
-    div.appendChild(this.canvas)
-    parent.insertBefore(div, element)
-    parent.removeChild(element)
+  updateScale() {
+    this.ctx?.setTransform(1, 0, 0, 1, 0, 0)
+    const { zoomW, zoomH } = this.scale
+    this.ctx?.scale(zoomW, zoomH)
   }
 
-  adapt(imgSize: { width: number; height: number }) {
-    if (!this.$el) {
+  private onResize() {
+    if (!this.canvas || !this.ctx) {
       return
     }
-    const attrWidth = this.$el.getAttribute('width')
-    const width = attrWidth ? parseInt(attrWidth) : imgSize.width
-    const zoomW = width / imgSize.width
+    this.updateScale()
+    this.drawDraft()
+  }
 
-    const attrHeight = this.$el.getAttribute('height')
-    const height = attrHeight ? parseInt(attrHeight) : imgSize.height
-    const zoomH = height / imgSize.height
+  mount(canvas: HTMLCanvasElement) {
+    this.canvas = canvas
+    this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
+    this.resizeObserver.observe(canvas)
+  }
 
-    this.canvas.width = width
-    this.canvas.height = height
-
+  setDraftSize(imgSize: { width: number; height: number }) {
+    if (!this.canvas) {
+      return
+    }
     // setSize
-    this.ctx.scale(zoomW, zoomH)
-    this.zoomW = zoomW
-    this.zoomH = zoomH
     this.draftCanvas.width = imgSize.width
     this.draftCanvas.height = imgSize.height
     this.draftCanvas.style.width = imgSize.width + 'px'
     this.draftCanvas.style.height = imgSize.height + 'px'
     this.draftCtx.setTransform(1, 0, 0, 1, 0, 0)
+    this.updateScale()
   }
   drawProgress(percent: number) {
+    if (!this.canvas) {
+      return
+    }
     if (percent > 1 || percent < 0 || !this.showProgressBar) return
-
+    const { zoomW, zoomH } = this.scale
     let height = 1
-    const top = (this.canvas.height - height) / this.zoomH
-    const mid = (percent * this.canvas.width) / this.zoomW
+    const top = (this.canvas.height - height) / zoomH
+    const mid = (percent * this.canvas.width) / zoomW
 
-    height = height / this.zoomH
-    const width = this.canvas.width / this.zoomW
-
+    height = height / zoomH
+    const width = this.canvas.width / zoomW
+    if (!this.ctx) {
+      return
+    }
     this.ctx.fillStyle = `rgba(255,255,255,0.4)`
     this.ctx.fillRect(mid, top, width - mid, height)
 
@@ -86,6 +84,9 @@ export class Viewer {
     this.ctx.fillRect(0, top, mid, height)
   }
   drawError = (originOfError: string) => {
+    if (!this.canvas || !this.ctx) {
+      return
+    }
     console.error(originOfError)
     this.ctx.fillStyle = 'black'
     const w = this.canvas.width
@@ -99,30 +100,19 @@ export class Viewer {
     this.ctx.lineTo(w, 0)
     this.ctx.stroke()
   }
-  getDraft(rect: Rect) {
-    return this.draftCtx.getImageData(
-      rect.leftPos,
-      rect.topPos,
-      rect.width,
-      rect.height
-    )
-  }
-  putDraft(
-    picture: ImageData | rgb | null,
-    left: number = 0,
-    top: number = 0
-  ) {
+
+  putDraft(picture: ImageData | rgb | null, left: number = 0, top: number = 0) {
     const { width, height } = this.draftCanvas
     if (!picture) {
       this.draftCtx.clearRect(0, 0, width, height)
     } else if (picture instanceof ImageData) {
-      this.draftCtx.putImageData(picture, left, top)
+      this.draftCtx.putImageData(picture, left, top, 0, 0, width, height)
     } else {
       this.draftCtx.fillStyle = `rgb(${picture.join(',')} )`
       this.draftCtx.fillRect(0, 0, width, height)
     }
   }
   drawDraft() {
-    this.ctx.drawImage(this.draftCanvas, 0, 0) // 真正的视图画布
+    this.ctx?.drawImage(this.draftCanvas, 0, 0) // 真正的视图画布
   }
 }

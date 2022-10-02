@@ -54,12 +54,11 @@ export class Player extends Emitter<['finish']> {
   }
 
   putFrameBy = (amount: number) => {
-    // XXX: Name is confusing.
     this.i = this.i + amount
     this.putFrame()
   }
 
-  private putFrame(flag?: number) {
+  putFrame(flag?: number) {
     if (typeof flag === 'number') {
       this.i = flag
     }
@@ -104,7 +103,7 @@ export class Player extends Emitter<['finish']> {
 
   onHeader = (header: Header) => {
     this.resetState()
-    this.quote.viewer.adapt({
+    this.quote.viewer.setDraftSize({
       width: header.logicalScreenWidth,
       height: header.logicalScreenHeight
     })
@@ -112,7 +111,6 @@ export class Player extends Emitter<['finish']> {
 
   onFrame = (frame: Frame & Rect) => {
     this.frameGroup.push(frame)
-    this.play()
   }
 
   onError = () => {
