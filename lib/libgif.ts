@@ -93,6 +93,10 @@ const libgif = (opts: Options) => {
   }
 
   const load_url = async (url: string) => {
+    const preload = gif.getAttribute('preload')
+    if (preload === 'none') {
+      return
+    }
     if (getLoading()) return
     try {
       const data = await loader.load_url(url)
@@ -110,9 +114,7 @@ const libgif = (opts: Options) => {
     const src = gif.getAttribute('src') || ''
     src && load_url(src)
   }
-  if (gif.getAttribute('preload') !== 'none') {
-    load()
-  }
+  load()
 
   const controls = {
     player,
