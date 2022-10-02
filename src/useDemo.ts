@@ -42,6 +42,7 @@ export default () => {
       width="${width}"
       height="${height}" 
       poster="poster"
+      preload="none"
     /> 
   `
   const container = document.getElementById(id)! as HTMLCanvasElement
@@ -67,7 +68,6 @@ export default () => {
   }
 
   const rub = libDev({ gif: container })
-  rub.load()
   console.log(rub)
 
   root.addEventListener('click', (e) => {

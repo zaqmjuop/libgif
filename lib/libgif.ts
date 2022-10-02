@@ -106,7 +106,13 @@ const libgif = (opts: Options) => {
     return decode(data)
   }
 
-  const load = () => load_url(gif.getAttribute('src') || '')
+  const load = () => {
+    const src = gif.getAttribute('src') || ''
+    src && load_url(src)
+  }
+  if (gif.getAttribute('preload') !== 'none') {
+    load()
+  }
 
   const controls = {
     player,
