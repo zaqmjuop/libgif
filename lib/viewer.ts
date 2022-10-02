@@ -1,7 +1,7 @@
 import { Rect, rgb } from './type'
 
 import { Emitter } from './utils/Emitter'
-export class Viewer extends Emitter<['resize']> {
+export class Viewer extends Emitter<[]> {
   canvas?: HTMLCanvasElement // 缩放滤镜后的模样
   ctx?: CanvasRenderingContext2D
   readonly resizeObserver: ResizeObserver
@@ -41,42 +41,19 @@ export class Viewer extends Emitter<['resize']> {
   }
 
   private updateZoomH() {
-    const canvasWidth = this.canvas?.width || 0
-    const draftWidth = this.draftCanvas.width
-    this.prevZoomH = canvasWidth / draftWidth
+    const canvasHeight = this.canvas?.height || 0
+    const draftHeight = this.draftCanvas.height
+    this.prevZoomH = canvasHeight / draftHeight
     return this.prevZoomH
   }
-
-  // private resetCanvasScale() {
-  //   if (!this.canvas) {
-  //     return
-  //   }
-  //   this.ctx?.setTransform(1, 0, 0, 1, 0, 0)
-  //   this.ctx?.scale(this.zoomW, this.zoomH)
-  // }
 
   private onResize() {
     if (!this.canvas || !this.ctx) {
       return
     }
-    const prevData2 = this.ctx.getImageData(
-      0,
-      0,
-      this.canvas.width,
-      this.canvas.height
-    )
-     this.ctx?.setTransform(1, 0, 0, 1, 0, 0)
+    this.ctx?.setTransform(1, 0, 0, 1, 0, 0)
     this.ctx?.scale(this.updateZoomW(), this.updateZoomH())
-    const prevData = this.draftCtx.getImageData(
-      0,
-      0,
-      this.draftCanvas.width,
-      this.draftCanvas.height
-    )
-    this.ctx?.putImageData(prevData2, 0, 0)
-    this.ctx?.putImageData(prevData, 0, 0)
-
-    this.emit('resize')
+    this.drawDraft()
   }
 
   private getDraft(rect: Rect) {
@@ -158,10 +135,6 @@ export class Viewer extends Emitter<['resize']> {
     }
   }
   drawDraft() {
-    if (!this.canvas || !this.ctx) {
-      return
-    }
-    const { width, height } = this.canvas
     this.ctx?.drawImage(this.draftCanvas, 0, 0) // 真正的视图画布
   }
 }
