@@ -115,7 +115,9 @@ export class Player extends Emitter<['finish']> {
     if (this.frameGroup.length === 1) {
       if (this.quote.viewer.canvas?.getAttribute('autoplay') === 'autoplay') {
         this.play()
-      } else {
+      } else if (
+        this.quote.viewer.canvas?.getAttribute('poster') === 'poster'
+      ) {
         this.putFrame(0)
       }
     }

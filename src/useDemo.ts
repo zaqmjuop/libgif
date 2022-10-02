@@ -41,8 +41,7 @@ export default () => {
       src="${src}" 
       width="${width}"
       height="${height}" 
-      autoplay="autoplay"
-      loop="loop"
+      poster="poster"
     /> 
   `
   const container = document.getElementById(id)! as HTMLCanvasElement
