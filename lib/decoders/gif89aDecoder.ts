@@ -12,8 +12,7 @@ import {
   Rect,
   rgb
 } from '../type'
-import { createWorkerFunc } from '../utils/createWorkerFunc'
-import { __DEV__ } from '../utils/metaData'
+import { createWorkerFunc } from '../utils/createWorkerFunc' 
 
 // The actual parsing; returns an object with properties.
 
@@ -88,8 +87,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
   }
 
   private parseHeader = () => {
-    if (!this.st) return
-    let t = __DEV__ ? Date.now() : 0
+    if (!this.st) return 
     const signature = this.st.read(3)
     const version = this.st.read(3)
     if (signature !== 'GIF') throw new Error('Not a GIF file.') // XXX: This should probably be handled more nicely.
@@ -125,8 +123,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       globalColorTable
     }
     this.header = header
-    this.setCanvasSize(header.logicalScreenWidth, header.logicalScreenHeight)
-    // __DEV__ && console.log(`parseHeader time: ${Date.now() - t}`)
+    this.setCanvasSize(header.logicalScreenWidth, header.logicalScreenHeight) 
     this.emit('header', header)
   }
 
@@ -272,8 +269,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
   }
 
   private parseImg = async (block: Block) => {
-    if (!this.st) return
-    let t = __DEV__ ? Date.now() : 0
+    if (!this.st) return 
     const deinterlace = (pixels: number[], width: number) => {
       // Of course this defeats the purpose of interlacing. And it's *probably*
       // the least efficient way it's ever been implemented. But nevertheless...
@@ -323,15 +319,10 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
 
     const lzwData: string = this.readSubBlocks() as string
 
-    let pixels: number[] = !__DEV__
-      ? lzwDecode(lzwMinCodeSize, lzwData)
-      : await workerLzwDecode(lzwMinCodeSize, lzwData)
-
-    // __DEV__ && console.log(`lzwDecode time: ${Date.now() - t}`)
+    let pixels: number[] = await workerLzwDecode(lzwMinCodeSize, lzwData) 
     // Move
     if (interlaced) {
-      pixels = deinterlace(pixels, width)
-      // __DEV__ && console.log(`deinterlace time: ${Date.now() - t}`)
+      pixels = deinterlace(pixels, width) 
     }
 
     const img: ImgBlock = {
@@ -348,13 +339,11 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       lct,
       lzwMinCodeSize,
       pixels
-    }
-    // __DEV__ && console.log(`parseImg time: ${Date.now() - t}`)
+    } 
     this.parseFrame(img)
   }
 
-  private parseFrame = (img: ImgBlock) => {
-    // let t = __DEV__ ? Date.now() : 0
+  private parseFrame = (img: ImgBlock) => { 
     // graphControll
     const graphControll = this.graphControll
     if (graphControll) {
@@ -405,8 +394,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     }
     this.frameGroup.push(frame)
 
-    this.graphControll = void 0
-    // __DEV__ && console.log(`parseFrame time: ${Date.now() - t}`)
+    this.graphControll = void 0 
     this.emit('frame', frame)
   }
 
@@ -447,8 +435,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
   }
 
   private parseBlock = async () => {
-    if (!this.st) return
-    let t = __DEV__ ? Date.now() : 0
+    if (!this.st) return 
     const sentinel = this.st.readByte()
     const block: Block = {
       sentinel,
@@ -488,9 +475,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
         break
       default:
         throw new Error('Unknown block: 0x' + block.sentinel.toString(16)) // TODO: Pad this with a 0.
-    }
-    // __DEV__ &&
-    //   console.log(`parseBlock time: ${Date.now() - t}, type:${block.type}`)
+    } 
     if (block.type !== 'complete') setTimeout(this.parseBlock, 0)
   }
 
