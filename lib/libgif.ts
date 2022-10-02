@@ -105,8 +105,7 @@ const libgif = (opts: Options) => {
     gif.getAttribute('rel:animated_src') || gif.getAttribute('src') || ''
   )
 
-
-  return {
+  const controls = {
     player,
     // play controls
     play: player.play,
@@ -129,7 +128,11 @@ const libgif = (opts: Options) => {
     get_length: () => player.frameGroup.length,
     on: emitter.on,
     off: emitter.off
-  }
+  };
+
+  (gif as any).controls = controls
+
+  return controls
 }
 
 export default libgif
