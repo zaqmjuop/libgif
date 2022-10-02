@@ -141,5 +141,6 @@ export default libgif
  *
  * TODO
  * 立即终止下载或解析，并切换下一个url
- * png编码
+ * img标签属性
+ * video标签属性
  */
