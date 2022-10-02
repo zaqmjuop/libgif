@@ -3,7 +3,15 @@ import { Loader } from './utils/loader'
 import { Gif89aDecoder } from './decoders/gif89aDecoder'
 import { Player } from './player'
 import { Stream } from './decoders/stream'
-import { AppExtBlock, Block, Frame, gifData, Header, Options, Rect } from './type'
+import {
+  AppExtBlock,
+  Block,
+  Frame,
+  gifData,
+  Header,
+  Options,
+  Rect
+} from './type'
 import { Viewer } from './viewer'
 import { __DEV__ } from './utils/metaData'
 
@@ -47,7 +55,6 @@ const libgif = (opts: Options) => {
     'frame',
     withProgress((frame: Frame & Rect) => {
       player.onFrame(frame)
-      player.play()
     })
   )
   decoder.on(
@@ -62,8 +69,7 @@ const libgif = (opts: Options) => {
   // loader
 
   const loader = new Loader()
-  loader.on('load', (data: gifData) => {
-  })
+  loader.on('load', (data: gifData) => {})
   loader.on('progress', (e: ProgressEvent<EventTarget>) => {
     e.lengthComputable && viewer.drawProgress(e.loaded / e.total)
   })
@@ -71,7 +77,6 @@ const libgif = (opts: Options) => {
     player.onError()
     viewer.drawError(message)
   })
-
 
   // /loader
   const getLoading = () => loader.loading || decoder.loading
@@ -101,9 +106,7 @@ const libgif = (opts: Options) => {
     return decode(data)
   }
 
-  const load = () => load_url(
-    gif.getAttribute('rel:animated_src') || gif.getAttribute('src') || ''
-  )
+  const load = () => load_url(gif.getAttribute('src') || '')
 
   const controls = {
     player,
@@ -128,9 +131,9 @@ const libgif = (opts: Options) => {
     get_length: () => player.frameGroup.length,
     on: emitter.on,
     off: emitter.off
-  };
+  }
 
-  (gif as any).controls = controls
+  ;(gif as any).controls = controls
 
   return controls
 }

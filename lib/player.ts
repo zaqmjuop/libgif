@@ -111,6 +111,13 @@ export class Player extends Emitter<['finish']> {
 
   onFrame = (frame: Frame & Rect) => {
     this.frameGroup.push(frame)
+    if (this.frameGroup.length === 1) {
+      if (this.quote.viewer.canvas?.getAttribute('autoplay') === 'autoplay') {
+        this.play()
+      } else {
+        this.putFrame(0)
+      }
+    }
   }
 
   onError = () => {

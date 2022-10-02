@@ -63,7 +63,7 @@ export class Viewer extends Emitter<[]> {
     this.updateScale()
   }
   drawProgress(percent: number) {
-    if (!this.canvas) {
+    if (!this.canvas || this.canvas.getAttribute('progress') !== 'progress') {
       return
     }
     if (percent > 1 || percent < 0 || !this.showProgressBar) return
