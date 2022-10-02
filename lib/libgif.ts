@@ -94,7 +94,8 @@ const libgif = (opts: Options) => {
 
   const load_url = async (url: string) => {
     const preload = gif.getAttribute('preload')
-    if (preload === 'none') {
+    const autoplay = gif.getAttribute('autoplay')
+    if (preload === 'none' && (!autoplay || autoplay === 'none')) {
       return
     }
     if (getLoading()) return
