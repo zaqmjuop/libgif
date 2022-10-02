@@ -8,8 +8,6 @@ export class Viewer extends Emitter<[]> {
   readonly draftCanvas = document.createElement('canvas') // 图片文件原始模样
   readonly draftCtx: CanvasRenderingContext2D
   opacity = 255
-  prevZoomW = 1
-  prevZoomH = 1
   constructor() {
     super()
     this.resizeObserver = new ResizeObserver(this.onResize.bind(this))
@@ -21,48 +19,29 @@ export class Viewer extends Emitter<[]> {
     return this.canvas?.getAttribute('progress_bar') !== 'none'
   }
 
-  get zoomW() {
+  get scale() {
     const canvasWidth = this.canvas?.width || 0
     const draftWidth = this.draftCanvas.width
-    return canvasWidth / draftWidth
-  }
-
-  get zoomH() {
     const canvasHeight = this.canvas?.height || 0
     const draftHeight = this.draftCanvas.height
-    return canvasHeight / draftHeight
+    return {
+      zoomW: canvasWidth / draftWidth,
+      zoomH: canvasHeight / draftHeight
+    }
   }
 
-  private updateZoomW() {
-    const canvasWidth = this.canvas?.width || 0
-    const draftWidth = this.draftCanvas.width
-    this.prevZoomW = canvasWidth / draftWidth
-    return this.prevZoomW
-  }
-
-  private updateZoomH() {
-    const canvasHeight = this.canvas?.height || 0
-    const draftHeight = this.draftCanvas.height
-    this.prevZoomH = canvasHeight / draftHeight
-    return this.prevZoomH
+  updateScale() {
+    this.ctx?.setTransform(1, 0, 0, 1, 0, 0)
+    const { zoomW, zoomH } = this.scale
+    this.ctx?.scale(zoomW, zoomH)
   }
 
   private onResize() {
     if (!this.canvas || !this.ctx) {
       return
     }
-    this.ctx?.setTransform(1, 0, 0, 1, 0, 0)
-    this.ctx?.scale(this.updateZoomW(), this.updateZoomH())
+    this.updateScale()
     this.drawDraft()
-  }
-
-  private getDraft(rect: Rect) {
-    return this.draftCtx.getImageData(
-      rect.leftPos,
-      rect.topPos,
-      rect.width,
-      rect.height
-    )
   }
 
   mount(canvas: HTMLCanvasElement) {
@@ -81,21 +60,20 @@ export class Viewer extends Emitter<[]> {
     this.draftCanvas.style.width = imgSize.width + 'px'
     this.draftCanvas.style.height = imgSize.height + 'px'
     this.draftCtx.setTransform(1, 0, 0, 1, 0, 0)
-    this.ctx?.setTransform(1, 0, 0, 1, 0, 0)
-    this.ctx?.scale(this.updateZoomW(), this.updateZoomH())
+    this.updateScale()
   }
   drawProgress(percent: number) {
     if (!this.canvas) {
       return
     }
     if (percent > 1 || percent < 0 || !this.showProgressBar) return
-
+    const { zoomW, zoomH } = this.scale
     let height = 1
-    const top = (this.canvas.height - height) / this.zoomH
-    const mid = (percent * this.canvas.width) / this.zoomW
+    const top = (this.canvas.height - height) / zoomH
+    const mid = (percent * this.canvas.width) / zoomW
 
-    height = height / this.zoomH
-    const width = this.canvas.width / this.zoomW
+    height = height / zoomH
+    const width = this.canvas.width / zoomW
     if (!this.ctx) {
       return
     }
