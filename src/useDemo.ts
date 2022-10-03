@@ -74,7 +74,7 @@ export default () => {
     if (e.target instanceof HTMLElement) {
       const targetUrl = e.target.getAttribute('url')
       if (targetUrl) {
-        rub.load_url(targetUrl)
+        rub.start(targetUrl)
       }
     }
   })

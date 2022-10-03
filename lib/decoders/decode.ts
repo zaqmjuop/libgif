@@ -1,6 +1,7 @@
 import { DecodedStore } from '../store/decoded'
 import { Stream } from './stream'
 import { Gif89aDecoder } from './gif89aDecoder'
+import { DecodedData } from '../type'
 
 const setupDecode = async (
   stream: Stream,
@@ -16,10 +17,10 @@ export const decode = async (
   stream: Stream,
   key: string,
   config: { opacity: number }
-) => {
+) :Promise<Required<DecodedData>>=> { 
   const decodeStatus = DecodedStore.getDecodeStatus(key)
   if (decodeStatus === 'complete') {
-    return DecodedStore.getDecodeData(key)
+    return DecodedStore.getDecodeData(key) as Required<DecodedData>
   } else if (decodeStatus === 'none') {
     setupDecode(stream, key, config)
   }
@@ -31,5 +32,5 @@ export const decode = async (
     DecodedStore.on('complete', onDecode)
   })
   await promise
-  return DecodedStore.getDecodeData(key)
+  return DecodedStore.getDecodeData(key) as Required<DecodedData>
 }

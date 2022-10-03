@@ -10,7 +10,6 @@ import { DownloadStore } from './store/downloaded'
 import { DecodedStore } from './store/decoded'
 
 const libgif = (opts: Options) => {
-  let t = 0
   const EMITS = ['loadstart', 'load', 'progress', 'error', 'finish'] as const
   const emitter = new Emitter<typeof EMITS>()
   const options: Required<Options> = Object.assign(
@@ -31,8 +30,7 @@ const libgif = (opts: Options) => {
   // player
   const player = new Player({
     viewer
-  })
-  player.on('finish', () => emitter.emit('finish', gif))
+  }) 
   // player
   // DecodedStore
   const withProgress = (fn: Function) => {
@@ -42,71 +40,74 @@ const libgif = (opts: Options) => {
       viewer.drawProgress(download.progress)
     }
   }
-  DecodedStore.on(
-    'header',
-    withProgress((e: { header: Header; key: string }) => {
+
+  const listenDecode = () => {
+    const onHeader = (e: { header: Header; key: string }) => {
       if (currentKey !== e.key) {
         return
       }
       player.onHeader(e.header)
-    })
-  )
-  DecodedStore.on(
-    'frame',
-    withProgress((e: { frames: frame[]; key: string }) => {
+    }
+    const onFrame = (e: { frames: frame[]; key: string }) => {
       if (currentKey !== e.key) {
         return
       }
       player.onFrame(e.frames[e.frames.length - 1])
-    })
-  )
-  DecodedStore.on(
-    'complete',
-    withProgress(() => {
+    }
+
+    const onComplete = () => {
       player.framsComplete = true
-      __DEV__ && console.log('decode time:', Date.now() - t)
-      emitter.emit('load', gif)
-    })
-  )
+    }
+
+    DecodedStore.on('header', withProgress(onHeader))
+    DecodedStore.on('frame', withProgress(onFrame))
+    DecodedStore.on('complete', withProgress(onComplete))
+    return () => {
+      DecodedStore.off('header', withProgress(onHeader))
+      DecodedStore.off('frame', withProgress(onFrame))
+      DecodedStore.off('complete', withProgress(onComplete))
+    }
+  }
+
   // /DecodedStore
 
   // DownloadStore
-  DownloadStore.on(
-    'downloaded',
-    (e: { key: string } & Required<DownloadRecord>) => {
+  const listenDownload = () => {
+    const onProgress = (e: { key: string } & DownloadRecord) => {
       if (e.key !== currentKey) {
         return
       }
-      const data = e.data
-      try {
-        const stream = new Stream(data)
-        __DEV__ && (t = Date.now())
-        return decode(stream, e.key, { opacity: options.opacity })
-      } catch (err) {
-        viewer.drawError(`load raw error with【${data.slice(0, 8)}】`)
+      viewer.drawProgress(e.progress)
+    }
+    const onError = (e: { key: string } & DownloadRecord) => {
+      if (e.key !== currentKey) {
+        return
       }
+      player.onError()
+      viewer.drawError(e.error || '')
     }
-  )
-  DownloadStore.on('progress', (e: { key: string } & DownloadRecord) => {
-    if (e.key !== currentKey) {
-      return
+    DownloadStore.on('progress', onProgress)
+    DownloadStore.on('error', onError)
+    return () => {
+      DownloadStore.off('progress', onProgress)
+      DownloadStore.off('error', onError)
     }
-    viewer.drawProgress(e.progress)
-  })
-  DownloadStore.on('error', (e: { key: string } & DownloadRecord) => {
-    if (e.key !== currentKey) {
-      return
-    }
-    player.onError()
-    viewer.drawError(e.error || '')
-  })
-
+  }
   // /DownloadStore
 
-  const load_url2 = async (url: string) => {
+  const start = async (url: string) => {
     currentKey = url
+
     try {
-      return load_url(url)
+      const unListenDownload = listenDownload()
+      const downloadData = await load_url(url)
+      unListenDownload()
+
+      const stream = new Stream(downloadData.data)
+      const unListenDecode = listenDecode()
+      const decoded = await decode(stream, url, { opacity: options.opacity })
+      unListenDecode()
+      return
     } catch {
       viewer.drawError(`load url error with【${url}】`)
     }
@@ -115,7 +116,7 @@ const libgif = (opts: Options) => {
   const preload = gif.getAttribute('preload')
   const autoplay = gif.getAttribute('autoplay')
   if (autoplay) {
-    load_url2(currentKey)
+    start(currentKey)
   }
 
   // const controls2 = {
@@ -156,14 +157,13 @@ const libgif = (opts: Options) => {
 
     get_canvas: () => viewer.canvas,
     get_auto_play: () => options,
-    load_url: load_url2,
-    load_raw,
+    start,
     get frames() {
       return player.frameGroup
     },
     get_length: () => player.frameGroup.length,
-    on: emitter.on,
-    off: emitter.off
+    on: emitter.on.bind(emitter),
+    off: emitter.off.bind(emitter)
   }
 
   ;(gif as any).controller = controller

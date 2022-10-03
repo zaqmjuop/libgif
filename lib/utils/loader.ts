@@ -1,4 +1,4 @@
-import { gifData } from '../type'
+import { DownloadRecord, gifData } from '../type'
 import { DownloadStore } from '../store/downloaded'
 
 const download = async (url: string) => {
@@ -30,6 +30,7 @@ const download = async (url: string) => {
       } else if (h.response.toString().indexOf('ArrayBuffer') > 0) {
         data = new Uint8Array(h.response)
       }
+      DownloadStore.setProgress(url, 100)
       resolve(data)
     }
     h.onprogress = (e) => {
@@ -45,14 +46,14 @@ const download = async (url: string) => {
   return data
 }
 
-export const load_url = async (url: string) => {
+export const load_url = async (url: string):Promise<Required<DownloadRecord>> => {
   const downloadStatus = DownloadStore.getDownloadStatus(url)
   if (downloadStatus === 'downloaded') {
-    return DownloadStore.getDownload(url)
+    return DownloadStore.getDownload(url) as Required<DownloadRecord>
   }
   if (downloadStatus === 'none') {
     download(url).then((data) => DownloadStore.setDownload(url, data))
-  } 
+  }
   await new Promise<gifData>((resolve) => {
     const onLoad = (event: { data: gifData; key: string }) => {
       if (event.key !== url) {
@@ -63,7 +64,7 @@ export const load_url = async (url: string) => {
     }
     DownloadStore.on('downloaded', onLoad)
   })
-  return DownloadStore.getDownload(url)
+  return DownloadStore.getDownload(url) as Required<DownloadRecord>
 }
 
 export const load_raw = (data: gifData, key: string) => {

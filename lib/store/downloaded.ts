@@ -52,7 +52,7 @@ const setError = (key: string, error: string) => {
 const getDownloadStatus = (
   key: string
 ): ArrayElement<typeof EMITS> | 'none' => {
-  if (cache[key]?.progress >= 99) {
+  if (cache[key]?.progress >= 100) {
     return 'downloaded'
   }
   if (key in cache) {
