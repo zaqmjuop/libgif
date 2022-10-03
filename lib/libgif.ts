@@ -20,7 +20,7 @@ const libgif = (opts: Options) => {
     opts
   )
   const gif = options.gif
-  const getKey = () => gif.getAttribute('src') || ''
+  let currentKey = gif.getAttribute('src') || ''
   // global func
   // global func
   // canvas
@@ -38,14 +38,14 @@ const libgif = (opts: Options) => {
   const withProgress = (fn: Function) => {
     return (...args) => {
       fn(...args)
-      const download = DownloadStore.getDownload(getKey())
+      const download = DownloadStore.getDownload(currentKey)
       viewer.drawProgress(download.progress)
     }
   }
   DecodedStore.on(
     'header',
     withProgress((e: { header: Header; key: string }) => {
-      if (getKey() !== e.key) {
+      if (currentKey !== e.key) {
         return
       }
       player.onHeader(e.header)
@@ -54,7 +54,7 @@ const libgif = (opts: Options) => {
   DecodedStore.on(
     'frame',
     withProgress((e: { frames: frame[]; key: string }) => {
-      if (getKey() !== e.key) {
+      if (currentKey !== e.key) {
         return
       }
       player.onFrame(e.frames[e.frames.length - 1])
@@ -74,7 +74,7 @@ const libgif = (opts: Options) => {
   DownloadStore.on(
     'downloaded',
     (e: { key: string } & Required<DownloadRecord>) => {
-      if (e.key !== getKey()) {
+      if (e.key !== currentKey) {
         return
       }
       const data = e.data
@@ -88,13 +88,13 @@ const libgif = (opts: Options) => {
     }
   )
   DownloadStore.on('progress', (e: { key: string } & DownloadRecord) => {
-    if (e.key !== getKey()) {
+    if (e.key !== currentKey) {
       return
     }
     viewer.drawProgress(e.progress)
   })
   DownloadStore.on('error', (e: { key: string } & DownloadRecord) => {
-    if (e.key !== getKey()) {
+    if (e.key !== currentKey) {
       return
     }
     player.onError()
@@ -104,6 +104,7 @@ const libgif = (opts: Options) => {
   // /DownloadStore
 
   const load_url2 = async (url: string) => {
+    currentKey = url
     const preload = gif.getAttribute('preload')
     const autoplay = gif.getAttribute('autoplay')
     if (preload === 'none' && (!autoplay || autoplay === 'none')) {
@@ -117,7 +118,7 @@ const libgif = (opts: Options) => {
   }
 
   const load = () => {
-    const src = getKey()
+    const src = currentKey
     src && load_url2(src)
   }
   load()

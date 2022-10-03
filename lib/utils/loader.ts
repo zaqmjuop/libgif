@@ -52,8 +52,7 @@ export const load_url = async (url: string) => {
   }
   if (downloadStatus === 'none') {
     download(url).then((data) => DownloadStore.setDownload(url, data))
-  }
-
+  } 
   await new Promise<gifData>((resolve) => {
     const onLoad = (event: { data: gifData; key: string }) => {
       if (event.key !== url) {
