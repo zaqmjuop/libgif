@@ -1,4 +1,3 @@
-import { Emitter } from '../utils/Emitter'
 import { lzwDecode } from './lzwDecode'
 import { bitsToNum, byteToBitArr, Stream } from './stream'
 import {
@@ -15,19 +14,6 @@ import {
 import { createWorkerFunc } from '../utils/createWorkerFunc'
 import { DecodedStore } from '../store/decoded'
 
-// The actual parsing; returns an object with properties.
-
-const EMITS = [
-  'header',
-  'com',
-  'app',
-  'frame',
-  'complete',
-  'pte',
-  'unknown',
-  'decoded'
-] as const
-
 // Disposal method indicates the way in which the graphic is to be treated after being displayed.
 enum DisposalMethod {
   ignore = 0, // No disposal specified. The decoder is not required to take any action.
@@ -38,13 +24,11 @@ enum DisposalMethod {
 
 const workerLzwDecode = createWorkerFunc(lzwDecode)
 
-export const gifDecodeEmitter = new Emitter<typeof EMITS>()
-
-export class Gif89aDecoder extends Emitter<typeof EMITS> {
+export class Gif89aDecoder {
   private readonly canvas = document.createElement('canvas') // 图片文件原始模样
   private readonly ctx: CanvasRenderingContext2D
   private st: Stream | null = null
-  cacheKey = ''
+  key = ''
   private header?: Header
   private graphControll?: GCExtBlock
   public app?: AppExtBlock
@@ -52,7 +36,6 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
   private opacity = 255
   frameGroup: Array<Frame & Rect> = []
   constructor() {
-    super()
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
   }
 
@@ -129,7 +112,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     }
     this.header = header
     this.setCanvasSize(header.logicalScreenWidth, header.logicalScreenHeight)
-    this.emit('header', header)
+    DecodedStore.setHeader(this.key, header)
     return header
   }
 
@@ -182,7 +165,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       const comment = this.readSubBlocks()
       const comExt = { ...block, comment }
       this.exts.push(comExt)
-      this.emit('com', comExt)
+      DecodedStore.pushBlocks(this.key, [comExt])
       return comExt
     }
 
@@ -194,7 +177,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       const ptData = this.readSubBlocks()
       const pteExt = { ...block, ptHeader, ptData }
       this.exts.push(pteExt)
-      this.emit('pte', pteExt)
+      DecodedStore.pushBlocks(this.key, [pteExt])
       return pteExt
     }
 
@@ -214,7 +197,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
           identifier: 'NETSCAPE'
         }
         this.app = appExt
-        this.emit('app', appExt)
+        DecodedStore.pushBlocks(this.key, [appExt])
         return appExt
       }
 
@@ -223,7 +206,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
         const appExt = { ...block, appData, identifier: block.identifier }
         this.app = appExt
         // FIXME: This won't work if a handler wants to match on any identifier.
-        this.emit('app', appExt)
+        DecodedStore.pushBlocks(this.key, [appExt])
         return appExt
       }
 
@@ -246,7 +229,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       const data = this.readSubBlocks()
       const unknownExt = { ...block, data }
       this.exts.push(unknownExt)
-      this.emit('unknown', unknownExt)
+      DecodedStore.pushBlocks(this.key, [unknownExt])
       return unknownExt
     }
 
@@ -405,7 +388,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     this.frameGroup.push(frame)
 
     this.graphControll = void 0
-    this.emit('frame', frame)
+    DecodedStore.pushFrames(this.key, [frame])
     return frame
   }
 
@@ -456,7 +439,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     const onComplete = () => {
       block.type = 'complete'
       this.st = null
-      this.cacheKey = ''
+      this.key = ''
       return block
     }
 
@@ -480,12 +463,12 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
 
   public parse = async (
     st: Stream,
-    cacheKey: string,
+    key: string,
     config?: { opacity: number }
   ) => {
     if (this.st) return
     this.st = st
-    this.cacheKey = cacheKey
+    this.key = key
     if (config) {
       this.opacity = config.opacity
     }
@@ -501,7 +484,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       frameGroup: this.frameGroup,
       opacity: this.opacity
     }
-    this.emit('complete', completeData)
+    DecodedStore.setComplete(this.key)
     return completeData
   }
 }
@@ -528,13 +511,12 @@ export const decode = async (
     setupDecode(stream, key, config)
   }
   const promise = new Promise((resolve) => {
-    const onDecode = (e: { data: any; key: string }) => {
-      gifDecodeEmitter.off('complete', onDecode)
-      resolve(e.data)
+    const onDecode = () => {
+      DecodedStore.off('complete', onDecode)
+      resolve(void 0)
     }
-    gifDecodeEmitter.on('complete', onDecode)
+    DecodedStore.on('complete', onDecode)
   })
-  const data = await promise
-  gifDecodeEmitter.emit('decoded', { data, key })
-  return data
+  await promise
+  return DecodedStore.getDecodeData(key)
 }

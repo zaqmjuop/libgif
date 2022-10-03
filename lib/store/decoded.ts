@@ -1,12 +1,13 @@
-import { ArrayElement, Frame, Header, Rect } from '../type'
+import { ArrayElement, Block, Frame, Header, Rect } from '../type'
 import { Emitter } from '../utils/Emitter'
 
-const EMITS = ['header', 'frame', 'complete'] as const
+const EMITS = ['header', 'block', 'frame', 'complete'] as const
 
 type frame = Frame & Rect
 
 interface DecodedData {
   header?: Header
+  blocks: Block[]
   frames: frame[]
   complete: boolean
 }
@@ -18,6 +19,7 @@ const cache: Record<string, DecodedData> = {}
 const defaultDecodedData = (): DecodedData => ({
   header: void 0,
   frames: [],
+  blocks: [],
   complete: false
 })
 
@@ -31,6 +33,12 @@ const pushFrames = (key: string, frames: frame[]) => {
   cache[key] = cache[key] || defaultDecodedData()
   cache[key].frames.push(...frames)
   emitter.emit('frame', { key, ...cache[key] })
+}
+
+const pushBlocks = (key: string, blocks: Block[]) => {
+  cache[key] = cache[key] || defaultDecodedData()
+  cache[key].blocks.push(...blocks)
+  emitter.emit('block', { key, ...cache[key] })
 }
 
 const setComplete = (key: string) => {
@@ -55,6 +63,7 @@ const getDecodeData = (key: string) => cache[key]
 export const DecodedStore = {
   getDecodeStatus,
   setHeader,
+  pushBlocks,
   pushFrames,
   setComplete,
   getDecodeData,
