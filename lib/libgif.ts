@@ -1,20 +1,9 @@
 import { Emitter } from './utils/Emitter'
 import { load_url, load_raw } from './utils/loader'
-import { Gif89aDecoder } from './decoders/gif89aDecoder'
 import { Player } from './player'
+import { decode } from './decoders/decode'
 import { Stream } from './decoders/stream'
-import {
-  AppExtBlock,
-  Block,
-  DecodedData,
-  DownloadRecord,
-  frame,
-  Frame,
-  gifData,
-  Header,
-  Options,
-  Rect
-} from './type'
+import { DownloadRecord, frame, gifData, Header, Options } from './type'
 import { Viewer } from './viewer'
 import { __DEV__ } from './utils/metaData'
 import { DownloadStore } from './store/downloaded'
@@ -24,7 +13,12 @@ const libgif = (opts: Options) => {
   let t = 0
   const EMITS = ['loadstart', 'load', 'progress', 'error', 'finish'] as const
   const emitter = new Emitter<typeof EMITS>()
-  const options: Options = Object.assign({}, opts)
+  const options: Required<Options> = Object.assign(
+    {
+      opacity: 255
+    },
+    opts
+  )
   const gif = options.gif
   const getKey = () => gif.getAttribute('src') || ''
   // global func
@@ -40,13 +34,12 @@ const libgif = (opts: Options) => {
   })
   player.on('finish', () => emitter.emit('finish', gif))
   // player
-  // decoder
-  const decoder = new Gif89aDecoder()
-
+  // DecodedStore
   const withProgress = (fn: Function) => {
     return (...args) => {
       fn(...args)
-      viewer.drawProgress(decoder.pos / decoder.len)
+      const download = DownloadStore.getDownload(getKey())
+      viewer.drawProgress(download.progress)
     }
   }
   DecodedStore.on(
@@ -75,45 +68,40 @@ const libgif = (opts: Options) => {
       emitter.emit('load', gif)
     })
   )
-  // /decoder
+  // /DecodedStore
 
   // DownloadStore
   DownloadStore.on(
     'downloaded',
-    (e: { key: string; cache: Required<DownloadRecord> }) => {
+    (e: { key: string } & Required<DownloadRecord>) => {
       if (e.key !== getKey()) {
         return
       }
-      decode(e.cache.data, e.key)
+      const data = e.data
+      try {
+        const stream = new Stream(data)
+        __DEV__ && (t = Date.now())
+        return decode(stream, e.key, { opacity: options.opacity })
+      } catch (err) {
+        viewer.drawError(`load raw error with【${data.slice(0, 8)}】`)
+      }
     }
   )
-  DownloadStore.on('progress', (e: { key: string; cache: DownloadRecord }) => {
+  DownloadStore.on('progress', (e: { key: string } & DownloadRecord) => {
     if (e.key !== getKey()) {
       return
     }
-    viewer.drawProgress(e.cache.progress)
+    viewer.drawProgress(e.progress)
   })
-  DownloadStore.on('error', (e: { key: string; cache: DownloadRecord }) => {
+  DownloadStore.on('error', (e: { key: string } & DownloadRecord) => {
     if (e.key !== getKey()) {
       return
     }
     player.onError()
-    viewer.drawError(e.cache.error || '')
+    viewer.drawError(e.error || '')
   })
 
   // /DownloadStore
-  const getLoading = () => decoder.loading
-
-  const decode = (data: gifData, cacheKey: string) => {
-    if (getLoading()) return
-    try {
-      const stream = new Stream(data)
-      __DEV__ && (t = Date.now())
-      return decoder.parse(stream, cacheKey)
-    } catch (err) {
-      viewer.drawError(`load raw error with【${data.slice(0, 8)}】`)
-    }
-  }
 
   const load_url2 = async (url: string) => {
     const preload = gif.getAttribute('preload')
@@ -121,7 +109,6 @@ const libgif = (opts: Options) => {
     if (preload === 'none' && (!autoplay || autoplay === 'none')) {
       return
     }
-    if (getLoading()) return
     try {
       return load_url(url)
     } catch {
@@ -172,7 +159,6 @@ const libgif = (opts: Options) => {
     get_current_frame: () => player.current_frame(),
 
     get_canvas: () => viewer.canvas,
-    get_loading: getLoading,
     get_auto_play: () => options,
     load_url: load_url2,
     load,

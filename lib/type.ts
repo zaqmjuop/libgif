@@ -35,6 +35,7 @@ export interface Header {
 
 export interface Options {
   gif: HTMLCanvasElement
+  opacity?: number
 }
 
 export interface Block {

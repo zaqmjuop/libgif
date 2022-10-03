@@ -1,8 +1,7 @@
-import { ArrayElement, DownloadEvent, DownloadRecord, gifData } from '../type'
+import { ArrayElement, DownloadRecord, gifData } from '../type'
 import { Emitter } from '../utils/Emitter'
 
-
-const EMITS = ['record','error', 'progress', 'downloaded'] as const
+const EMITS = ['record', 'error', 'progress', 'downloaded'] as const
 
 const emitter = new Emitter<typeof EMITS>()
 
@@ -21,13 +20,16 @@ const addRecord = (key: string) => {
     return
   }
   cache[key] = defaultRecord()
-  emitter.emit('record', { key, cache: cache[key] })
+  const eventData = { ...cache[key], key }
+  emitter.emit('record', eventData)
 }
 
 const setDownload = (key: string, data: gifData) => {
   cache[key] = cache[key] || defaultRecord()
   cache[key].data = data
-  emitter.emit('downloaded', { key, cache: cache[key] })
+  cache[key]
+  const eventData = { ...cache[key], key }
+  emitter.emit('downloaded', eventData)
 }
 
 const setProgress = (key: string, progress: number, data?: gifData) => {
@@ -36,13 +38,15 @@ const setProgress = (key: string, progress: number, data?: gifData) => {
   if (data) {
     cache[key].data = data
   }
-  emitter.emit('progress', { key, cache: cache[key] })
+  const eventData = { ...cache[key], key }
+  emitter.emit('progress', eventData)
 }
 
-const setError = (key: string, error: string ) => {
+const setError = (key: string, error: string) => {
   cache[key] = cache[key] || defaultRecord()
   cache[key].error = error
-  emitter.emit('error', { key, cache: cache[key] })
+  const eventData = { ...cache[key], key }
+  emitter.emit('error', eventData)
 }
 
 const getDownloadStatus = (

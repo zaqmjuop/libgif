@@ -42,7 +42,6 @@ const download = async (url: string) => {
     h.send()
   })
   const data = await promise
-  DownloadStore.setDownload(url, data)
   return data
 }
 
@@ -52,10 +51,10 @@ export const load_url = async (url: string) => {
     return DownloadStore.getDownload(url)
   }
   if (downloadStatus === 'none') {
-    download(url)
+    download(url).then((data) => DownloadStore.setDownload(url, data))
   }
 
-  const promise = new Promise<gifData>((resolve) => {
+  await new Promise<gifData>((resolve) => {
     const onLoad = (event: { data: gifData; key: string }) => {
       if (event.key !== url) {
         return
@@ -65,8 +64,7 @@ export const load_url = async (url: string) => {
     }
     DownloadStore.on('downloaded', onLoad)
   })
-  const data = await promise
-  return load_raw(data, url)
+  return DownloadStore.getDownload(url)
 }
 
 export const load_raw = (data: gifData, key: string) => {
