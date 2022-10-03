@@ -9,6 +9,14 @@ import { __DEV__ } from './utils/metaData'
 import { DownloadStore } from './store/downloaded'
 import { DecodedStore } from './store/decoded'
 
+const READY_STATE = {
+  UNDOWNLOAD: 0,
+  DOWNLOADING: 1,
+  DOWNLOADED: 2,
+  DECODING: 3,
+  DECODED: 4
+} as const
+
 const libgif = (opts: Options) => {
   const EMITS = ['loadstart', 'load', 'progress', 'error', 'finish'] as const
   const emitter = new Emitter<typeof EMITS>()
@@ -72,41 +80,77 @@ const libgif = (opts: Options) => {
   // /DecodedStore
 
   // DownloadStore
-  const listenDownload = () => {
-    const onProgress = (e: { key: string } & DownloadRecord) => {
-      if (e.key !== currentKey) {
-        return
-      }
-      viewer.drawProgress(e.progress)
+  const onProgress = (e: { key: string } & DownloadRecord) => {
+    if (e.key !== currentKey) {
+      return
     }
-    const onError = (e: { key: string } & DownloadRecord) => {
-      if (e.key !== currentKey) {
-        return
-      }
-      player.onError()
-      viewer.drawError(e.error || '')
-    }
-    DownloadStore.on('progress', onProgress)
-    DownloadStore.on('error', onError)
-    return () => {
-      DownloadStore.off('progress', onProgress)
-      DownloadStore.off('error', onError)
-    }
+    viewer.drawProgress(e.progress)
   }
+  const onError = (e: { key: string } & DownloadRecord) => {
+    if (e.key !== currentKey) {
+      return
+    }
+    player.onError()
+    viewer.drawError(e.error || '')
+  }
+  DownloadStore.on('progress', onProgress)
+  DownloadStore.on('error', onError)
   // /DownloadStore
 
   const start = async (url: string) => {
     currentKey = url
-    player.resetState()
+    let status: number
+    const hasDecoded = DecodedStore.getDecodeStatus(url)
+    const hasDownloaded = DownloadStore.getDownloadStatus(url)
     try {
-      const downloadData = await load_url(url)
-      const decoded = await decode(downloadData.data, url, {
-        opacity: options.opacity
-      })
-      player.onHeader(decoded.header)
-      decoded.frames.forEach((frame) => player.onFrame(frame))
-      player.framsComplete = decoded.complete
-      return
+      if (hasDecoded === 'complete') {
+        status = READY_STATE.DECODED
+        const decoded = DecodedStore.getDecodeData(url)
+        player.resetState()
+        player.onHeader(decoded.header!)
+        decoded.frames.forEach((frame) => player.onFrame(frame))
+        player.framsComplete = decoded.complete
+      } else if (hasDecoded !== 'none') {
+        status = READY_STATE.DECODING
+        const downloadData = await DownloadStore.getDownload(url)
+        const decoded = await decode(downloadData.data!, url, {
+          opacity: options.opacity
+        })
+        player.resetState()
+        player.onHeader(decoded.header!)
+        decoded.frames.forEach((frame) => player.onFrame(frame))
+        player.framsComplete = decoded.complete
+      } else if (hasDownloaded === 'downloaded') {
+        status = READY_STATE.DOWNLOADED
+        const downloadData = await DownloadStore.getDownload(url)
+        const decoded = await decode(downloadData.data!, url, {
+          opacity: options.opacity
+        })
+        player.resetState()
+        player.onHeader(decoded.header!)
+        decoded.frames.forEach((frame) => player.onFrame(frame))
+        player.framsComplete = decoded.complete
+      } else if (hasDownloaded !== 'none') {
+        status = READY_STATE.DOWNLOADING
+        const downloadData = await load_url(url)
+        const decoded = await decode(downloadData.data, url, {
+          opacity: options.opacity
+        })
+        player.resetState()
+        player.onHeader(decoded.header)
+        decoded.frames.forEach((frame) => player.onFrame(frame))
+        player.framsComplete = decoded.complete
+      } else {
+        status = READY_STATE.UNDOWNLOAD
+        const downloadData = await load_url(url)
+        const decoded = await decode(downloadData.data, url, {
+          opacity: options.opacity
+        })
+        player.resetState()
+        player.onHeader(decoded.header)
+        decoded.frames.forEach((frame) => player.onFrame(frame))
+        player.framsComplete = decoded.complete
+      }
     } catch {
       viewer.drawError(`load url error with【${url}】`)
     }
