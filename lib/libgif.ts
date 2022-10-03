@@ -114,15 +114,14 @@ const libgif = (opts: Options) => {
     }
     if (getLoading()) return
     try {
-      const data = await load_url(url)
-      return load_raw(data!, url)
+      return load_url(url)
     } catch {
       viewer.drawError(`load url error with【${url}】`)
     }
   }
 
   const load = () => {
-    const src = gif.getAttribute('src') || ''
+    const src = getKey()
     src && load_url2(src)
   }
   load()

@@ -66,10 +66,10 @@ export const load_url = async (url: string) => {
     DownloadStore.on('downloaded', onLoad)
   })
   const data = await promise
-  load_raw(data, url)
-  return data
+  return load_raw(data, url)
 }
 
 export const load_raw = (data: gifData, key: string) => {
   DownloadStore.setDownload(key, data)
+  return DownloadStore.getDownload(key)
 }
