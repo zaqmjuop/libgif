@@ -2,86 +2,90 @@ import { gifData } from '../type'
 import { Emitter } from './Emitter'
 import { downloadCache } from '../cache'
 
-const EMITS = ['loadstart', 'load', 'progress', 'error'] as const
+const EMITS = ['loadstart', 'load', 'progress', 'error', 'download'] as const
 
-export class Loader extends Emitter<typeof EMITS> {
-  private _loading = false
+export const loadEmitter = new Emitter<typeof EMITS>()
 
-  get loading() {
-    return this._loading
+export const getDownloadState = (key: string) => {
+  if (downloadCache[key]?.length) {
+    return 'load'
   }
+  if (key in downloadCache) {
+    return 'loadstart'
+  }
+  return 'unload'
+}
 
-  async load_url(url: string) {
-    if (this._loading) return
-    this._loading = true
-    let data: gifData
+const download = async (url: string) => {
+  downloadCache[url] = ''
+  const promise = new Promise<gifData>((resolve, reject) => {
+    const h = new XMLHttpRequest()
+    // new browsers (XMLHttpRequest2-compliant)
+    h.open('GET', url, true)
 
-    if (downloadCache[url]) {
-      data = downloadCache[url]
+    if ('overrideMimeType' in h) {
+      h.overrideMimeType('text/plain; charset=x-user-defined')
+    } else if ('responseType' in h) {
+      // old browsers (XMLHttpRequest-compliant)
+      h.responseType = 'arraybuffer'
     } else {
-      const promise = new Promise<gifData>((resolve, reject) => {
-        const h = new XMLHttpRequest()
-        // new browsers (XMLHttpRequest2-compliant)
-        h.open('GET', url, true)
-
-        if ('overrideMimeType' in h) {
-          h.overrideMimeType('text/plain; charset=x-user-defined')
-        } else if ('responseType' in h) {
-          // old browsers (XMLHttpRequest-compliant)
-          h.responseType = 'arraybuffer'
-        } else {
-          // IE9 (Microsoft.XMLHTTP-compliant)
-          h.setRequestHeader('Accept-Charset', 'x-user-defined')
-        }
-
-        h.onloadstart = () => {
-          this.emit('loadstart')
-        }
-        h.onload = (e) => {
-          if (h.status != 200) {
-            this.emit('error', 'xhr - response')
-            reject('xhr - response')
-          }
-          // emulating response field for IE9
-          if (!('response' in h)) {
-            Object.assign(this, {
-              response: new window.VBArray(h.responseText as any)
-                .toArray()
-                .map(String.fromCharCode as any)
-                .join('')
-            })
-          }
-          let data: gifData = ''
-          if (typeof h.response === 'string') {
-            data = h.response
-          } else if (h.response.toString().indexOf('ArrayBuffer') > 0) {
-            data = new Uint8Array(h.response)
-          }
-          resolve(data)
-        }
-        h.onprogress = (e) => {
-          this.emit('progress', e)
-        }
-        h.onerror = () => {
-          this.emit('error', 'xhr')
-          reject('xhr')
-        }
-        h.send()
-      })
-      data = await promise
-      downloadCache[url] = data
+      // IE9 (Microsoft.XMLHTTP-compliant)
+      h.setRequestHeader('Accept-Charset', 'x-user-defined')
     }
 
-    return this.onLoad(data)
+    h.onloadstart = () => {
+      loadEmitter.emit('loadstart', { key: url })
+    }
+    h.onload = (e) => {
+      if (h.status != 200) {
+        loadEmitter.emit('error', { key: url, message: 'xhr - response' })
+        reject('xhr - response')
+      }
+      let data: gifData = ''
+      if (typeof h.response === 'string') {
+        data = h.response
+      } else if (h.response.toString().indexOf('ArrayBuffer') > 0) {
+        data = new Uint8Array(h.response)
+      }
+      resolve(data)
+    }
+    h.onprogress = (e) => {
+      loadEmitter.emit('progress', { ...e, key: url })
+    }
+    h.onerror = () => {
+      loadEmitter.emit('error', { key: url, message: 'xhr' })
+      reject('xhr')
+    }
+    h.send()
+  })
+  const data = await promise
+  downloadCache[url] = data
+  loadEmitter.emit('download', { data, key: url })
+  return data
+}
+
+export const load_url = async (url: string) => {
+  const downloadState = getDownloadState(url)
+  if (downloadState === 'load') {
+    return downloadCache[url]
   }
-  load_raw = (data: gifData) => {
-    if (this._loading) return
-    this._loading = true
-    this.onLoad(data)
+  if (downloadState === 'unload') {
+    download(url)
   }
-  private onLoad(data: gifData) {
-    this._loading = false
-    this.emit('load', data)
-    return data
-  }
+
+  const promise = new Promise<gifData>((resolve) => {
+    const onLoad = (event: { data: gifData; key: string }) => {
+      loadEmitter.off('download', onLoad)
+      resolve(event.data)
+    }
+    loadEmitter.on('download', onLoad)
+  })
+  const data = await promise
+  loadEmitter.emit('load', { data, key: url })
+  return data
+}
+
+export const load_raw = (data: gifData, key: string) => {
+  downloadCache[key] = data
+  loadEmitter.emit('load', { data, key })
 }

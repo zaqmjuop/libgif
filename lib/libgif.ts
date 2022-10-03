@@ -1,5 +1,5 @@
 import { Emitter } from './utils/Emitter'
-import { Loader } from './utils/loader'
+import { loadEmitter, load_url, load_raw } from './utils/loader'
 import { Gif89aDecoder } from './decoders/gif89aDecoder'
 import { Player } from './player'
 import { Stream } from './decoders/stream'
@@ -67,19 +67,19 @@ const libgif = (opts: Options) => {
   // /decoder
 
   // loader
-
-  const loader = new Loader()
-  loader.on('load', (data: gifData) => {})
-  loader.on('progress', (e: ProgressEvent<EventTarget>) => {
+  loadEmitter.on('load', (e: { data: gifData; key: string }) => {
+    decode(e.data, e.key)
+  })
+  loadEmitter.on('progress', (e: ProgressEvent<EventTarget>) => {
     e.lengthComputable && viewer.drawProgress(e.loaded / e.total)
   })
-  loader.on('error', (message: string) => {
+  loadEmitter.on('error', (e: { message: string; key: string }) => {
     player.onError()
-    viewer.drawError(message)
+    viewer.drawError(e.message)
   })
 
   // /loader
-  const getLoading = () => loader.loading || decoder.loading
+  const getLoading = () => decoder.loading
 
   const decode = (data: gifData, cacheKey: string) => {
     if (getLoading()) return
@@ -92,7 +92,7 @@ const libgif = (opts: Options) => {
     }
   }
 
-  const load_url = async (url: string) => {
+  const load_url2 = async (url: string) => {
     const preload = gif.getAttribute('preload')
     const autoplay = gif.getAttribute('autoplay')
     if (preload === 'none' && (!autoplay || autoplay === 'none')) {
@@ -100,20 +100,16 @@ const libgif = (opts: Options) => {
     }
     if (getLoading()) return
     try {
-      const data = await loader.load_url(url)
+      const data = await load_url(url)
       return load_raw(data!, url)
     } catch {
       viewer.drawError(`load url error with【${url}】`)
     }
   }
 
-  const load_raw = (data: gifData, cacheKey: string) => {
-    return decode(data, cacheKey)
-  }
-
   const load = () => {
     const src = gif.getAttribute('src') || ''
-    src && load_url(src)
+    src && load_url2(src)
   }
   load()
 
@@ -156,7 +152,7 @@ const libgif = (opts: Options) => {
     get_canvas: () => viewer.canvas,
     get_loading: getLoading,
     get_auto_play: () => options,
-    load_url,
+    load_url: load_url2,
     load,
     load_raw,
     get frames() {
