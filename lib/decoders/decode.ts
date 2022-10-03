@@ -19,7 +19,6 @@ export const decode = async (
   config: { opacity: number }
 ): Promise<Required<DecodedData>> => {
   const decodeStatus = DecodedStore.getDecodeStatus(key)
-  console.log(decodeStatus)
   if (decodeStatus === 'complete') {
     return DecodedStore.getDecodeData(key) as Required<DecodedData>
   } else if (decodeStatus === 'none') { 
