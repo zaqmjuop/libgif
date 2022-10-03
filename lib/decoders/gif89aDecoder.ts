@@ -12,7 +12,7 @@ import {
   Rect,
   rgb
 } from '../type'
-import { createWorkerFunc } from '../utils/createWorkerFunc' 
+import { createWorkerFunc } from '../utils/createWorkerFunc'
 
 // The actual parsing; returns an object with properties.
 
@@ -87,7 +87,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
   }
 
   private parseHeader = () => {
-    if (!this.st) return 
+    if (!this.st) return
     const signature = this.st.read(3)
     const version = this.st.read(3)
     if (signature !== 'GIF') throw new Error('Not a GIF file.') // XXX: This should probably be handled more nicely.
@@ -123,7 +123,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       globalColorTable
     }
     this.header = header
-    this.setCanvasSize(header.logicalScreenWidth, header.logicalScreenHeight) 
+    this.setCanvasSize(header.logicalScreenWidth, header.logicalScreenHeight)
     this.emit('header', header)
   }
 
@@ -269,7 +269,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
   }
 
   private parseImg = async (block: Block) => {
-    if (!this.st) return 
+    if (!this.st) return
     const deinterlace = (pixels: number[], width: number) => {
       // Of course this defeats the purpose of interlacing. And it's *probably*
       // the least efficient way it's ever been implemented. But nevertheless...
@@ -319,10 +319,10 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
 
     const lzwData: string = this.readSubBlocks() as string
 
-    let pixels: number[] = await workerLzwDecode(lzwMinCodeSize, lzwData) 
+    let pixels: number[] = await workerLzwDecode(lzwMinCodeSize, lzwData)
     // Move
     if (interlaced) {
-      pixels = deinterlace(pixels, width) 
+      pixels = deinterlace(pixels, width)
     }
 
     const img: ImgBlock = {
@@ -339,11 +339,11 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       lct,
       lzwMinCodeSize,
       pixels
-    } 
+    }
     this.parseFrame(img)
   }
 
-  private parseFrame = (img: ImgBlock) => { 
+  private parseFrame = (img: ImgBlock) => {
     // graphControll
     const graphControll = this.graphControll
     if (graphControll) {
@@ -394,7 +394,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     }
     this.frameGroup.push(frame)
 
-    this.graphControll = void 0 
+    this.graphControll = void 0
     this.emit('frame', frame)
   }
 
@@ -435,7 +435,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
   }
 
   private parseBlock = async () => {
-    if (!this.st) return 
+    if (!this.st) return
     const sentinel = this.st.readByte()
     const block: Block = {
       sentinel,
@@ -475,17 +475,17 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
         break
       default:
         throw new Error('Unknown block: 0x' + block.sentinel.toString(16)) // TODO: Pad this with a 0.
-    } 
-    if (block.type !== 'complete') setTimeout(this.parseBlock, 0)
+    }
+    return (block.type !== 'complete') && this.parseBlock()
   }
 
-  public parse = (st: Stream, config?: { opacity: number }) => {
+  public parse = async (st: Stream, config?: { opacity: number }) => {
     if (this.st) return
     this.st = st
     if (config) {
       this.opacity = config.opacity
     }
     this.parseHeader()
-    setTimeout(this.parseBlock, 0)
+    await this.parseBlock()
   }
 }
