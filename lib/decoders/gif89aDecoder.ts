@@ -13,7 +13,7 @@ import {
   rgb
 } from '../type'
 import { createWorkerFunc } from '../utils/createWorkerFunc'
-import { decodedCache } from '../cache'
+import { DecodedStore } from '../store/decoded'
 
 // The actual parsing; returns an object with properties.
 
@@ -24,7 +24,8 @@ const EMITS = [
   'frame',
   'complete',
   'pte',
-  'unknown'
+  'unknown',
+  'decoded'
 ] as const
 
 // Disposal method indicates the way in which the graphic is to be treated after being displayed.
@@ -36,6 +37,8 @@ enum DisposalMethod {
 } // Importantly, "previous" means the frame state after the last disposal of method 0, 1, or 2.
 
 const workerLzwDecode = createWorkerFunc(lzwDecode)
+
+export const gifDecodeEmitter = new Emitter<typeof EMITS>()
 
 export class Gif89aDecoder extends Emitter<typeof EMITS> {
   private readonly canvas = document.createElement('canvas') // 图片文件原始模样
@@ -501,4 +504,37 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     this.emit('complete', completeData)
     return completeData
   }
+}
+
+const setupDecode = async (
+  stream: Stream,
+  key: string,
+  config?: { opacity: number }
+) => {
+  const deocder = new Gif89aDecoder()
+  const res = await deocder.parse(stream, key, config)
+  return res
+}
+
+export const decode = async (
+  stream: Stream,
+  key: string,
+  config?: { opacity: number }
+) => {
+  const decodeStatus = DecodedStore.getDecodeStatus(key)
+  if (decodeStatus === 'complete') {
+    return DecodedStore.getDecodeData(key)
+  } else if (decodeStatus === 'none') {
+    setupDecode(stream, key, config)
+  }
+  const promise = new Promise((resolve) => {
+    const onDecode = (e: { data: any; key: string }) => {
+      gifDecodeEmitter.off('complete', onDecode)
+      resolve(e.data)
+    }
+    gifDecodeEmitter.on('complete', onDecode)
+  })
+  const data = await promise
+  gifDecodeEmitter.emit('decoded', { data, key })
+  return data
 }

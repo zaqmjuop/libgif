@@ -1,23 +1,13 @@
 import { gifData } from '../type'
 import { Emitter } from './Emitter'
-import { downloadCache } from '../cache'
+import { DownloadStore } from '../store/downloaded'
 
 const EMITS = ['loadstart', 'load', 'progress', 'error', 'download'] as const
 
-export const loadEmitter = new Emitter<typeof EMITS>()
-
-export const getDownloadState = (key: string) => {
-  if (downloadCache[key]?.length) {
-    return 'load'
-  }
-  if (key in downloadCache) {
-    return 'loadstart'
-  }
-  return 'unload'
-}
+export const loadEmitter = new Emitter<typeof EMITS>() 
 
 const download = async (url: string) => {
-  downloadCache[url] = ''
+  DownloadStore.addRecord(url)
   const promise = new Promise<gifData>((resolve, reject) => {
     const h = new XMLHttpRequest()
     // new browsers (XMLHttpRequest2-compliant)
@@ -59,17 +49,17 @@ const download = async (url: string) => {
     h.send()
   })
   const data = await promise
-  downloadCache[url] = data
+  DownloadStore.setDownload(url, data) 
   loadEmitter.emit('download', { data, key: url })
   return data
 }
 
 export const load_url = async (url: string) => {
-  const downloadState = getDownloadState(url)
-  if (downloadState === 'load') {
-    return downloadCache[url]
+  const downloadStatus = DownloadStore.getDownloadStatus(url)
+  if (downloadStatus === 'downloaded') {
+    return DownloadStore.getDownload(url)
   }
-  if (downloadState === 'unload') {
+  if (downloadStatus === 'none') {
     download(url)
   }
 
@@ -86,6 +76,6 @@ export const load_url = async (url: string) => {
 }
 
 export const load_raw = (data: gifData, key: string) => {
-  downloadCache[key] = data
+  DownloadStore.setDownload(key, data)
   loadEmitter.emit('load', { data, key })
 }
