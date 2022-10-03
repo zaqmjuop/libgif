@@ -1,10 +1,5 @@
 import { gifData } from '../type'
-import { Emitter } from './Emitter'
 import { DownloadStore } from '../store/downloaded'
-
-const EMITS = ['loadstart', 'load', 'progress', 'error', 'download'] as const
-
-export const loadEmitter = new Emitter<typeof EMITS>() 
 
 const download = async (url: string) => {
   DownloadStore.addRecord(url)
@@ -23,12 +18,10 @@ const download = async (url: string) => {
       h.setRequestHeader('Accept-Charset', 'x-user-defined')
     }
 
-    h.onloadstart = () => {
-      loadEmitter.emit('loadstart', { key: url })
-    }
+    h.onloadstart = () => {}
     h.onload = (e) => {
       if (h.status != 200) {
-        loadEmitter.emit('error', { key: url, message: 'xhr - response' })
+        DownloadStore.setError(url, 'xhr - response')
         reject('xhr - response')
       }
       let data: gifData = ''
@@ -40,17 +33,16 @@ const download = async (url: string) => {
       resolve(data)
     }
     h.onprogress = (e) => {
-      loadEmitter.emit('progress', { ...e, key: url })
+      e.lengthComputable && DownloadStore.setProgress(url, e.loaded / e.total)
     }
     h.onerror = () => {
-      loadEmitter.emit('error', { key: url, message: 'xhr' })
+      DownloadStore.setError(url, 'xhr')
       reject('xhr')
     }
     h.send()
   })
   const data = await promise
-  DownloadStore.setDownload(url, data) 
-  loadEmitter.emit('download', { data, key: url })
+  DownloadStore.setDownload(url, data)
   return data
 }
 
@@ -65,17 +57,19 @@ export const load_url = async (url: string) => {
 
   const promise = new Promise<gifData>((resolve) => {
     const onLoad = (event: { data: gifData; key: string }) => {
-      loadEmitter.off('download', onLoad)
+      if (event.key !== url) {
+        return
+      }
+      DownloadStore.off('downloaded', onLoad)
       resolve(event.data)
     }
-    loadEmitter.on('download', onLoad)
+    DownloadStore.on('downloaded', onLoad)
   })
   const data = await promise
-  loadEmitter.emit('load', { data, key: url })
+  load_raw(data, url)
   return data
 }
 
 export const load_raw = (data: gifData, key: string) => {
   DownloadStore.setDownload(key, data)
-  loadEmitter.emit('load', { data, key })
 }

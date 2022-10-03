@@ -1,11 +1,12 @@
 import { Emitter } from './utils/Emitter'
-import { loadEmitter, load_url, load_raw } from './utils/loader'
+import { load_url, load_raw } from './utils/loader'
 import { Gif89aDecoder } from './decoders/gif89aDecoder'
 import { Player } from './player'
 import { Stream } from './decoders/stream'
 import {
   AppExtBlock,
   Block,
+  DownloadRecord,
   Frame,
   gifData,
   Header,
@@ -14,6 +15,7 @@ import {
 } from './type'
 import { Viewer } from './viewer'
 import { __DEV__ } from './utils/metaData'
+import { DownloadStore } from './store/downloaded'
 
 const libgif = (opts: Options) => {
   let t = 0
@@ -21,6 +23,7 @@ const libgif = (opts: Options) => {
   const emitter = new Emitter<typeof EMITS>()
   const options: Options = Object.assign({}, opts)
   const gif = options.gif
+  const getKey = () => gif.getAttribute('src') || ''
   // global func
   // global func
   // canvas
@@ -65,19 +68,31 @@ const libgif = (opts: Options) => {
   )
   // /decoder
 
-  // loader
-  loadEmitter.on('load', (e: { data: gifData; key: string }) => {
-    decode(e.data, e.key)
+  // DownloadStore
+  DownloadStore.on(
+    'downloaded',
+    (e: { key: string; cache: Required<DownloadRecord> }) => {
+      if (e.key !== getKey()) {
+        return
+      }
+      decode(e.cache.data, e.key)
+    }
+  )
+  DownloadStore.on('progress', (e: { key: string; cache: DownloadRecord }) => {
+    if (e.key !== getKey()) {
+      return
+    }
+    viewer.drawProgress(e.cache.progress)
   })
-  loadEmitter.on('progress', (e: ProgressEvent<EventTarget>) => {
-    e.lengthComputable && viewer.drawProgress(e.loaded / e.total)
-  })
-  loadEmitter.on('error', (e: { message: string; key: string }) => {
+  DownloadStore.on('error', (e: { key: string; cache: DownloadRecord }) => {
+    if (e.key !== getKey()) {
+      return
+    }
     player.onError()
-    viewer.drawError(e.message)
+    viewer.drawError(e.cache.error || '')
   })
 
-  // /loader
+  // /DownloadStore
   const getLoading = () => decoder.loading
 
   const decode = (data: gifData, cacheKey: string) => {

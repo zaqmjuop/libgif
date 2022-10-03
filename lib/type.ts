@@ -1,5 +1,5 @@
-export type ArrayElement<ArrayType extends readonly unknown[]> = 
-  ArrayType extends readonly (infer ElementType)[] ? ElementType : never;
+export type ArrayElement<ArrayType extends readonly unknown[]> =
+  ArrayType extends readonly (infer ElementType)[] ? ElementType : never
 
 export interface Frame {
   data: ImageData
@@ -98,3 +98,14 @@ export type background = Rect & {
 }
 
 export type gifData = string | Uint8Array
+
+export interface DownloadRecord {
+  data?: gifData
+  progress: number
+  error?: string
+}
+
+export interface DownloadEvent {
+  key: string
+  cache: DownloadRecord
+}
