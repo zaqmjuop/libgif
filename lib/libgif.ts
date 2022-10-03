@@ -30,7 +30,7 @@ const libgif = (opts: Options) => {
   // player
   const player = new Player({
     viewer
-  }) 
+  })
   // player
   // DecodedStore
   const withProgress = (fn: Function) => {
@@ -97,16 +97,15 @@ const libgif = (opts: Options) => {
 
   const start = async (url: string) => {
     currentKey = url
-
+    player.resetState()
     try {
-      const unListenDownload = listenDownload()
       const downloadData = await load_url(url)
-      unListenDownload()
-
-      const stream = new Stream(downloadData.data)
-      const unListenDecode = listenDecode()
-      const decoded = await decode(stream, url, { opacity: options.opacity })
-      unListenDecode()
+      const decoded = await decode(downloadData.data, url, {
+        opacity: options.opacity
+      })
+      player.onHeader(decoded.header)
+      decoded.frames.forEach((frame) => player.onFrame(frame))
+      player.framsComplete = decoded.complete
       return
     } catch {
       viewer.drawError(`load url error with【${url}】`)

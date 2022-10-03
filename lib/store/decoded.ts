@@ -1,7 +1,7 @@
-import { ArrayElement, Block, DecodedData, frame, Frame, Header, Rect } from '../type'
+import { ArrayElement, Block, DecodedData, frame, Header } from '../type'
 import { Emitter } from '../utils/Emitter'
 
-const EMITS = ['header', 'block', 'frame', 'complete'] as const
+const EMITS = ['header', 'record', 'block', 'frame', 'complete'] as const
 
 const emitter = new Emitter<typeof EMITS>()
 
@@ -13,6 +13,11 @@ const defaultDecodedData = (): DecodedData => ({
   blocks: [],
   complete: false
 })
+
+const addRecord = (key: string) => {
+  cache[key] = cache[key] || defaultDecodedData()
+  emitter.emit('record', { key, ...cache[key] })
+}
 
 const setHeader = (key: string, header: Header) => {
   cache[key] = cache[key] || defaultDecodedData()
@@ -53,6 +58,7 @@ const getDecodeData = (key: string) => cache[key]
 
 export const DecodedStore = {
   getDecodeStatus,
+  addRecord,
   setHeader,
   pushBlocks,
   pushFrames,

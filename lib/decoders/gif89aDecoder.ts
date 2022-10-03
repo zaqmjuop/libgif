@@ -484,7 +484,7 @@ export class Gif89aDecoder {
       frameGroup: this.frameGroup,
       opacity: this.opacity
     }
-    DecodedStore.setComplete(this.key)
+    DecodedStore.setComplete(key)
     return completeData
   }
 }
