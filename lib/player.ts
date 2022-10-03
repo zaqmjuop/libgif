@@ -48,9 +48,7 @@ export class Player extends Emitter<['finish']> {
     const delay = this.frameGroup[this.i].delay
     const isComplete = this.getNextFrameNo() === 0 && this.framsComplete
     clearTimeout(this.t)
-    this.t = isComplete
-      ? window.setTimeout(this.finish, delay)
-      : window.setTimeout(this.goOn, delay)
+    this.t = window.setTimeout(isComplete ? this.finish : this.goOn, delay)
     return
   }
 
