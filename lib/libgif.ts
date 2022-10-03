@@ -105,23 +105,18 @@ const libgif = (opts: Options) => {
 
   const load_url2 = async (url: string) => {
     currentKey = url
-    const preload = gif.getAttribute('preload')
-    const autoplay = gif.getAttribute('autoplay')
-    if (preload === 'none' && (!autoplay || autoplay === 'none')) {
-      return
-    }
     try {
       return load_url(url)
     } catch {
       viewer.drawError(`load url error with【${url}】`)
     }
   }
-
-  const load = () => {
-    const src = currentKey
-    src && load_url2(src)
+  // preload & autoplay
+  const preload = gif.getAttribute('preload')
+  const autoplay = gif.getAttribute('autoplay')
+  if (autoplay) {
+    load_url2(currentKey)
   }
-  load()
 
   // const controls2 = {
   //   get playing() {
@@ -162,7 +157,6 @@ const libgif = (opts: Options) => {
     get_canvas: () => viewer.canvas,
     get_auto_play: () => options,
     load_url: load_url2,
-    load,
     load_raw,
     get frames() {
       return player.frameGroup
