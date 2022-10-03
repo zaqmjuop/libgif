@@ -125,6 +125,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     this.header = header
     this.setCanvasSize(header.logicalScreenWidth, header.logicalScreenHeight)
     this.emit('header', header)
+    return header
   }
 
   private setCanvasSize(width: number, height: number) {
@@ -268,7 +269,9 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     }
   }
 
-  private parseImg = async (block: Block) => {
+  private parseImg = async (
+    block: Block
+  ): Promise<void | (ImgBlock & { frame: Frame & Rect })> => {
     if (!this.st) return
     const deinterlace = (pixels: number[], width: number) => {
       // Of course this defeats the purpose of interlacing. And it's *probably*
@@ -340,10 +343,11 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       lzwMinCodeSize,
       pixels
     }
-    this.parseFrame(img)
+    const frame = this.parseFrame(img)
+    return { ...img, frame }
   }
 
-  private parseFrame = (img: ImgBlock) => {
+  private parseFrame = (img: ImgBlock): Frame & Rect => {
     // graphControll
     const graphControll = this.graphControll
     if (graphControll) {
@@ -396,6 +400,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
 
     this.graphControll = void 0
     this.emit('frame', frame)
+    return frame
   }
 
   private disposal(method: number | null) {
@@ -442,41 +447,35 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       type: ''
     }
 
+    const onComplete = () => {
+      block.type = 'complete'
+      this.st = null
+      const completeData = {
+        ...block,
+        header: this.header,
+        frameGroup: this.frameGroup,
+        opacity: this.opacity
+      }
+      this.emit('complete', completeData)
+      return completeData
+    }
+
     switch (
       String.fromCharCode(block.sentinel) // For ease of matching
     ) {
       case '!':
         block.type = 'ext'
-        this.parseExt(block)
-        break
+        return this.parseExt(block)
       case ',':
         block.type = 'img'
-        await this.parseImg(block)
-        break
+        return this.parseImg(block)
       case ';':
-        block.type = 'complete'
-        this.st = null
-        this.emit('complete', {
-          ...block,
-          header: this.header,
-          frameGroup: this.frameGroup,
-          opacity: this.opacity
-        })
-        break
+        return onComplete()
       case '\x00':
-        block.type = 'complete'
-        this.st = null
-        this.emit('complete', {
-          ...block,
-          header: this.header,
-          frameGroup: this.frameGroup,
-          opacity: this.opacity
-        })
-        break
+        return onComplete()
       default:
         throw new Error('Unknown block: 0x' + block.sentinel.toString(16)) // TODO: Pad this with a 0.
     }
-    return (block.type !== 'complete') && this.parseBlock()
   }
 
   public parse = async (st: Stream, config?: { opacity: number }) => {
@@ -486,6 +485,8 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       this.opacity = config.opacity
     }
     this.parseHeader()
-    await this.parseBlock()
+    while (this.st) {
+      await this.parseBlock()
+    }
   }
 }
