@@ -19,9 +19,11 @@ export const decode = async (
   config: { opacity: number }
 ): Promise<Required<DecodedData>> => {
   const decodeStatus = DecodedStore.getDecodeStatus(key)
+  let t
   if (decodeStatus === 'complete') {
     return DecodedStore.getDecodeData(key) as Required<DecodedData>
-  } else if (decodeStatus === 'none') { 
+  } else if (decodeStatus === 'none') {
+    t = Date.now()
     DecodedStore.addRecord(key)
     const stream = new Stream(gifData)
     setupDecode(stream, key, config)
@@ -33,6 +35,7 @@ export const decode = async (
     }
     DecodedStore.on('complete', onDecode)
   })
-  await promise 
+  await promise
+  t && console.log('解码时长', Date.now() - t, key)
   return DecodedStore.getDecodeData(key) as Required<DecodedData>
 }

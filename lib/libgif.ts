@@ -128,8 +128,6 @@ const libgif = (opts: Options) => {
           opacity: options.opacity
         })
         status = READY_STATE.DECODED
-        // player.onHeader(decoded.header!)
-        player.onFrames(decoded.frames)
         player.framsComplete = decoded.complete
       } else if (hasDownloaded !== 'none') {
         status = READY_STATE.DOWNLOADING
@@ -139,8 +137,6 @@ const libgif = (opts: Options) => {
           opacity: options.opacity
         })
         status = READY_STATE.DECODED
-        // player.onHeader(decoded.header)
-        player.onFrames(decoded.frames)
         player.framsComplete = decoded.complete
       } else {
         status = READY_STATE.UNDOWNLOAD
@@ -150,8 +146,6 @@ const libgif = (opts: Options) => {
           opacity: options.opacity
         })
         status = READY_STATE.DECODED
-        // player.onHeader(decoded.header)
-        player.onFrames(decoded.frames)
         player.framsComplete = decoded.complete
       }
     } catch {
