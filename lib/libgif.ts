@@ -6,7 +6,9 @@ import { Stream } from './decoders/stream'
 import {
   AppExtBlock,
   Block,
+  DecodedData,
   DownloadRecord,
+  frame,
   Frame,
   gifData,
   Header,
@@ -16,6 +18,7 @@ import {
 import { Viewer } from './viewer'
 import { __DEV__ } from './utils/metaData'
 import { DownloadStore } from './store/downloaded'
+import { DecodedStore } from './store/decoded'
 
 const libgif = (opts: Options) => {
   let t = 0
@@ -46,21 +49,27 @@ const libgif = (opts: Options) => {
       viewer.drawProgress(decoder.pos / decoder.len)
     }
   }
-  decoder.on(
+  DecodedStore.on(
     'header',
-    withProgress((_hdr: Header) => {
-      player.onHeader(_hdr)
+    withProgress((e: { header: Header; key: string }) => {
+      if (getKey() !== e.key) {
+        return
+      }
+      player.onHeader(e.header)
     })
   )
-  decoder.on(
+  DecodedStore.on(
     'frame',
-    withProgress((frame: Frame & Rect) => {
-      player.onFrame(frame)
+    withProgress((e: { frames: frame[]; key: string }) => {
+      if (getKey() !== e.key) {
+        return
+      }
+      player.onFrame(e.frames[e.frames.length - 1])
     })
   )
-  decoder.on(
+  DecodedStore.on(
     'complete',
-    withProgress((block: Block) => {
+    withProgress(() => {
       player.framsComplete = true
       __DEV__ && console.log('decode time:', Date.now() - t)
       emitter.emit('load', gif)

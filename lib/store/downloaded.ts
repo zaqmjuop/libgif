@@ -66,6 +66,6 @@ export const DownloadStore = {
   setError,
   setDownload,
   getDownload,
-  on: emitter.on,
-  off: emitter.off
+  on: emitter.on.bind(emitter),
+  off: emitter.off.bind(emitter)
 }

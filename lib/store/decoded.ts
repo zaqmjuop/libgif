@@ -1,16 +1,7 @@
-import { ArrayElement, Block, Frame, Header, Rect } from '../type'
+import { ArrayElement, Block, DecodedData, frame, Frame, Header, Rect } from '../type'
 import { Emitter } from '../utils/Emitter'
 
 const EMITS = ['header', 'block', 'frame', 'complete'] as const
-
-type frame = Frame & Rect
-
-interface DecodedData {
-  header?: Header
-  blocks: Block[]
-  frames: frame[]
-  complete: boolean
-}
 
 const emitter = new Emitter<typeof EMITS>()
 
@@ -67,6 +58,6 @@ export const DecodedStore = {
   pushFrames,
   setComplete,
   getDecodeData,
-  on: emitter.on,
-  off: emitter.off
+  on: emitter.on.bind(emitter),
+  off: emitter.off.bind(emitter)
 }

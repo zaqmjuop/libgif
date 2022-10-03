@@ -109,3 +109,12 @@ export interface DownloadEvent {
   key: string
   cache: DownloadRecord
 }
+
+export type frame = Frame & Rect
+
+export interface DecodedData {
+  header?: Header
+  blocks: Block[]
+  frames: frame[]
+  complete: boolean
+}
