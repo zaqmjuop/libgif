@@ -42,7 +42,7 @@ export default () => {
       width="${width}"
       height="${height}" 
       poster="poster"
-      preload="d"
+      autoplay="autoplay"
     /> 
   `
   const container = document.getElementById(id)! as HTMLCanvasElement
