@@ -81,7 +81,7 @@ const libgif = (opts: Options) => {
   // /loader
   const getLoading = () => loader.loading || decoder.loading
 
-  const decode = (data: gifData) => {
+  const decode = (data: gifData, cacheKey: string) => {
     if (getLoading()) return
     try {
       const stream = new Stream(data)
@@ -101,14 +101,15 @@ const libgif = (opts: Options) => {
     if (getLoading()) return
     try {
       const data = await loader.load_url(url)
-      return load_raw(data!)
+      return load_raw(data!, url)
     } catch {
       viewer.drawError(`load url error with【${url}】`)
     }
   }
 
-  const load_raw = (data: gifData) => {
-    return decode(data)
+  const load_raw = (data: gifData, cacheKey: string) => {
+    console.log(data)
+    return decode(data, cacheKey)
   }
 
   const load = () => {

@@ -1,7 +1,6 @@
 import { gifData } from '../type'
 import { Emitter } from './Emitter'
-
-const downloadCache: Record<string, gifData> = {}
+import { downloadCache } from '../cache'
 
 const EMITS = ['loadstart', 'load', 'progress', 'error'] as const
 
