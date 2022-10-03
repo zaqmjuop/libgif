@@ -14,6 +14,7 @@ export class Player extends Emitter<['finish']> {
   framsComplete = false
   opacity = 255
   timestamp = 0
+  onFramed = false
   t = 0
   header = { width: 0, height: 0 }
   readonly quote: PlayerQuote
@@ -98,6 +99,7 @@ export class Player extends Emitter<['finish']> {
     this.frameGroup = []
     this.framsComplete = false
     this.opacity = 255
+    this.onFramed = false
     this.timestamp = 0
     this.header = { width: 0, height: 0 }
   }
@@ -111,9 +113,10 @@ export class Player extends Emitter<['finish']> {
     this.quote.viewer.setDraftSize(this.header)
   }
 
-  onFrame = (frame: Frame & Rect) => {
-    this.frameGroup.push(frame)
-    if (this.frameGroup.length === 1) {
+  onFrames = (frames: Array<Frame & Rect>) => {
+    this.frameGroup = frames
+    if (!this.onFramed) {
+      this.onFramed = true
       if (this.quote.viewer.canvas?.getAttribute('autoplay') === 'autoplay') {
         this.play()
       } else if (

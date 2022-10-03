@@ -27,6 +27,7 @@ const libgif = (opts: Options) => {
     opts
   )
   const gif = options.gif
+  let status: number
   let currentKey = gif.getAttribute('src') || ''
   // global func
   // global func
@@ -49,33 +50,35 @@ const libgif = (opts: Options) => {
     }
   }
 
-  const listenDecode = () => {
-    const onHeader = (e: { header: Header; key: string }) => {
-      if (currentKey !== e.key) {
-        return
-      }
+  const onHeader = (e: { header: Header; key: string }) => {
+    if (currentKey !== e.key) {
+      return
+    }
+    if ([READY_STATE.DECODED, READY_STATE.DECODING].includes(status as any)) {
+      return
+    }
+    player.onHeader(e.header)
+  }
+  const onFrame = (e: { frames: frame[]; header: Header; key: string }) => {
+    if (currentKey !== e.key) {
+      return
+    }
+    if ([READY_STATE.DECODED].includes(status as any)) {
+      return
+    }
+    if (!player.onFramed) {
       player.onHeader(e.header)
     }
-    const onFrame = (e: { frames: frame[]; key: string }) => {
-      if (currentKey !== e.key) {
-        return
-      }
-      player.onFrame(e.frames[e.frames.length - 1])
-    }
-
-    const onComplete = () => {
-      player.framsComplete = true
-    }
-
-    DecodedStore.on('header', withProgress(onHeader))
-    DecodedStore.on('frame', withProgress(onFrame))
-    DecodedStore.on('complete', withProgress(onComplete))
-    return () => {
-      DecodedStore.off('header', withProgress(onHeader))
-      DecodedStore.off('frame', withProgress(onFrame))
-      DecodedStore.off('complete', withProgress(onComplete))
-    }
+    player.onFrames(e.frames)
   }
+
+  const onComplete = () => {
+    player.framsComplete = true
+  }
+
+  DecodedStore.on('header', withProgress(onHeader))
+  DecodedStore.on('frame', withProgress(onFrame))
+  // DecodedStore.on('complete', withProgress(onComplete))
 
   // /DecodedStore
 
@@ -99,26 +102,24 @@ const libgif = (opts: Options) => {
 
   const start = async (url: string) => {
     currentKey = url
-    let status: number
     const hasDecoded = DecodedStore.getDecodeStatus(url)
     const hasDownloaded = DownloadStore.getDownloadStatus(url)
     try {
       if (hasDecoded === 'complete') {
         status = READY_STATE.DECODED
         const decoded = DecodedStore.getDecodeData(url)
-        player.resetState()
         player.onHeader(decoded.header!)
-        decoded.frames.forEach((frame) => player.onFrame(frame))
+        player.onFrames(decoded.frames)
         player.framsComplete = decoded.complete
       } else if (hasDecoded !== 'none') {
         status = READY_STATE.DECODING
         const downloadData = await DownloadStore.getDownload(url)
+        player.resetState()
         const decoded = await decode(downloadData.data!, url, {
           opacity: options.opacity
         })
-        player.resetState()
-        player.onHeader(decoded.header!)
-        decoded.frames.forEach((frame) => player.onFrame(frame))
+        status = READY_STATE.DECODED
+        player.onFrames(decoded.frames)
         player.framsComplete = decoded.complete
       } else if (hasDownloaded === 'downloaded') {
         status = READY_STATE.DOWNLOADED
@@ -126,29 +127,31 @@ const libgif = (opts: Options) => {
         const decoded = await decode(downloadData.data!, url, {
           opacity: options.opacity
         })
-        player.resetState()
-        player.onHeader(decoded.header!)
-        decoded.frames.forEach((frame) => player.onFrame(frame))
+        status = READY_STATE.DECODED
+        // player.onHeader(decoded.header!)
+        player.onFrames(decoded.frames)
         player.framsComplete = decoded.complete
       } else if (hasDownloaded !== 'none') {
         status = READY_STATE.DOWNLOADING
         const downloadData = await load_url(url)
+        status = READY_STATE.DOWNLOADED
         const decoded = await decode(downloadData.data, url, {
           opacity: options.opacity
         })
-        player.resetState()
-        player.onHeader(decoded.header)
-        decoded.frames.forEach((frame) => player.onFrame(frame))
+        status = READY_STATE.DECODED
+        // player.onHeader(decoded.header)
+        player.onFrames(decoded.frames)
         player.framsComplete = decoded.complete
       } else {
         status = READY_STATE.UNDOWNLOAD
         const downloadData = await load_url(url)
+        status = READY_STATE.DOWNLOADED
         const decoded = await decode(downloadData.data, url, {
           opacity: options.opacity
         })
-        player.resetState()
-        player.onHeader(decoded.header)
-        decoded.frames.forEach((frame) => player.onFrame(frame))
+        status = READY_STATE.DECODED
+        // player.onHeader(decoded.header)
+        player.onFrames(decoded.frames)
         player.framsComplete = decoded.complete
       }
     } catch {
