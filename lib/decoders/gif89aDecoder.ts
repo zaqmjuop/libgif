@@ -180,6 +180,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       const comExt = { ...block, comment }
       this.exts.push(comExt)
       this.emit('com', comExt)
+      return comExt
     }
 
     const parsePTExt = (block: ExtBlock) => {
@@ -191,6 +192,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       const pteExt = { ...block, ptHeader, ptData }
       this.exts.push(pteExt)
       this.emit('pte', pteExt)
+      return pteExt
     }
 
     const parseAppExt = (block: ExtBlock) => {
@@ -210,6 +212,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
         }
         this.app = appExt
         this.emit('app', appExt)
+        return appExt
       }
 
       const parseUnknownAppExt = (block: AppExtBlock) => {
@@ -218,6 +221,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
         this.app = appExt
         // FIXME: This won't work if a handler wants to match on any identifier.
         this.emit('app', appExt)
+        return appExt
       }
 
       const blockSize = this.st.readByte() // Always 11
@@ -232,6 +236,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
           parseUnknownAppExt(appBlock)
           break
       }
+      return appBlock
     }
 
     const parseUnknownExt = (block: ExtBlock) => {
@@ -239,6 +244,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       const unknownExt = { ...block, data }
       this.exts.push(unknownExt)
       this.emit('unknown', unknownExt)
+      return unknownExt
     }
 
     const label = this.st.readByte()
@@ -250,24 +256,19 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     switch (extBlock.label) {
       case 0xf9:
         extBlock.extType = 'gce'
-        parseGCExt(extBlock)
-        break
+        return parseGCExt(extBlock)
       case 0xfe:
         extBlock.extType = 'com'
-        parseComExt(extBlock)
-        break
+        return parseComExt(extBlock)
       case 0x01:
         extBlock.extType = 'pte'
-        parsePTExt(extBlock)
-        break
+        return parsePTExt(extBlock)
       case 0xff:
         extBlock.extType = 'app'
-        parseAppExt(extBlock)
-        break
+        return parseAppExt(extBlock)
       default:
         extBlock.extType = 'unknown'
-        parseUnknownExt(extBlock)
-        break
+        return parseUnknownExt(extBlock)
     }
   }
 
@@ -453,14 +454,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       block.type = 'complete'
       this.st = null
       this.cacheKey = ''
-      const completeData = {
-        ...block,
-        header: this.header,
-        frameGroup: this.frameGroup,
-        opacity: this.opacity
-      }
-      this.emit('complete', completeData)
-      return completeData
+      return block
     }
 
     switch (
@@ -481,16 +475,30 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     }
   }
 
-  public parse = async (st: Stream, cacheKey: string, config?: { opacity: number }) => {
+  public parse = async (
+    st: Stream,
+    cacheKey: string,
+    config?: { opacity: number }
+  ) => {
     if (this.st) return
     this.st = st
     this.cacheKey = cacheKey
     if (config) {
       this.opacity = config.opacity
     }
-    this.parseHeader()
+    const blocks: Block[] = []
+    const header = this.parseHeader()
     while (this.st) {
-      await this.parseBlock()
+      const block = await this.parseBlock()
+      block && blocks.push(block)
     }
+    const completeData = {
+      header,
+      blocks,
+      frameGroup: this.frameGroup,
+      opacity: this.opacity
+    }
+    this.emit('complete', completeData)
+    return completeData
   }
 }
