@@ -86,7 +86,7 @@ const libgif = (opts: Options) => {
     try {
       const stream = new Stream(data)
       __DEV__ && (t = Date.now())
-      return decoder.parse(stream)
+      return decoder.parse(stream, cacheKey)
     } catch (err) {
       viewer.drawError(`load raw error with【${data.slice(0, 8)}】`)
     }

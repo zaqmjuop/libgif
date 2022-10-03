@@ -13,6 +13,7 @@ import {
   rgb
 } from '../type'
 import { createWorkerFunc } from '../utils/createWorkerFunc'
+import { decodedCache } from '../cache'
 
 // The actual parsing; returns an object with properties.
 
@@ -40,6 +41,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
   private readonly canvas = document.createElement('canvas') // 图片文件原始模样
   private readonly ctx: CanvasRenderingContext2D
   private st: Stream | null = null
+  cacheKey = ''
   private header?: Header
   private graphControll?: GCExtBlock
   public app?: AppExtBlock
@@ -450,6 +452,7 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     const onComplete = () => {
       block.type = 'complete'
       this.st = null
+      this.cacheKey = ''
       const completeData = {
         ...block,
         header: this.header,
@@ -478,9 +481,10 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     }
   }
 
-  public parse = async (st: Stream, config?: { opacity: number }) => {
+  public parse = async (st: Stream, cacheKey: string, config?: { opacity: number }) => {
     if (this.st) return
     this.st = st
+    this.cacheKey = cacheKey
     if (config) {
       this.opacity = config.opacity
     }
