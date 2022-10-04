@@ -87,7 +87,6 @@ export class Viewer extends Emitter<[]> {
     if (!this.canvas || !this.ctx) {
       return
     }
-    console.error(originOfError)
     this.ctx.fillStyle = 'black'
     const w = this.canvas.width
     const h = this.canvas.height

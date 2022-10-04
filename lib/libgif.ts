@@ -1,27 +1,32 @@
 import { Emitter } from './utils/Emitter'
-import { Loader } from './utils/loader'
-import { Gif89aDecoder } from './decoders/gif89aDecoder'
+import { load_url } from './utils/loader'
 import { Player } from './player'
-import { Stream } from './decoders/stream'
-import {
-  AppExtBlock,
-  Block,
-  Frame,
-  gifData,
-  Header,
-  Options,
-  Rect
-} from './type'
+import { decode } from './decoders/decode'
+import { DownloadRecord, frame, Header, Options } from './type'
 import { Viewer } from './viewer'
-import { __DEV__ } from './utils/metaData'
+import { DownloadStore } from './store/downloaded'
+import { DecodedStore } from './store/decoded'
+
+const READY_STATE = {
+  UNDOWNLOAD: 0,
+  DOWNLOADING: 1,
+  DOWNLOADED: 2,
+  DECODING: 3,
+  DECODED: 4
+} as const
 
 const libgif = (opts: Options) => {
-  let t = 0
   const EMITS = ['loadstart', 'load', 'progress', 'error', 'finish'] as const
   const emitter = new Emitter<typeof EMITS>()
-  const options: Options = Object.assign({}, opts)
-
+  const options: Required<Options> = Object.assign(
+    {
+      opacity: 255
+    },
+    opts
+  )
   const gif = options.gif
+  let status: number
+  let currentKey = gif.getAttribute('src') || ''
   // global func
   // global func
   // canvas
@@ -30,141 +35,124 @@ const libgif = (opts: Options) => {
   // canvas
 
   // player
-  const player = new Player({
-    viewer
-  })
-  player.on('finish', () => emitter.emit('finish', gif))
+  const player = new Player({ viewer })
   // player
-  // decoder
-  const decoder = new Gif89aDecoder()
-
+  // DownloadStore
   const withProgress = (fn: Function) => {
     return (...args) => {
       fn(...args)
-      viewer.drawProgress(decoder.pos / decoder.len)
+      const download = DownloadStore.getDownload(currentKey)
+      download?.progress && viewer.drawProgress(download.progress)
     }
   }
-  decoder.on(
-    'header',
-    withProgress((_hdr: Header) => {
-      player.onHeader(_hdr)
-    })
-  )
-  decoder.on(
-    'frame',
-    withProgress((frame: Frame & Rect) => {
-      player.onFrame(frame)
-    })
-  )
-  decoder.on(
-    'complete',
-    withProgress((block: Block) => {
-      player.framsComplete = true
-      __DEV__ && console.log('decode time:', Date.now() - t)
-      emitter.emit('load', gif)
-    })
-  )
-  // /decoder
-
-  // loader
-
-  const loader = new Loader()
-  loader.on('load', (data: gifData) => {})
-  loader.on('progress', (e: ProgressEvent<EventTarget>) => {
-    e.lengthComputable && viewer.drawProgress(e.loaded / e.total)
-  })
-  loader.on('error', (message: string) => {
-    player.onError()
-    viewer.drawError(message)
-  })
-
-  // /loader
-  const getLoading = () => loader.loading || decoder.loading
-
-  const decode = (data: gifData) => {
-    if (getLoading()) return
-    try {
-      const stream = new Stream(data)
-      __DEV__ && (t = Date.now())
-      return decoder.parse(stream)
-    } catch (err) {
-      viewer.drawError(`load raw error with【${data.slice(0, 8)}】`)
-    }
-  }
-
-  const load_url = async (url: string) => {
-    const preload = gif.getAttribute('preload')
-    const autoplay = gif.getAttribute('autoplay')
-    if (preload === 'none' && (!autoplay || autoplay === 'none')) {
+  const onProgress = (e: { key: string } & DownloadRecord) => {
+    if (e.key !== currentKey) {
       return
     }
-    if (getLoading()) return
+    viewer.drawProgress(e.progress)
+  }
+  const onError = (e: { key: string } & DownloadRecord) => {
+    if (e.key !== currentKey) {
+      return
+    }
+    player.onError()
+    viewer.drawError(e.error || '')
+  }
+  DownloadStore.on('progress', withProgress(onProgress))
+  DownloadStore.on('error', withProgress(onError))
+  // /DownloadStore
+
+  const start = async (url: string) => {
+    currentKey = url
+    const hasDecoded = DecodedStore.getDecodeStatus(url)
+    const hasDownloaded = DownloadStore.getDownloadStatus(url)
     try {
-      const data = await loader.load_url(url)
-      return load_raw(data!)
+      if (hasDecoded === 'complete') {
+        status = READY_STATE.DECODED
+        player.switch(url)
+      } else if (hasDecoded !== 'none') {
+        status = READY_STATE.DECODING
+        player.switch(url)
+      } else if (hasDownloaded === 'downloaded') {
+        status = READY_STATE.DOWNLOADED
+        const downloadData = await DownloadStore.getDownload(url)
+        player.switch(url)
+        await decode(downloadData.data!, url, {
+          opacity: options.opacity
+        })
+        status = READY_STATE.DECODED
+      } else if (hasDownloaded !== 'none') {
+        status = READY_STATE.DOWNLOADING
+        const downloadData = await load_url(url)
+        status = READY_STATE.DOWNLOADED
+        player.switch(url)
+        await decode(downloadData.data, url, {
+          opacity: options.opacity
+        })
+        status = READY_STATE.DECODED
+      } else {
+        status = READY_STATE.UNDOWNLOAD
+        const downloadData = await load_url(url)
+        status = READY_STATE.DOWNLOADED
+        player.switch(url)
+        await decode(downloadData.data, url, {
+          opacity: options.opacity
+        })
+        status = READY_STATE.DECODED
+      }
     } catch {
       viewer.drawError(`load url error with【${url}】`)
     }
   }
-
-  const load_raw = (data: gifData) => {
-    return decode(data)
+  // preload & autoplay
+  const preload = gif.getAttribute('preload')
+  const autoplay = gif.getAttribute('autoplay')
+  if (autoplay) {
+    start(currentKey)
   }
 
-  const load = () => {
-    const src = gif.getAttribute('src') || ''
-    src && load_url(src)
-  }
-  load()
-
-  const controls2 = {
-    get playing() {
-      return player.playing
-    },
-    get sourceWidth() {
-      return player.header.width
-    },
-    get sourceHeight() {
-      return player.header.height
-    },
-    currentSrc: '', // 只读 地址 
-    defaultPlaybackRate: 1, // 默认播放速度
-    playbackRate: 1, // 播放速度
-    duration: 1, // 总时长 只读
-    ended: 1, // 播放完毕 只读
-    error: 1, // 错误 只读
-    initialTime: 1, //初始播放位置（以秒为单位）。 只读
-    loop: 1, // 
-    mediaGroup: [], // 连播
-    paused: true,// 指示媒体元素是否被暂停 只读
-    played: [], // 播放过的帧 只读
-    preload: 'auto',
-    readyState: 1, // 准备状态
-  }
+  // const controls2 = {
+  //   get playing() {
+  //     return player.playing
+  //   },
+  //   get sourceWidth() {
+  //     return player.header.width
+  //   },
+  //   get sourceHeight() {
+  //     return player.header.height
+  //   },
+  //   currentSrc: '', // 只读 地址
+  //   defaultPlaybackRate: 1, // 默认播放速度
+  //   playbackRate: 1, // 播放速度
+  //   duration: 1, // 总时长 只读
+  //   ended: 1, // 播放完毕 只读
+  //   error: 1, // 错误 只读
+  //   initialTime: 1, //初始播放位置（以秒为单位）。 只读
+  //   loop: 1, //
+  //   mediaGroup: [], // 连播
+  //   paused: true, // 指示媒体元素是否被暂停 只读
+  //   played: [], // 播放过的帧 只读
+  //   preload: 'auto',
+  //   readyState: 1 // 准备状态
+  // }
 
   const controller = {
     player,
     // play controls
     play: player.play,
     pause: player.pause,
-    move_relative: player.putFrameBy,
-    move_to: player.move_to,
     // getters for instance vars
     get_playing: () => player.playing,
-    get_current_frame: () => player.current_frame(),
 
     get_canvas: () => viewer.canvas,
-    get_loading: getLoading,
     get_auto_play: () => options,
-    load_url,
-    load,
-    load_raw,
+    start,
     get frames() {
       return player.frameGroup
     },
     get_length: () => player.frameGroup.length,
-    on: emitter.on,
-    off: emitter.off
+    on: emitter.on.bind(emitter),
+    off: emitter.off.bind(emitter)
   }
 
   ;(gif as any).controller = controller

@@ -24,14 +24,16 @@ export const createWorkerFunc = <F extends (...agrs: any[]) => any>(
   const workerFunc = async (...args: Parameters<F>) => {
     const traceId = getTraceId()
     return new Promise<ReturnType<F>>((resolve) => {
-      worker.onmessage = (
+      const hander = (
         e: MessageEvent<{ traceId: string; data: ReturnType<F> }>
       ) => {
         if (e.data.traceId !== traceId) {
           return
         }
+        worker.removeEventListener('message', hander)
         resolve(e.data.data)
       }
+      worker.addEventListener('message', hander)
 
       worker.postMessage({ args, traceId })
     })

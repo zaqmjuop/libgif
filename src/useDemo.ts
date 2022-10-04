@@ -42,7 +42,7 @@ export default () => {
       width="${width}"
       height="${height}" 
       poster="poster"
-      preload="d"
+      autoplay="autoplay"
     /> 
   `
   const container = document.getElementById(id)! as HTMLCanvasElement
@@ -74,7 +74,7 @@ export default () => {
     if (e.target instanceof HTMLElement) {
       const targetUrl = e.target.getAttribute('url')
       if (targetUrl) {
-        rub.load_url(targetUrl)
+        rub.start(targetUrl)
       }
     }
   })
