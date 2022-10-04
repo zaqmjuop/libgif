@@ -1,7 +1,7 @@
 import { ArrayElement, Block, DecodedData, frame, Header } from '../type'
 import { Emitter } from '../utils/Emitter'
 
-const EMITS = ['header', 'record', 'block', 'frame', 'complete'] as const
+const EMITS = ['header', 'record', 'block', 'frame', 'decoded'] as const
 
 const emitter = new Emitter<typeof EMITS>()
 
@@ -40,12 +40,12 @@ const pushBlocks = (key: string, blocks: Block[]) => {
 const setComplete = (key: string) => {
   cache[key] = cache[key] || defaultDecodedData()
   cache[key].complete = true
-  emitter.emit('complete', { key, ...cache[key] })
+  emitter.emit('decoded', { key, ...cache[key] })
 }
 
 const getDecodeStatus = (key: string): ArrayElement<typeof EMITS> | 'none' => {
   if (cache[key]?.complete) {
-    return 'complete'
+    return 'decoded'
   } else if (cache[key]?.frames.length) {
     return 'frame'
   } else if (cache[key]?.header) {

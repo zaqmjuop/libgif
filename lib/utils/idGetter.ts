@@ -1,4 +1,7 @@
 export const idGetter = () => {
   let id = 0
-  return () => id++
+  return () => {
+    id > 65535 && (id = -id)
+    return `${id++}`
+  }
 }
