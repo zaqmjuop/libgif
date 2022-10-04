@@ -12,18 +12,18 @@
   resolved "https://registry.npmjs.org/@types/node/-/node-18.7.23.tgz#75c580983846181ebe5f4abc40fe9dfb2d65665f"
   integrity sha512-DWNcCHolDq0ZKGizjx2DZjR/PqsYwAcYUJmfMWqtVU2MBMG5Mo+xFZrhGId5r/O5HOuMPyQEcM6KUBp5lBZZBg==
 
-"@zaqmjuop/libgif@^1.0.3":
-  version "1.0.7"
-  resolved "https://registry.npmjs.org/@zaqmjuop/libgif/-/libgif-1.0.7.tgz#d5d143df3f609d580f33330b91696c322d776de2"
-  integrity sha512-K6hqJS2vOCtyMr2I5WUHXRQ8OpI0ZJKBGV4f/z3vPZviDW26+5WQNliXNiT78UuOYVryBsHjf6VWGpbPqp+gEA==
+"@zaqmjuop/libgif@^1.0.10":
+  version "1.0.10"
+  resolved "https://registry.npmjs.org/@zaqmjuop/libgif/-/libgif-1.0.10.tgz#6c84c38a9483444c0e24d98cb9d1f7cb5d18f53e"
+  integrity sha512-64V0x3RaypjKOzgG03tZzTNzOjfohb4Akq8oknpjWoU9m3p5eV/SzMbdwx6KmtweDq9E/XVca5sVM2M/6wh8yA==
   dependencies:
     "@zaqmjuop/libgif" "^1.0.3"
     mitt "^3.0.0"
 
-"@zaqmjuop/libgif@^1.0.9":
-  version "1.0.9"
-  resolved "https://registry.npmjs.org/@zaqmjuop/libgif/-/libgif-1.0.9.tgz#61c5ad984ef5b3e6284f402300e8e1fc85bed62d"
-  integrity sha512-tnyOE+9ZFTkQAZipuTSEjKun2Nvja9IGG9Va3WUTuNWCcMn3ms3kO2hlg9ZMPSOqRBKk5ADih1ipyoxZBF19Cw==
+"@zaqmjuop/libgif@^1.0.3":
+  version "1.0.7"
+  resolved "https://registry.npmjs.org/@zaqmjuop/libgif/-/libgif-1.0.7.tgz#d5d143df3f609d580f33330b91696c322d776de2"
+  integrity sha512-K6hqJS2vOCtyMr2I5WUHXRQ8OpI0ZJKBGV4f/z3vPZviDW26+5WQNliXNiT78UuOYVryBsHjf6VWGpbPqp+gEA==
   dependencies:
     "@zaqmjuop/libgif" "^1.0.3"
     mitt "^3.0.0"
