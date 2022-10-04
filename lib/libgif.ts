@@ -62,7 +62,7 @@ const libgif = (opts: Options) => {
   DownloadStore.on('error', withProgress(onError))
   // /DownloadStore
 
-  const start = async (url: string) => {
+  const loadUrl = async (url: string) => {
     currentKey = url
     const hasDecoded = DecodedStore.getDecodeStatus(url)
     const hasDownloaded = DownloadStore.getDownloadStatus(url)
@@ -108,7 +108,7 @@ const libgif = (opts: Options) => {
   const preload = gif.getAttribute('preload')
   const autoplay = gif.getAttribute('autoplay')
   if (autoplay) {
-    start(currentKey)
+    loadUrl(currentKey)
   }
 
   // const controls2 = {
@@ -137,20 +137,21 @@ const libgif = (opts: Options) => {
   // }
 
   const controller = {
-    player,
-    // play controls
     play: player.play,
     pause: player.pause,
-    // getters for instance vars
-    get_playing: () => player.playing,
-
-    get_canvas: () => viewer.canvas,
-    get_auto_play: () => options,
-    start,
-    get frames() {
-      return player.frameGroup
+    loadUrl: loadUrl,
+    get playing() {
+      return player.playing
     },
-    get_length: () => player.frameGroup.length,
+    get forward() {
+      return player.forward
+    },
+    get iterationCount() {
+      return player.iterationCount
+    },
+    get currentKey() {
+      return player.currentKey
+    },
     on: emitter.on.bind(emitter),
     off: emitter.off.bind(emitter)
   }
