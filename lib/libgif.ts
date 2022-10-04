@@ -35,11 +35,9 @@ const libgif = (opts: Options) => {
   // canvas
 
   // player
-  const player = new Player({
-    viewer
-  })
+  const player = new Player({ viewer })
   // player
-  // DecodedStore
+  // DownloadStore
   const withProgress = (fn: Function) => {
     return (...args) => {
       fn(...args)
@@ -47,14 +45,6 @@ const libgif = (opts: Options) => {
       download?.progress && viewer.drawProgress(download.progress)
     }
   }
-  DecodedStore.on(
-    'frame',
-    withProgress(() => {})
-  )
-
-  // /DecodedStore
-
-  // DownloadStore
   const onProgress = (e: { key: string } & DownloadRecord) => {
     if (e.key !== currentKey) {
       return
@@ -68,8 +58,8 @@ const libgif = (opts: Options) => {
     player.onError()
     viewer.drawError(e.error || '')
   }
-  DownloadStore.on('progress', onProgress)
-  DownloadStore.on('error', onError)
+  DownloadStore.on('progress', withProgress(onProgress))
+  DownloadStore.on('error', withProgress(onError))
   // /DownloadStore
 
   const start = async (url: string) => {
