@@ -47,31 +47,10 @@ const libgif = (opts: Options) => {
       download?.progress && viewer.drawProgress(download.progress)
     }
   }
-
-  const onHeader = (e: { header: Header; key: string }) => {
-    if (currentKey !== e.key) {
-      return
-    }
-    if ([READY_STATE.DECODED, READY_STATE.DECODING].includes(status as any)) {
-      return
-    }
-    player.onHeader(e.header)
-  }
-  const onFrame = (e: { frames: frame[]; header: Header; key: string }) => {
-    if (currentKey !== e.key) {
-      return
-    }
-    if ([READY_STATE.DECODED].includes(status as any)) {
-      return
-    }
-    if (!player.onFramed) {
-      player.onHeader(e.header)
-    }
-    player.onFrames(e.frames)
-  }
-
-  DecodedStore.on('header', withProgress(onHeader))
-  DecodedStore.on('frame', withProgress(onFrame))
+  DecodedStore.on(
+    'frame',
+    withProgress(() => {})
+  )
 
   // /DecodedStore
 
@@ -100,46 +79,36 @@ const libgif = (opts: Options) => {
     try {
       if (hasDecoded === 'complete') {
         status = READY_STATE.DECODED
-        const decoded = DecodedStore.getDecodeData(url)
-        player.onHeader(decoded.header!)
-        player.onFrames(decoded.frames)
-        player.framsComplete = decoded.complete
+        player.switch(url)
       } else if (hasDecoded !== 'none') {
         status = READY_STATE.DECODING
-        const downloadData = await DownloadStore.getDownload(url)
-        player.resetState()
-        const decoded = await decode(downloadData.data!, url, {
-          opacity: options.opacity
-        })
-        status = READY_STATE.DECODED
-        player.onFrames(decoded.frames)
-        player.framsComplete = decoded.complete
+        player.switch(url)
       } else if (hasDownloaded === 'downloaded') {
         status = READY_STATE.DOWNLOADED
         const downloadData = await DownloadStore.getDownload(url)
-        const decoded = await decode(downloadData.data!, url, {
+        player.switch(url)
+        await decode(downloadData.data!, url, {
           opacity: options.opacity
         })
         status = READY_STATE.DECODED
-        player.framsComplete = decoded.complete
       } else if (hasDownloaded !== 'none') {
         status = READY_STATE.DOWNLOADING
         const downloadData = await load_url(url)
         status = READY_STATE.DOWNLOADED
-        const decoded = await decode(downloadData.data, url, {
+        player.switch(url)
+        await decode(downloadData.data, url, {
           opacity: options.opacity
         })
         status = READY_STATE.DECODED
-        player.framsComplete = decoded.complete
       } else {
         status = READY_STATE.UNDOWNLOAD
         const downloadData = await load_url(url)
         status = READY_STATE.DOWNLOADED
-        const decoded = await decode(downloadData.data, url, {
+        player.switch(url)
+        await decode(downloadData.data, url, {
           opacity: options.opacity
         })
         status = READY_STATE.DECODED
-        player.framsComplete = decoded.complete
       }
     } catch {
       viewer.drawError(`load url error with【${url}】`)
@@ -182,11 +151,8 @@ const libgif = (opts: Options) => {
     // play controls
     play: player.play,
     pause: player.pause,
-    move_relative: player.putFrameBy,
-    move_to: player.move_to,
     // getters for instance vars
     get_playing: () => player.playing,
-    get_current_frame: () => player.current_frame(),
 
     get_canvas: () => viewer.canvas,
     get_auto_play: () => options,
