@@ -152,14 +152,3 @@ const libgif = (opts: Options) => {
 }
 
 export default libgif
-/**
- * 下载
- * 读取字符
- * 解析
- * 播放
- *
- * TODO
- * 立即终止下载或解析，并切换下一个url
- * img标签属性
- * video标签属性
- */
