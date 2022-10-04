@@ -26,7 +26,7 @@ export class Player extends Emitter<['finish']> {
     this.quote = quote
   }
 
-  get currentImg(): DecodedData | void {
+  get currentImg() {
     return (
       (this.currentKey && DecodedStore.getDecodeData(this.currentKey)) || void 0
     )
