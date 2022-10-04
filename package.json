@@ -1,6 +1,6 @@
 {
   "name": "@zaqmjuop/libgif",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "author": "zaqmjuop <zaqmjuop@gmail.com> (https://github.com/zaqmjuop)",
   "files": [
     "dist"
@@ -23,9 +23,9 @@
   },
   "devDependencies": {
     "@types/node": "^18.0.0",
+    "@zaqmjuop/libgif": "^1.0.3",
     "typescript": "^4.4.3",
-    "vite": "^3.1.1",
-    "@zaqmjuop/libgif": "^1.0.3"
+    "vite": "^3.1.1"
   },
   "description": "refactor from libgif",
   "directories": {
