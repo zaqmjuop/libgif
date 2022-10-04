@@ -20,7 +20,7 @@ export const decode = async (
 ): Promise<Required<DecodedData>> => {
   const decodeStatus = DecodedStore.getDecodeStatus(key)
   let t
-  if (decodeStatus === 'complete') {
+  if (decodeStatus === 'decoded') {
     return DecodedStore.getDecodeData(key) as Required<DecodedData>
   } else if (decodeStatus === 'none') {
     t = Date.now()
@@ -30,10 +30,10 @@ export const decode = async (
   }
   const promise = new Promise((resolve) => {
     const onDecode = () => {
-      DecodedStore.off('complete', onDecode)
+      DecodedStore.off('decoded', onDecode)
       resolve(void 0)
     }
-    DecodedStore.on('complete', onDecode)
+    DecodedStore.on('decoded', onDecode)
   })
   await promise
   t && console.log('解码时长', Date.now() - t, key)
