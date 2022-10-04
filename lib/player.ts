@@ -9,9 +9,9 @@ interface PlayerQuote {
 
 type playerHeader = { width: number; height: number }
 
-export class Player extends Emitter<['finish']> {
+export class Player extends Emitter<['play', 'frameChange', 'pause']> {
   private i = 0
-  iterationCount = 0
+  loopCount = 0
   forward = true
   playing = false
   opacity = 255
@@ -61,6 +61,10 @@ export class Player extends Emitter<['finish']> {
     return this.frameGroup[this.i]
   }
 
+  get currentFrameNo() {
+    return this.i
+  }
+
   /**
    * Gets the index of the frame "up next".
    * @returns {number}
@@ -76,8 +80,7 @@ export class Player extends Emitter<['finish']> {
   }
 
   private finish = () => {
-    this.iterationCount++
-    this.emit('finish')
+    this.loopCount++
     if (this.quote.viewer.canvas?.getAttribute('loop') === 'loop') {
       this.goOn()
     } else {
@@ -100,6 +103,7 @@ export class Player extends Emitter<['finish']> {
       this.i = flag
       this.quote.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
       this.quote.viewer.drawDraft()
+      this.emit('frameChange')
     }
     return frame
   }
@@ -110,16 +114,18 @@ export class Player extends Emitter<['finish']> {
     }
     this.playing = true
     this.goOn()
+    this.emit('play')
   }
 
   pause = () => {
     this.playing = false
+    this.emit('pause')
   }
 
   resetState = () => {
     clearTimeout(this.t)
     this.i = 0
-    this.iterationCount = 0
+    this.loopCount = 0
     this.forward = true
     this.playing = false
     this.opacity = 255

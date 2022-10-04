@@ -69,6 +69,7 @@ export default () => {
 
   const rub = libDev({ gif: container })
   console.log(rub)
+  ;(window as any).r = rub
 
   root.addEventListener('click', (e) => {
     if (e.target instanceof HTMLElement) {

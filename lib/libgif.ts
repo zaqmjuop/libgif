@@ -16,7 +16,7 @@ const READY_STATE = {
 } as const
 
 const libgif = (opts: Options) => {
-  const EMITS = ['loadstart', 'load', 'progress', 'error', 'finish'] as const
+  const EMITS = ['play', 'frameChange', 'pause'] as const
   const emitter = new Emitter<typeof EMITS>()
   const options: Required<Options> = Object.assign(
     {
@@ -136,22 +136,29 @@ const libgif = (opts: Options) => {
   //   readyState: 1 // 准备状态
   // }
 
+  player.on('play', () => emitter.emit('play'))
+  player.on('frameChange', () => emitter.emit('frameChange'))
+  player.on('pause', () => emitter.emit('pause'))
+
   const controller = {
-    play: player.play,
-    pause: player.pause,
-    loadUrl: loadUrl,
     get playing() {
       return player.playing
     },
     get forward() {
       return player.forward
     },
-    get iterationCount() {
-      return player.iterationCount
+    get loopCount() {
+      return player.loopCount
     },
     get currentKey() {
       return player.currentKey
     },
+    get currentFrameNo() {
+      return player.currentFrameNo
+    },
+    play: player.play,
+    pause: player.pause,
+    loadUrl: loadUrl,
     on: emitter.on.bind(emitter),
     off: emitter.off.bind(emitter)
   }
