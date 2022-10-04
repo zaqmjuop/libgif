@@ -1,11 +1,9 @@
 import { Emitter } from './utils/Emitter'
-import { load_url, load_raw } from './utils/loader'
+import { load_url } from './utils/loader'
 import { Player } from './player'
 import { decode } from './decoders/decode'
-import { Stream } from './decoders/stream'
-import { DownloadRecord, frame, gifData, Header, Options } from './type'
+import { DownloadRecord, frame, Header, Options } from './type'
 import { Viewer } from './viewer'
-import { __DEV__ } from './utils/metaData'
 import { DownloadStore } from './store/downloaded'
 import { DecodedStore } from './store/decoded'
 
@@ -46,7 +44,7 @@ const libgif = (opts: Options) => {
     return (...args) => {
       fn(...args)
       const download = DownloadStore.getDownload(currentKey)
-      viewer.drawProgress(download.progress)
+      download?.progress && viewer.drawProgress(download.progress)
     }
   }
 
@@ -72,13 +70,8 @@ const libgif = (opts: Options) => {
     player.onFrames(e.frames)
   }
 
-  const onComplete = () => {
-    player.framsComplete = true
-  }
-
   DecodedStore.on('header', withProgress(onHeader))
   DecodedStore.on('frame', withProgress(onFrame))
-  // DecodedStore.on('complete', withProgress(onComplete))
 
   // /DecodedStore
 
