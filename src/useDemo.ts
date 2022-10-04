@@ -67,7 +67,7 @@ export default () => {
     scaleYInput.oninput = onYScale
   }
 
-  const rub = libDev({ gif: container })
+  const rub = libgif({ gif: container })
   console.log(rub)
 
   root.addEventListener('click', (e) => {

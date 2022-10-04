@@ -20,10 +20,10 @@
     "@zaqmjuop/libgif" "^1.0.3"
     mitt "^3.0.0"
 
-"@zaqmjuop/libgif@^1.0.8":
-  version "1.0.8"
-  resolved "https://registry.npmjs.org/@zaqmjuop/libgif/-/libgif-1.0.8.tgz#91c03197649c85c7a587a37f876efb4044976d1d"
-  integrity sha512-b/Rf4sm5J/RQNYTd8RiedvPAIZk2Ekv1lXgg11OtPLyWkc2tu/ptNjx9CNoB2Qv22bs9bURPSlvDjrc/jcDGzw==
+"@zaqmjuop/libgif@^1.0.9":
+  version "1.0.9"
+  resolved "https://registry.npmjs.org/@zaqmjuop/libgif/-/libgif-1.0.9.tgz#61c5ad984ef5b3e6284f402300e8e1fc85bed62d"
+  integrity sha512-tnyOE+9ZFTkQAZipuTSEjKun2Nvja9IGG9Va3WUTuNWCcMn3ms3kO2hlg9ZMPSOqRBKk5ADih1ipyoxZBF19Cw==
   dependencies:
     "@zaqmjuop/libgif" "^1.0.3"
     mitt "^3.0.0"
