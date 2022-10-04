@@ -1,20 +1,24 @@
-import { Frame, Header, Rect } from './type'
+import { DecodedStore } from './store/decoded'
+import { DecodedData, frame, Frame, Header, Rect } from './type'
 import { Emitter } from './utils/Emitter'
 import { Viewer } from './viewer'
 
 interface PlayerQuote {
-  overrideLoopMode: boolean
   viewer: Viewer
 }
+
+type playerHeader = { width: number; height: number }
+
 export class Player extends Emitter<['finish']> {
-  private i = -1
+  private i = 0
   iterationCount = 0
   forward = true
   playing = false
-  frameGroup: Array<Frame & Rect> = []
   opacity = 255
-  timestamp = 0
+  onFramed = false
   t = 0
+  currentKey?: string = void 0
+  prepared = false
   readonly quote: PlayerQuote
 
   constructor(quote: PlayerQuote) {
@@ -22,19 +26,59 @@ export class Player extends Emitter<['finish']> {
     this.quote = quote
   }
 
+  get currentImg() {
+    return (
+      (this.currentKey && DecodedStore.getDecodeData(this.currentKey)) || void 0
+    )
+  }
+
+  get header(): playerHeader | void {
+    const img = this.currentImg
+    if (!img?.header) {
+      return void 0
+    }
+    return {
+      width: img.header.logicalScreenWidth,
+      height: img.header.logicalScreenHeight
+    }
+  }
+
+  get framsComplete() {
+    return !!this.currentImg?.complete
+  }
+
+  get frameGroup() {
+    return this.currentImg ? this.currentImg.frames : []
+  }
+
+  get readyStatus() {
+    return this.currentKey
+      ? DecodedStore.getDecodeStatus(this.currentKey)
+      : 'none'
+  }
+
+  get currentFrame(): frame | void {
+    return this.frameGroup[this.i]
+  }
+
   /**
    * Gets the index of the frame "up next".
    * @returns {number}
    */
   private getNextFrameNo() {
+    const length = this.frameGroup.length
+    if (!length) {
+      return length
+    }
     const delta = this.forward ? 1 : -1
-    return (this.i + delta + this.frameGroup.length) % this.frameGroup.length
+    const res = (this.i + delta + length) % length
+    return res
   }
 
   private finish = () => {
     this.iterationCount++
     this.emit('finish')
-    if (this.quote.overrideLoopMode || this.iterationCount < 1) {
+    if (this.quote.viewer.canvas?.getAttribute('loop') === 'loop') {
       this.goOn()
     } else {
       this.pause()
@@ -43,33 +87,21 @@ export class Player extends Emitter<['finish']> {
 
   private goOn = () => {
     if (!this.playing) return
-    this.putFrameBy(1)
-    const delay = this.frameGroup[this.i].delay
-    const isComplete = this.getNextFrameNo() === 0
     clearTimeout(this.t)
-    this.t = isComplete
-      ? window.setTimeout(this.finish, delay)
-      : window.setTimeout(this.goOn, delay)
-    return
+    const currentFrame = this.putFrame(this.getNextFrameNo())
+    const isComplete = this.getNextFrameNo() === 0 && this.framsComplete
+    const delay = currentFrame?.delay || 17
+    this.t = window.setTimeout(isComplete ? this.finish : this.goOn, delay)
   }
 
-  putFrameBy = (amount: number) => {
-    // XXX: Name is confusing.
-    this.i = this.i + amount
-    this.putFrame()
-  }
-
-  private putFrame(flag?: number) {
-    if (typeof flag === 'number') {
+  putFrame(flag: number) {
+    const frame = this.frameGroup[flag]
+    if (frame) {
       this.i = flag
+      this.quote.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
+      this.quote.viewer.drawDraft()
     }
-    if (this.i < 0 || this.i >= this.frameGroup.length) {
-      this.i = 0
-    }
-    const frame = this.frameGroup[this.i]
-
-    this.quote.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
-    this.quote.viewer.drawDraft()
+    return frame
   }
 
   play = () => {
@@ -83,35 +115,40 @@ export class Player extends Emitter<['finish']> {
   pause = () => {
     this.playing = false
   }
-  current_frame() {
-    return this.i
-  }
-  move_to = (frame_idx) => {
-    this.i = frame_idx
-    this.putFrame()
-  }
 
   resetState = () => {
     clearTimeout(this.t)
-    this.i = -1
+    this.i = 0
     this.iterationCount = 0
     this.forward = true
     this.playing = false
-    this.frameGroup = []
     this.opacity = 255
-    this.timestamp = 0
+    this.onFramed = false
+    this.prepared = false
   }
 
-  onHeader = (header: Header) => {
+  async prepare() {
+    const setHeader = () => {
+      const header = this.header
+      if (header) {
+        this.quote.viewer.setDraftSize(header)
+      }
+      return !!header
+    }
+    if (!setHeader()) {
+      await new Promise((resolve) => {
+        const handler = () =>
+          setHeader() && resolve(DecodedStore.off('header', handler))
+        DecodedStore.on('header', handler)
+      })
+    }
+    this.prepared = true
+  }
+
+  async switch(key: string) {
     this.resetState()
-    this.quote.viewer.adapt({
-      width: header.logicalScreenWidth,
-      height: header.logicalScreenHeight
-    })
-  }
-
-  onFrame = (frame: Frame & Rect) => {
-    this.frameGroup.push(frame)
+    this.currentKey = key
+    await this.prepare()
     this.play()
   }
 

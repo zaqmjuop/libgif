@@ -1,4 +1,3 @@
-import { Emitter } from '../utils/Emitter'
 import { lzwDecode } from './lzwDecode'
 import { bitsToNum, byteToBitArr, Stream } from './stream'
 import {
@@ -13,19 +12,7 @@ import {
   rgb
 } from '../type'
 import { createWorkerFunc } from '../utils/createWorkerFunc'
-import { __DEV__ } from '../utils/metaData'
-
-// The actual parsing; returns an object with properties.
-
-const EMITS = [
-  'header',
-  'com',
-  'app',
-  'frame',
-  'complete',
-  'pte',
-  'unknown'
-] as const
+import { DecodedStore } from '../store/decoded'
 
 // Disposal method indicates the way in which the graphic is to be treated after being displayed.
 enum DisposalMethod {
@@ -37,10 +24,11 @@ enum DisposalMethod {
 
 const workerLzwDecode = createWorkerFunc(lzwDecode)
 
-export class Gif89aDecoder extends Emitter<typeof EMITS> {
+export class Gif89aDecoder {
   private readonly canvas = document.createElement('canvas') // 图片文件原始模样
   private readonly ctx: CanvasRenderingContext2D
   private st: Stream | null = null
+  key = ''
   private header?: Header
   private graphControll?: GCExtBlock
   public app?: AppExtBlock
@@ -48,7 +36,6 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
   private opacity = 255
   frameGroup: Array<Frame & Rect> = []
   constructor() {
-    super()
     this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
   }
 
@@ -89,7 +76,6 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
 
   private parseHeader = () => {
     if (!this.st) return
-    let t = __DEV__ ? Date.now() : 0
     const signature = this.st.read(3)
     const version = this.st.read(3)
     if (signature !== 'GIF') throw new Error('Not a GIF file.') // XXX: This should probably be handled more nicely.
@@ -126,8 +112,8 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     }
     this.header = header
     this.setCanvasSize(header.logicalScreenWidth, header.logicalScreenHeight)
-    __DEV__ && console.log(`parseHeader time: ${Date.now() - t}`)
-    this.emit('header', header)
+    DecodedStore.setHeader(this.key, header)
+    return header
   }
 
   private setCanvasSize(width: number, height: number) {
@@ -179,7 +165,8 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       const comment = this.readSubBlocks()
       const comExt = { ...block, comment }
       this.exts.push(comExt)
-      this.emit('com', comExt)
+      DecodedStore.pushBlocks(this.key, [comExt])
+      return comExt
     }
 
     const parsePTExt = (block: ExtBlock) => {
@@ -190,7 +177,8 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       const ptData = this.readSubBlocks()
       const pteExt = { ...block, ptHeader, ptData }
       this.exts.push(pteExt)
-      this.emit('pte', pteExt)
+      DecodedStore.pushBlocks(this.key, [pteExt])
+      return pteExt
     }
 
     const parseAppExt = (block: ExtBlock) => {
@@ -209,7 +197,8 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
           identifier: 'NETSCAPE'
         }
         this.app = appExt
-        this.emit('app', appExt)
+        DecodedStore.pushBlocks(this.key, [appExt])
+        return appExt
       }
 
       const parseUnknownAppExt = (block: AppExtBlock) => {
@@ -217,7 +206,8 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
         const appExt = { ...block, appData, identifier: block.identifier }
         this.app = appExt
         // FIXME: This won't work if a handler wants to match on any identifier.
-        this.emit('app', appExt)
+        DecodedStore.pushBlocks(this.key, [appExt])
+        return appExt
       }
 
       const blockSize = this.st.readByte() // Always 11
@@ -232,13 +222,15 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
           parseUnknownAppExt(appBlock)
           break
       }
+      return appBlock
     }
 
     const parseUnknownExt = (block: ExtBlock) => {
       const data = this.readSubBlocks()
       const unknownExt = { ...block, data }
       this.exts.push(unknownExt)
-      this.emit('unknown', unknownExt)
+      DecodedStore.pushBlocks(this.key, [unknownExt])
+      return unknownExt
     }
 
     const label = this.st.readByte()
@@ -250,30 +242,26 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     switch (extBlock.label) {
       case 0xf9:
         extBlock.extType = 'gce'
-        parseGCExt(extBlock)
-        break
+        return parseGCExt(extBlock)
       case 0xfe:
         extBlock.extType = 'com'
-        parseComExt(extBlock)
-        break
+        return parseComExt(extBlock)
       case 0x01:
         extBlock.extType = 'pte'
-        parsePTExt(extBlock)
-        break
+        return parsePTExt(extBlock)
       case 0xff:
         extBlock.extType = 'app'
-        parseAppExt(extBlock)
-        break
+        return parseAppExt(extBlock)
       default:
         extBlock.extType = 'unknown'
-        parseUnknownExt(extBlock)
-        break
+        return parseUnknownExt(extBlock)
     }
   }
 
-  private parseImg = async (block: Block) => {
+  private parseImg = async (
+    block: Block
+  ): Promise<void | (ImgBlock & { frame: Frame & Rect })> => {
     if (!this.st) return
-    let t = __DEV__ ? Date.now() : 0
     const deinterlace = (pixels: number[], width: number) => {
       // Of course this defeats the purpose of interlacing. And it's *probably*
       // the least efficient way it's ever been implemented. But nevertheless...
@@ -323,15 +311,10 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
 
     const lzwData: string = this.readSubBlocks() as string
 
-    let pixels: number[] = !__DEV__
-      ? lzwDecode(lzwMinCodeSize, lzwData)
-      : await workerLzwDecode(lzwMinCodeSize, lzwData)
-
-    __DEV__ && console.log(`lzwDecode time: ${Date.now() - t}`)
+    let pixels: number[] = await workerLzwDecode(lzwMinCodeSize, lzwData)
     // Move
     if (interlaced) {
       pixels = deinterlace(pixels, width)
-      __DEV__ && console.log(`deinterlace time: ${Date.now() - t}`)
     }
 
     const img: ImgBlock = {
@@ -349,12 +332,11 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       lzwMinCodeSize,
       pixels
     }
-    __DEV__ && console.log(`parseImg time: ${Date.now() - t}`)
-    this.parseFrame(img)
+    const frame = this.parseFrame(img)
+    return { ...img, frame }
   }
 
-  private parseFrame = (img: ImgBlock) => {
-    let t = __DEV__ ? Date.now() : 0
+  private parseFrame = (img: ImgBlock): Frame & Rect => {
     // graphControll
     const graphControll = this.graphControll
     if (graphControll) {
@@ -370,7 +352,12 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
       : (this.header?.globalColorTable as rgb[]) // TODO: What if neither exists? 调用系统颜色表
     //Get existing pixels for img region after applying disposal method
 
-    const imgData: ImageData = this.getDraft(img)
+    const imgData: ImageData = this.ctx.getImageData(
+      img.leftPos,
+      img.topPos,
+      img.width,
+      img.height
+    )
     if (colorTable) {
       img.pixels.forEach((pixel, i) => {
         if (pixel !== transparency) {
@@ -381,19 +368,28 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
         }
       })
     }
+    this.ctx.putImageData(
+      imgData,
+      img.leftPos,
+      img.topPos,
+      0,
+      0,
+      img.width,
+      img.height
+    )
     const frame: Frame & Rect = {
-      data: imgData,
+      data: this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height),
       delay: delayTime,
-      leftPos: img.leftPos,
-      topPos: img.topPos,
+      leftPos: 0,
+      topPos: 0,
       width: this.canvas.width,
       height: this.canvas.height
     }
     this.frameGroup.push(frame)
 
     this.graphControll = void 0
-    __DEV__ && console.log(`parseFrame time: ${Date.now() - t}`)
-    this.emit('frame', frame)
+    DecodedStore.pushFrames(this.key, [frame])
+    return frame
   }
 
   private disposal(method: number | null) {
@@ -432,22 +428,19 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     }
   }
 
-  private getDraft = (rect: Rect) => {
-    return this.ctx.getImageData(
-      rect.leftPos,
-      rect.topPos,
-      rect.width,
-      rect.height
-    )
-  }
-
   private parseBlock = async () => {
     if (!this.st) return
-    let t = __DEV__ ? Date.now() : 0
     const sentinel = this.st.readByte()
     const block: Block = {
       sentinel,
       type: ''
+    }
+
+    const onComplete = () => {
+      block.type = 'complete'
+      this.st = null
+      this.key = ''
+      return block
     }
 
     switch (
@@ -455,47 +448,44 @@ export class Gif89aDecoder extends Emitter<typeof EMITS> {
     ) {
       case '!':
         block.type = 'ext'
-        this.parseExt(block)
-        break
+        return this.parseExt(block)
       case ',':
         block.type = 'img'
-        await this.parseImg(block)
-        break
+        return this.parseImg(block)
       case ';':
-        block.type = 'complete'
-        this.st = null
-        this.emit('complete', {
-          ...block,
-          header: this.header,
-          frameGroup: this.frameGroup,
-          opacity: this.opacity
-        })
-        break
+        return onComplete()
       case '\x00':
-        block.type = 'complete'
-        this.st = null
-        this.emit('complete', {
-          ...block,
-          header: this.header,
-          frameGroup: this.frameGroup,
-          opacity: this.opacity
-        })
-        break
+        return onComplete()
       default:
         throw new Error('Unknown block: 0x' + block.sentinel.toString(16)) // TODO: Pad this with a 0.
     }
-    __DEV__ &&
-      console.log(`parseBlock time: ${Date.now() - t}, type:${block.type}`)
-    if (block.type !== 'complete') setTimeout(this.parseBlock, 0)
   }
 
-  public parse = (st: Stream, config?: { opacity: number }) => {
+  public parse = async (
+    st: Stream,
+    key: string,
+    config?: { opacity: number }
+  ) => {
     if (this.st) return
     this.st = st
+    this.key = key
     if (config) {
       this.opacity = config.opacity
     }
-    this.parseHeader()
-    setTimeout(this.parseBlock, 0)
+    const blocks: Block[] = []
+    const header = this.parseHeader()
+    while (this.st) {
+      const block = await this.parseBlock()
+      block && blocks.push(block)
+    }
+    const completeData = {
+      header,
+      blocks,
+      frameGroup: this.frameGroup,
+      opacity: this.opacity
+    }
+    DecodedStore.setComplete(key)
+    return completeData
   }
 }
+

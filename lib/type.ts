@@ -1,3 +1,6 @@
+export type ArrayElement<ArrayType extends readonly unknown[]> =
+  ArrayType extends readonly (infer ElementType)[] ? ElementType : never
+
 export interface Frame {
   data: ImageData
   delay: number
@@ -31,10 +34,8 @@ export interface Header {
 }
 
 export interface Options {
-  gif: HTMLElement
-  on_end?: (gif: HTMLElement) => void
-  loop_delay?: number
-  loop_mode?: boolean
+  gif: HTMLCanvasElement
+  opacity?: number
 }
 
 export interface Block {
@@ -98,3 +99,23 @@ export type background = Rect & {
 }
 
 export type gifData = string | Uint8Array
+
+export interface DownloadRecord {
+  data?: gifData
+  progress: number
+  error?: string
+}
+
+export interface DownloadEvent {
+  key: string
+  cache: DownloadRecord
+}
+
+export type frame = Frame & Rect
+
+export interface DecodedData {
+  header?: Header
+  blocks: Block[]
+  frames: frame[]
+  complete: boolean
+}
