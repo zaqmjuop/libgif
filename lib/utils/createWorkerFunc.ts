@@ -1,7 +1,4 @@
-const idGetter = () => {
-  let id = 0
-  return () => `${id++}`
-}
+import { idGetter } from './idGetter'
 
 export const createWorkerFunc = <F extends (...agrs: any[]) => any>(
   func: F
