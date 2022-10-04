@@ -36,6 +36,6 @@ export const decode = async (
     DecodedStore.on('decoded', onDecode)
   })
   await promise
-  t && console.log('解码时长', Date.now() - t, key)
+  t && console.log(`【${key}】decode time: ${Date.now() - t}`)
   return DecodedStore.getDecodeData(key) as Required<DecodedData>
 }
