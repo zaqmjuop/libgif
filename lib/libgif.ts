@@ -16,7 +16,7 @@ const READY_STATE = {
 } as const
 
 const libgif = (opts: Options) => {
-  const EMITS = ['play', 'frameChange', 'pause', 'decoded'] as const
+  const EMITS = ['play', 'frameChange', 'pause', 'decoded', 'downloaded'] as const
   const emitter = new Emitter<typeof EMITS>()
   const options: Required<Options> = Object.assign(
     {
@@ -158,6 +158,8 @@ const libgif = (opts: Options) => {
     loadUrl: loadUrl,
     // decodeStore
     getDecodeData: DecodedStore.getDecodeData,
+    // DownloadStore
+    getDownload: DownloadStore.getDownload,
     // emiter
     on: emitter.on.bind(emitter),
     off: emitter.off.bind(emitter)
@@ -167,7 +169,8 @@ const libgif = (opts: Options) => {
   player.on('frameChange', (e) => emitter.emit('frameChange', e))
   player.on('pause', (e) => emitter.emit('pause', e))
   DecodedStore.on('decoded', (e) => emitter.emit('decoded', e))
-  
+  DownloadStore.on('downloaded', (e) => emitter.emit('downloaded', e))
+
   ;(gif as any).controller = controller
 
   return controller
