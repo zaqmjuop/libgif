@@ -16,7 +16,7 @@ const READY_STATE = {
 } as const
 
 const libgif = (opts: Options) => {
-  const EMITS = ['play', 'frameChange', 'pause'] as const
+  const EMITS = ['play', 'frameChange', 'pause', 'decoded'] as const
   const emitter = new Emitter<typeof EMITS>()
   const options: Required<Options> = Object.assign(
     {
@@ -67,7 +67,7 @@ const libgif = (opts: Options) => {
     const hasDecoded = DecodedStore.getDecodeStatus(url)
     const hasDownloaded = DownloadStore.getDownloadStatus(url)
     try {
-      if (hasDecoded === 'complete') {
+      if (hasDecoded === 'decoded') {
         status = READY_STATE.DECODED
         player.switch(url)
       } else if (hasDecoded !== 'none') {
@@ -136,11 +136,8 @@ const libgif = (opts: Options) => {
   //   readyState: 1 // 准备状态
   // }
 
-  player.on('play', () => emitter.emit('play'))
-  player.on('frameChange', () => emitter.emit('frameChange'))
-  player.on('pause', () => emitter.emit('pause'))
-
   const controller = {
+    // player
     get playing() {
       return player.playing
     },
@@ -159,10 +156,18 @@ const libgif = (opts: Options) => {
     play: player.play,
     pause: player.pause,
     loadUrl: loadUrl,
+    // decodeStore
+    getDecodeData: DecodedStore.getDecodeData,
+    // emiter
     on: emitter.on.bind(emitter),
     off: emitter.off.bind(emitter)
   }
 
+  player.on('play', (e) => emitter.emit('play', e))
+  player.on('frameChange', (e) => emitter.emit('frameChange', e))
+  player.on('pause', (e) => emitter.emit('pause', e))
+  DecodedStore.on('decoded', (e) => emitter.emit('decoded', e))
+  
   ;(gif as any).controller = controller
 
   return controller
