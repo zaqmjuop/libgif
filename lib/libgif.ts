@@ -2,22 +2,15 @@ import { Emitter } from './utils/Emitter'
 import { load_url } from './utils/loader'
 import { Player } from './player'
 import { decode } from './decoders/decode'
-import { DownloadRecord, LibgifDefaultOptions } from './type'
+import { DownloadRecord, LibgifInitOptions } from './type'
 import { Viewer } from './viewer'
 import { DownloadStore } from './store/downloaded'
 import { DecodedStore } from './store/decoded'
-
-const READY_STATE = {
-  UNDOWNLOAD: 0,
-  DOWNLOADING: 1,
-  DOWNLOADED: 2,
-  DECODING: 3,
-  DECODED: 4
-} as const
+import { READY_STATE } from './utils/metaData'
 
 const OPACITY = 255
 
-const libgif = (opts: LibgifDefaultOptions) => {
+const libgif = (opts: LibgifInitOptions) => {
   const EMITS = [
     'error',
     'play',
@@ -30,22 +23,9 @@ const libgif = (opts: LibgifDefaultOptions) => {
   ] as const
   const emitter = new Emitter<typeof EMITS>()
   const gif = opts.gif
-  const initialTime =
-    typeof opts.initialTime === 'number' ? opts.initialTime : true
-  const initialForward =
-    typeof opts.initialForward === 'boolean' ? opts.initialForward : true
-  const initialRate =
-    typeof opts.initialRate === 'number' ? opts.initialRate : 1
-  const initialLoop =
-    typeof opts.initialLoop === 'boolean' ? opts.initialLoop : true
-  const initialPlay = ['auto', 'downloaded', 'decoded', 'none'].includes(
-    opts.initialPlay as any
-  )
-    ? opts.initialPlay
-    : 'auto'
 
   let status: number
-  let currentKey = gif.getAttribute('src') || ''
+  let currentKey = opts.src || ''
   // global func
   // global func
   // canvas
@@ -54,7 +34,14 @@ const libgif = (opts: LibgifDefaultOptions) => {
   // canvas
 
   // player
-  const player = new Player({ viewer })
+  const player = new Player({
+    viewer,
+    beginFrameNo: opts.beginFrameNo,
+    forword: opts.forword,
+    rate: opts.rate,
+    loop: opts.loop,
+    autoplay: opts.autoplay
+  })
   // player
   // DownloadStore
   const onError = (e: { key: string } & DownloadRecord) => {
@@ -106,12 +93,6 @@ const libgif = (opts: LibgifDefaultOptions) => {
       emitter.emit('error', event)
     }
   }
-  // preload & autoplay
-  const preload = gif.getAttribute('preload')
-  const autoplay = gif.getAttribute('autoplay')
-  if (autoplay) {
-    loadUrl(currentKey)
-  }
 
   const controller = {
     // player
@@ -159,6 +140,8 @@ const libgif = (opts: LibgifDefaultOptions) => {
   DownloadStore.on('downloaded', (e) => emitter.emit('downloaded', e))
   DownloadStore.on('progress', (e) => emitter.emit('progress', e))
   ;(gif as any).controller = controller
+
+  currentKey &&  loadUrl(currentKey)
 
   return controller
 }

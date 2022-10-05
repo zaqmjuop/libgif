@@ -1,29 +1,48 @@
 import { DecodedStore } from './store/decoded'
-import { frame } from './type'
+import { frame, initialPlay } from './type'
 import { Emitter } from './utils/Emitter'
+import { AUTO_PLAY_VARS } from './utils/metaData'
 import { Viewer } from './viewer'
 
-interface PlayerQuote {
+interface PlayerOption {
   viewer: Viewer
+  beginFrameNo?: number
+  forword?: boolean
+  rate?: number
+  loop?: boolean
+  autoplay?: initialPlay
 }
 
 type playerHeader = { width: number; height: number }
 
-export class Player extends Emitter<['play', 'frameChange', 'pause', 'playended']> {
-  private i = 0
-  private _rate = 1
-  private _forward = true
+const isAutoPlayVar = (str: unknown): str is initialPlay =>
+  AUTO_PLAY_VARS.includes(str as any)
+
+export class Player extends Emitter<
+  ['play', 'frameChange', 'pause', 'playended']
+> {
+  private i: number
+  private _rate: number
+  private _forward: boolean
+  private _loop: boolean
+  private t = 0
+  readonly viewer: Viewer
+  readonly beginFrameNo: number
+  readonly autoplay: initialPlay
   loopCount = 0
   playing = false
-  t = 0
   currentKey?: string = void 0
-  prepared = false
 
-  readonly quote: PlayerQuote
-
-  constructor(quote: PlayerQuote) {
+  constructor(option: PlayerOption) {
     super()
-    this.quote = quote
+    this.viewer = option.viewer
+    this.beginFrameNo =
+      typeof option.beginFrameNo === 'number' ? option.beginFrameNo : 1
+    this._forward = typeof option.forword === 'boolean' ? option.forword : true
+    this._rate = typeof option.rate === 'number' ? option.rate : 1
+    this._loop = typeof option.loop === 'boolean' ? option.loop : true
+    this.autoplay = isAutoPlayVar(option.autoplay) ? option.autoplay : 'auto'
+    this.i = this.beginFrameNo
   }
 
   get rate() {
@@ -42,6 +61,14 @@ export class Player extends Emitter<['play', 'frameChange', 'pause', 'playended'
 
   set forward(val: boolean) {
     this._forward = val
+  }
+
+  get loop() {
+    return this._loop
+  }
+
+  set loop(val: boolean) {
+    this._loop = val
   }
 
   get currentImg() {
@@ -99,7 +126,7 @@ export class Player extends Emitter<['play', 'frameChange', 'pause', 'playended'
 
   private finish = () => {
     this.loopCount++
-    if (this.quote.viewer.canvas?.getAttribute('loop') !== 'loop') {
+    if (this.loop) {
       this.goOn()
     } else {
       this.pause()
@@ -119,12 +146,19 @@ export class Player extends Emitter<['play', 'frameChange', 'pause', 'playended'
     )
   }
 
+  resetState = () => {
+    clearTimeout(this.t)
+    this.i = this.beginFrameNo
+    this.loopCount = 0
+    this.playing = false
+  }
+
   putFrame(flag: number) {
     const frame = this.frameGroup[flag]
-    if (frame && frame.data !== this.quote.viewer.currentImgData) {
+    if (frame && frame.data !== this.viewer.currentImgData) {
       this.i = flag
-      this.quote.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
-      this.quote.viewer.drawDraft()
+      this.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
+      this.viewer.drawDraft()
       this.emit('frameChange')
     }
     return frame
@@ -144,21 +178,11 @@ export class Player extends Emitter<['play', 'frameChange', 'pause', 'playended'
     this.emit('pause')
   }
 
-  resetState = () => {
-    clearTimeout(this.t)
-    this.i = 0
-    this.loopCount = 0
-    this.forward = true
-    this.playing = false
-    this.prepared = false
-    this.rate = 1
-  }
-
   async prepare() {
     const setHeader = () => {
       const header = this.header
       if (header) {
-        this.quote.viewer.setDraftSize(header)
+        this.viewer.setDraftSize(header)
       }
       return !!header
     }
@@ -169,7 +193,6 @@ export class Player extends Emitter<['play', 'frameChange', 'pause', 'playended'
         DecodedStore.on('header', handler)
       })
     }
-    this.prepared = true
   }
 
   async switch(key: string) {

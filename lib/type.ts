@@ -1,3 +1,4 @@
+import { AUTO_PLAY_VARS } from './utils/metaData'
 export type ArrayElement<ArrayType extends readonly unknown[]> =
   ArrayType extends readonly (infer ElementType)[] ? ElementType : never
 
@@ -33,15 +34,16 @@ export interface Header {
   readonly globalColorTable: rgb[] | undefined
 }
 
-type initialPlay = 'auto' | 'downloaded' | 'decoded' | 'none'
+export type initialPlay = ArrayElement<typeof AUTO_PLAY_VARS>
 
-export interface LibgifDefaultOptions {
+export interface LibgifInitOptions {
   gif: HTMLCanvasElement // container
-  initialTime?: number
-  initialForward?: true
-  initialRate?: number
-  initialLoop?: boolean
-  initialPlay?: initialPlay
+  src?: string
+  forword?: boolean
+  rate?: number
+  loop?: boolean
+  autoplay?: initialPlay
+  beginFrameNo?: number
 }
 
 export interface Block {
