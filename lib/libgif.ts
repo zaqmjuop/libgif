@@ -25,7 +25,8 @@ const libgif = (opts: LibgifDefaultOptions) => {
     'pause',
     'playended',
     'decoded',
-    'downloaded'
+    'downloaded',
+    'progress'
   ] as const
   const emitter = new Emitter<typeof EMITS>()
   const gif = opts.gif
@@ -56,19 +57,6 @@ const libgif = (opts: LibgifDefaultOptions) => {
   const player = new Player({ viewer })
   // player
   // DownloadStore
-  const withProgress = (fn: Function) => {
-    return (...args) => {
-      fn(...args)
-      const download = DownloadStore.getDownload(currentKey)
-      download?.progress && viewer.drawProgress(download.progress)
-    }
-  }
-  const onProgress = (e: { key: string } & DownloadRecord) => {
-    if (e.key !== currentKey) {
-      return
-    }
-    viewer.drawProgress(e.progress)
-  }
   const onError = (e: { key: string } & DownloadRecord) => {
     if (e.key !== currentKey) {
       return
@@ -77,8 +65,7 @@ const libgif = (opts: LibgifDefaultOptions) => {
     viewer.drawError(e.error || '')
     emitter.emit('error', e)
   }
-  DownloadStore.on('progress', withProgress(onProgress))
-  DownloadStore.on('error', withProgress(onError))
+  DownloadStore.on('error', onError)
   // /DownloadStore
 
   const loadUrl = async (url: string) => {
@@ -170,6 +157,7 @@ const libgif = (opts: LibgifDefaultOptions) => {
   player.on('playended', (e) => emitter.emit('playended', e))
   DecodedStore.on('decoded', (e) => emitter.emit('decoded', e))
   DownloadStore.on('downloaded', (e) => emitter.emit('downloaded', e))
+  DownloadStore.on('progress', (e) => emitter.emit('progress', e))
   ;(gif as any).controller = controller
 
   return controller
