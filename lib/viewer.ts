@@ -1,4 +1,4 @@
-import { Rect, rgb } from './type'
+import { rgb } from './type'
 
 import { Emitter } from './utils/Emitter'
 export class Viewer extends Emitter<[]> {
@@ -7,16 +7,13 @@ export class Viewer extends Emitter<[]> {
   readonly resizeObserver: ResizeObserver
   readonly draftCanvas = document.createElement('canvas') // 图片文件原始模样
   readonly draftCtx: CanvasRenderingContext2D
-  opacity = 255
+  currentImgData: ImageData | rgb | null = null
   constructor() {
     super()
     this.resizeObserver = new ResizeObserver(this.onResize.bind(this))
     this.draftCtx = this.draftCanvas.getContext(
       '2d'
     ) as CanvasRenderingContext2D
-  }
-  get showProgressBar() {
-    return this.canvas?.getAttribute('progress_bar') !== 'none'
   }
 
   get scale() {
@@ -62,27 +59,6 @@ export class Viewer extends Emitter<[]> {
     this.draftCtx.setTransform(1, 0, 0, 1, 0, 0)
     this.updateScale()
   }
-  drawProgress(percent: number) {
-    if (!this.canvas || this.canvas.getAttribute('progress') !== 'progress') {
-      return
-    }
-    if (percent > 1 || percent < 0 || !this.showProgressBar) return
-    const { zoomW, zoomH } = this.scale
-    let height = 1
-    const top = (this.canvas.height - height) / zoomH
-    const mid = (percent * this.canvas.width) / zoomW
-
-    height = height / zoomH
-    const width = this.canvas.width / zoomW
-    if (!this.ctx) {
-      return
-    }
-    this.ctx.fillStyle = `rgba(255,255,255,0.4)`
-    this.ctx.fillRect(mid, top, width - mid, height)
-
-    this.ctx.fillStyle = `rgba(0,123,255,0.4)`
-    this.ctx.fillRect(0, top, mid, height)
-  }
   drawError = (originOfError: string) => {
     if (!this.canvas || !this.ctx) {
       return
@@ -102,6 +78,7 @@ export class Viewer extends Emitter<[]> {
 
   putDraft(picture: ImageData | rgb | null, left: number = 0, top: number = 0) {
     const { width, height } = this.draftCanvas
+    this.currentImgData = picture
     if (!picture) {
       this.draftCtx.clearRect(0, 0, width, height)
     } else if (picture instanceof ImageData) {
