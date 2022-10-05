@@ -19,11 +19,9 @@ export const decode = async (
   config: { opacity: number }
 ): Promise<Required<DecodedData>> => {
   const decodeStatus = DecodedStore.getDecodeStatus(key)
-  let t
   if (decodeStatus === 'decoded') {
     return DecodedStore.getDecodeData(key) as Required<DecodedData>
   } else if (decodeStatus === 'none') {
-    t = Date.now()
     DecodedStore.addRecord(key)
     const stream = new Stream(gifData)
     setupDecode(stream, key, config)
@@ -36,6 +34,5 @@ export const decode = async (
     DecodedStore.on('decoded', onDecode)
   })
   await promise
-  t && console.log(`【${key}】decode time: ${Date.now() - t}`)
   return DecodedStore.getDecodeData(key) as Required<DecodedData>
 }
