@@ -36,7 +36,9 @@ export class Gif89aDecoder {
   private opacity = 255
   frameGroup: Array<Frame & Rect> = []
   constructor() {
-    this.ctx = this.canvas.getContext('2d') as CanvasRenderingContext2D
+    this.ctx = this.canvas.getContext('2d', {
+      willReadFrequently: true // https://html.spec.whatwg.org/multipage/canvas.html#concept-canvas-will-read-frequently
+    }) as CanvasRenderingContext2D
   }
 
   public get pos() {
@@ -488,4 +490,3 @@ export class Gif89aDecoder {
     return completeData
   }
 }
-

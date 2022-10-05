@@ -37,12 +37,9 @@ export default () => {
     </label>
     </div>
     <canvas
-      id="${id}"
-      src="${src}" 
+      id="${id}" 
       width="${width}"
       height="${height}" 
-      poster="poster"
-      autoplay="autoplay"
     /> 
   `
   const container = document.getElementById(id)! as HTMLCanvasElement
@@ -67,7 +64,7 @@ export default () => {
     scaleYInput.oninput = onYScale
   }
 
-  const rub = libgif({ gif: container })
+  const rub = libgif({ gif: container, src })
   console.log(rub)
   ;(window as any).r = rub
 
