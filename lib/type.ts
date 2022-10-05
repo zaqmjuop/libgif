@@ -33,9 +33,15 @@ export interface Header {
   readonly globalColorTable: rgb[] | undefined
 }
 
-export interface Options {
-  gif: HTMLCanvasElement
-  opacity?: number
+type initialPlay = 'auto' | 'downloaded' | 'decoded' | 'none'
+
+export interface LibgifDefaultOptions {
+  gif: HTMLCanvasElement // container
+  initialTime?: number
+  initialForward?: true
+  initialRate?: number
+  initialLoop?: boolean
+  initialPlay?: initialPlay
 }
 
 export interface Block {

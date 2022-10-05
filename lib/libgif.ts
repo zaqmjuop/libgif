@@ -2,7 +2,7 @@ import { Emitter } from './utils/Emitter'
 import { load_url } from './utils/loader'
 import { Player } from './player'
 import { decode } from './decoders/decode'
-import { DownloadRecord, frame, Header, Options } from './type'
+import { DownloadRecord, LibgifDefaultOptions } from './type'
 import { Viewer } from './viewer'
 import { DownloadStore } from './store/downloaded'
 import { DecodedStore } from './store/decoded'
@@ -15,7 +15,9 @@ const READY_STATE = {
   DECODED: 4
 } as const
 
-const libgif = (opts: Options) => {
+const OPACITY = 255
+
+const libgif = (opts: LibgifDefaultOptions) => {
   const EMITS = [
     'error',
     'play',
@@ -26,14 +28,21 @@ const libgif = (opts: Options) => {
     'downloaded'
   ] as const
   const emitter = new Emitter<typeof EMITS>()
-  const options: Required<Options> = Object.assign(
-    {
-      opacity: 255
-    },
-    opts
+  const gif = opts.gif
+  const initialTime =
+    typeof opts.initialTime === 'number' ? opts.initialTime : true
+  const initialForward =
+    typeof opts.initialForward === 'boolean' ? opts.initialForward : true
+  const initialRate =
+    typeof opts.initialRate === 'number' ? opts.initialRate : 1
+  const initialLoop =
+    typeof opts.initialLoop === 'boolean' ? opts.initialLoop : true
+  const initialPlay = ['auto', 'downloaded', 'decoded', 'none'].includes(
+    opts.initialPlay as any
   )
-  Object.defineProperties
-  const gif = options.gif
+    ? opts.initialPlay
+    : 'auto'
+
   let status: number
   let currentKey = gif.getAttribute('src') || ''
   // global func
@@ -88,7 +97,7 @@ const libgif = (opts: Options) => {
         const downloadData = await DownloadStore.getDownload(url)
         player.switch(url)
         await decode(downloadData.data!, url, {
-          opacity: options.opacity
+          opacity: OPACITY
         })
         status = READY_STATE.DECODED
       } else if (hasDownloaded !== 'none') {
@@ -97,7 +106,7 @@ const libgif = (opts: Options) => {
         status = READY_STATE.DOWNLOADED
         player.switch(url)
         await decode(downloadData.data, url, {
-          opacity: options.opacity
+          opacity: OPACITY
         })
         status = READY_STATE.DECODED
       } else {
@@ -106,7 +115,7 @@ const libgif = (opts: Options) => {
         status = READY_STATE.DOWNLOADED
         player.switch(url)
         await decode(downloadData.data, url, {
-          opacity: options.opacity
+          opacity: OPACITY
         })
         status = READY_STATE.DECODED
       }

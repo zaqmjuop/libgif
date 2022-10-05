@@ -11,7 +11,7 @@ type playerHeader = { width: number; height: number }
 
 export class Player extends Emitter<['play', 'frameChange', 'pause', 'playended']> {
   private i = 0
-  private _speed = 1
+  private _rate = 1
   private _forward = true
   loopCount = 0
   playing = false
@@ -27,12 +27,12 @@ export class Player extends Emitter<['play', 'frameChange', 'pause', 'playended'
   }
 
   get rate() {
-    return this._speed
+    return this._rate
   }
 
   set rate(val: number) {
     if (val >= 0) {
-      this._speed = val
+      this._rate = val
     }
   }
 

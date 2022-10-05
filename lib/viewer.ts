@@ -7,7 +7,6 @@ export class Viewer extends Emitter<[]> {
   readonly resizeObserver: ResizeObserver
   readonly draftCanvas = document.createElement('canvas') // 图片文件原始模样
   readonly draftCtx: CanvasRenderingContext2D
-  opacity = 255
   currentImgData: ImageData | rgb | null = null
   constructor() {
     super()
