@@ -126,13 +126,14 @@ const libgif = (opts: LibgifInitOptions) => {
     set loop(val: boolean) {
       player.loop = val
     },
-    play: player.play,
-    pause: player.pause,
+    play: player.play.bind(player),
+    pause: player.pause.bind(player),
+    jumpTo: player.putFrame.bind(player),
     loadUrl: loadUrl,
     // decodeStore
-    getDecodeData: DecodedStore.getDecodeData,
+    getDecodeData: DecodedStore.getDecodeData.bind(DecodedStore),
     // DownloadStore
-    getDownload: DownloadStore.getDownload,
+    getDownload: DownloadStore.getDownload.bind(DownloadStore),
     // emiter
     on: emitter.on.bind(emitter),
     off: emitter.off.bind(emitter)
