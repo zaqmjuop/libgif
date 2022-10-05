@@ -1,5 +1,5 @@
 import { DecodedStore } from './store/decoded'
-import { DecodedData, frame, Frame, Header, Rect } from './type'
+import { frame } from './type'
 import { Emitter } from './utils/Emitter'
 import { Viewer } from './viewer'
 
@@ -15,8 +15,6 @@ export class Player extends Emitter<['play', 'frameChange', 'pause']> {
   private _forward = true
   loopCount = 0
   playing = false
-  opacity = 255
-  onFramed = false
   t = 0
   currentKey?: string = void 0
   prepared = false
@@ -151,8 +149,6 @@ export class Player extends Emitter<['play', 'frameChange', 'pause']> {
     this.loopCount = 0
     this.forward = true
     this.playing = false
-    this.opacity = 255
-    this.onFramed = false
     this.prepared = false
     this.speed = 1
   }
