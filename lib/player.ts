@@ -26,11 +26,11 @@ export class Player extends Emitter<['play', 'frameChange', 'pause']> {
     this.quote = quote
   }
 
-  get speed() {
+  get rate() {
     return this._speed
   }
 
-  set speed(val: number) {
+  set rate(val: number) {
     if (val >= 0) {
       this._speed = val
     }
@@ -114,7 +114,7 @@ export class Player extends Emitter<['play', 'frameChange', 'pause']> {
     const delay = currentFrame?.delay || 17
     this.t = window.setTimeout(
       isComplete ? this.finish : this.goOn,
-      delay / this.speed
+      delay / this.rate
     )
   }
 
@@ -150,7 +150,7 @@ export class Player extends Emitter<['play', 'frameChange', 'pause']> {
     this.forward = true
     this.playing = false
     this.prepared = false
-    this.speed = 1
+    this.rate = 1
   }
 
   async prepare() {

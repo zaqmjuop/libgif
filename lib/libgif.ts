@@ -132,11 +132,11 @@ const libgif = (opts: Options) => {
     get currentFrameNo() {
       return player.currentFrameNo
     },
-    get speed() {
-      return player.speed
+    get rate() {
+      return player.rate
     },
-    set speed(val: number) {
-      player.speed = val
+    set rate(val: number) {
+      player.rate = val
     },
     get forward() {
       return player.forward
