@@ -12,10 +12,10 @@
   resolved "https://registry.npmjs.org/@types/node/-/node-18.7.23.tgz#75c580983846181ebe5f4abc40fe9dfb2d65665f"
   integrity sha512-DWNcCHolDq0ZKGizjx2DZjR/PqsYwAcYUJmfMWqtVU2MBMG5Mo+xFZrhGId5r/O5HOuMPyQEcM6KUBp5lBZZBg==
 
-"@zaqmjuop/libgif@^1.0.12":
-  version "1.0.12"
-  resolved "https://registry.npmjs.org/@zaqmjuop/libgif/-/libgif-1.0.12.tgz#1c9c26f0ef8442f04f86f96901bf7e71ab23f359"
-  integrity sha512-CeX2FvFESvNBD5nMZD/d/L7XXQ8zR4T2ZY0rPYVet8cK8obXowQFMi7mzPcNVTTx5l8HOqriv7By/z1hCdB5dQ==
+"@zaqmjuop/libgif@^1.0.13":
+  version "1.0.13"
+  resolved "https://registry.npmjs.org/@zaqmjuop/libgif/-/libgif-1.0.13.tgz#33c636f7228218c632bd791712be768497455c57"
+  integrity sha512-2RM52ZJJU2fMwfsA2OiOm3bkMZH3FxGWRm7J5wdiCkxIsdWjudXvxYMp7U2FCm6e8WazGN9jCZf6iVT2nX9aGg==
   dependencies:
     mitt "^3.0.0"
 

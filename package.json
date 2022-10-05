@@ -1,6 +1,6 @@
 {
   "name": "@zaqmjuop/libgif",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "author": "zaqmjuop <zaqmjuop@gmail.com> (https://github.com/zaqmjuop)",
   "files": [
     "dist"
@@ -19,7 +19,7 @@
     "publish": "npm config set registry=http://registry.npmjs.org && npm publish --access public"
   },
   "dependencies": {
-    "@zaqmjuop/libgif": "^1.0.12",
+    "@zaqmjuop/libgif": "^1.0.13",
     "mitt": "^3.0.0"
   },
   "devDependencies": {
