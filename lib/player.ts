@@ -11,6 +11,7 @@ type playerHeader = { width: number; height: number }
 
 export class Player extends Emitter<['play', 'frameChange', 'pause']> {
   private i = 0
+  private _speed = 1
   loopCount = 0
   forward = true
   playing = false
@@ -19,11 +20,22 @@ export class Player extends Emitter<['play', 'frameChange', 'pause']> {
   t = 0
   currentKey?: string = void 0
   prepared = false
+
   readonly quote: PlayerQuote
 
   constructor(quote: PlayerQuote) {
     super()
     this.quote = quote
+  }
+
+  get speed() {
+    return this._speed
+  }
+
+  set speed(val: number) {
+    if (val >= 0) {
+      this._speed = val
+    }
   }
 
   get currentImg() {
@@ -94,7 +106,10 @@ export class Player extends Emitter<['play', 'frameChange', 'pause']> {
     const currentFrame = this.putFrame(this.getNextFrameNo())
     const isComplete = this.getNextFrameNo() === 0 && this.framsComplete
     const delay = currentFrame?.delay || 17
-    this.t = window.setTimeout(isComplete ? this.finish : this.goOn, delay)
+    this.t = window.setTimeout(
+      isComplete ? this.finish : this.goOn,
+      delay / this.speed
+    )
   }
 
   putFrame(flag: number) {
@@ -131,6 +146,7 @@ export class Player extends Emitter<['play', 'frameChange', 'pause']> {
     this.opacity = 255
     this.onFramed = false
     this.prepared = false
+    this.speed = 1
   }
 
   async prepare() {

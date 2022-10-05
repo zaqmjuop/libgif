@@ -16,7 +16,13 @@ const READY_STATE = {
 } as const
 
 const libgif = (opts: Options) => {
-  const EMITS = ['play', 'frameChange', 'pause', 'decoded', 'downloaded'] as const
+  const EMITS = [
+    'play',
+    'frameChange',
+    'pause',
+    'decoded',
+    'downloaded'
+  ] as const
   const emitter = new Emitter<typeof EMITS>()
   const options: Required<Options> = Object.assign(
     {
@@ -24,6 +30,7 @@ const libgif = (opts: Options) => {
     },
     opts
   )
+  Object.defineProperties
   const gif = options.gif
   let status: number
   let currentKey = gif.getAttribute('src') || ''
@@ -128,6 +135,12 @@ const libgif = (opts: Options) => {
     get currentFrameNo() {
       return player.currentFrameNo
     },
+    get speed() {
+      return player.speed
+    },
+    set speed(val: number) {
+      player.speed = val
+    },
     play: player.play,
     pause: player.pause,
     loadUrl: loadUrl,
@@ -145,7 +158,6 @@ const libgif = (opts: Options) => {
   player.on('pause', (e) => emitter.emit('pause', e))
   DecodedStore.on('decoded', (e) => emitter.emit('decoded', e))
   DownloadStore.on('downloaded', (e) => emitter.emit('downloaded', e))
-
   ;(gif as any).controller = controller
 
   return controller
