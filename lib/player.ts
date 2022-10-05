@@ -12,8 +12,8 @@ type playerHeader = { width: number; height: number }
 export class Player extends Emitter<['play', 'frameChange', 'pause']> {
   private i = 0
   private _speed = 1
+  private _forward = true
   loopCount = 0
-  forward = true
   playing = false
   opacity = 255
   onFramed = false
@@ -36,6 +36,14 @@ export class Player extends Emitter<['play', 'frameChange', 'pause']> {
     if (val >= 0) {
       this._speed = val
     }
+  }
+
+  get forward() {
+    return this._forward
+  }
+
+  set forward(val: boolean) {
+    this._forward = val
   }
 
   get currentImg() {
@@ -93,7 +101,7 @@ export class Player extends Emitter<['play', 'frameChange', 'pause']> {
 
   private finish = () => {
     this.loopCount++
-    if (this.quote.viewer.canvas?.getAttribute('loop') === 'loop') {
+    if (this.quote.viewer.canvas?.getAttribute('loop') !== 'loop') {
       this.goOn()
     } else {
       this.pause()
@@ -114,7 +122,7 @@ export class Player extends Emitter<['play', 'frameChange', 'pause']> {
 
   putFrame(flag: number) {
     const frame = this.frameGroup[flag]
-    if (frame) {
+    if (frame && frame.data !== this.quote.viewer.currentImgData) {
       this.i = flag
       this.quote.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
       this.quote.viewer.drawDraft()

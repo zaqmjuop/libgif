@@ -123,9 +123,6 @@ const libgif = (opts: Options) => {
     get playing() {
       return player.playing
     },
-    get forward() {
-      return player.forward
-    },
     get loopCount() {
       return player.loopCount
     },
@@ -140,6 +137,12 @@ const libgif = (opts: Options) => {
     },
     set speed(val: number) {
       player.speed = val
+    },
+    get forward() {
+      return player.forward
+    },
+    set forward(val: boolean) {
+      player.forward = val
     },
     play: player.play,
     pause: player.pause,

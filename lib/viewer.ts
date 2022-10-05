@@ -8,6 +8,7 @@ export class Viewer extends Emitter<[]> {
   readonly draftCanvas = document.createElement('canvas') // 图片文件原始模样
   readonly draftCtx: CanvasRenderingContext2D
   opacity = 255
+  currentImgData: ImageData | rgb | null = null
   constructor() {
     super()
     this.resizeObserver = new ResizeObserver(this.onResize.bind(this))
@@ -102,6 +103,7 @@ export class Viewer extends Emitter<[]> {
 
   putDraft(picture: ImageData | rgb | null, left: number = 0, top: number = 0) {
     const { width, height } = this.draftCanvas
+    this.currentImgData = picture
     if (!picture) {
       this.draftCtx.clearRect(0, 0, width, height)
     } else if (picture instanceof ImageData) {
