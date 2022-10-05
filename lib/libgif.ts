@@ -120,6 +120,12 @@ const libgif = (opts: LibgifInitOptions) => {
     set forward(val: boolean) {
       player.forward = val
     },
+    get loop() {
+      return player.loop
+    },
+    set loop(val: boolean) {
+      player.loop = val
+    },
     play: player.play,
     pause: player.pause,
     loadUrl: loadUrl,
