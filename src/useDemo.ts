@@ -1,6 +1,5 @@
 import { GIFS } from './metaData'
 import libDev from '@/../lib/libgif'
-import libgif from '@zaqmjuop/libgif'
 export default () => {
   const root = document.getElementById('useDemo')!
   const src = GIFS[1]
