@@ -20,6 +20,7 @@ const libgif = (opts: Options) => {
     'play',
     'frameChange',
     'pause',
+    'playended',
     'decoded',
     'downloaded'
   ] as const
@@ -159,6 +160,7 @@ const libgif = (opts: Options) => {
   player.on('play', (e) => emitter.emit('play', e))
   player.on('frameChange', (e) => emitter.emit('frameChange', e))
   player.on('pause', (e) => emitter.emit('pause', e))
+  player.on('playended', (e) => emitter.emit('playended', e))
   DecodedStore.on('decoded', (e) => emitter.emit('decoded', e))
   DownloadStore.on('downloaded', (e) => emitter.emit('downloaded', e))
   ;(gif as any).controller = controller

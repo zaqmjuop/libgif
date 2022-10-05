@@ -9,7 +9,7 @@ interface PlayerQuote {
 
 type playerHeader = { width: number; height: number }
 
-export class Player extends Emitter<['play', 'frameChange', 'pause']> {
+export class Player extends Emitter<['play', 'frameChange', 'pause', 'playended']> {
   private i = 0
   private _speed = 1
   private _forward = true
@@ -103,6 +103,7 @@ export class Player extends Emitter<['play', 'frameChange', 'pause']> {
       this.goOn()
     } else {
       this.pause()
+      this.emit('playended')
     }
   }
 
