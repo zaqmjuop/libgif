@@ -2,7 +2,7 @@
 
 这是[libgif-js](https://github.com/buzzfeed/libgif-js) 的一个分支，该项目被实现为一个用来在浏览器端对 GIF 进行解码和操纵动画的脚本组件。
 
-如果你喜欢它，请给它一个Star！
+如果你喜欢它，请给它一个 Star！
 
 **添加了一些变化**
 
@@ -13,9 +13,19 @@
 
 # 用法示例
 
+安装
+
+```
+npm i @zaqmjuop/libgif
+```
+
+在页面里放置一个画布容器
+
 ```html
 <canvas id="myGif" />
 ```
+
+初始化控制器示例
 
 ```typescript
 import libgif from '@zaqmjuop/libgif'
@@ -50,24 +60,24 @@ const controls = libgif({
 
 - **play()**: void 播放动画
 - **pause()**: void 暂停动画
-- **jumpTo(No: number)**: void 跳转到指定次序，No是指定帧的次序
-- **loadUrl(key: string)**: void 加载新的GIF文件，key是GIF文件地址
-- **getDecodeData(key: string)**: DecodedData 获取GIF的解码信息，key是已缓存的GIF文件地址
-- **getDownload(key: string)**: DownloadRecord 获取GIF的文件内容，key是已缓存的GIF文件地址
+- **jumpTo(No: number)**: void 跳转到指定次序，No 是指定帧的次序
+- **loadUrl(key: string)**: void 加载新的 GIF 文件，key 是 GIF 文件地址
+- **getDecodeData(key: string)**: DecodedData 获取 GIF 的解码信息，key 是已缓存的 GIF 文件地址
+- **getDownload(key: string)**: DownloadRecord 获取 GIF 的文件内容，key 是已缓存的 GIF 文件地址
 - **on(type: string, callback)**: void 监听事件
 - **off(type: string, callback)**: void 卸载事件监听
 
 ### 控制器事件
+
 - **play** 从暂停到播放时触发
 - **frameChange** 播放次序改变时触发
 - **pause** 从播放到暂停时触发
 - **playended** 最后一帧播放完触发
-- **decoded** 有GIF文件解码完成时触发
-- **downloaded** 有GIF文件下载完成时触发
-- **progress** 有GIF文件下载时触发
+- **decoded** 有 GIF 文件解码完成时触发
+- **downloaded** 有 GIF 文件下载完成时触发
+- **progress** 有 GIF 文件下载时触发
 
 # 注意事项
 
 GIF 文件必须和您正在加载的页面位于同一域上。
 因为该库的工作原理是通过 Ajax 请求 GIF 图像数据，解码 GIF 文件并获取帧信息，并将它们呈现在 canvas 元素上。
-
