@@ -17,6 +17,7 @@ const READY_STATE = {
 
 const libgif = (opts: Options) => {
   const EMITS = [
+    'error',
     'play',
     'frameChange',
     'pause',
@@ -65,6 +66,7 @@ const libgif = (opts: Options) => {
     }
     player.onError()
     viewer.drawError(e.error || '')
+    emitter.emit('error', e)
   }
   DownloadStore.on('progress', withProgress(onProgress))
   DownloadStore.on('error', withProgress(onError))
@@ -109,7 +111,9 @@ const libgif = (opts: Options) => {
         status = READY_STATE.DECODED
       }
     } catch {
-      viewer.drawError(`load url error with【${url}】`)
+      const event = { error: `load url error with【${url}】` }
+      viewer.drawError(event.error)
+      emitter.emit('error', event)
     }
   }
   // preload & autoplay
