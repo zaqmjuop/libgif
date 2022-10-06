@@ -126,17 +126,21 @@ const libgif = (opts: LibgifInitOptions) => {
     set loop(val: boolean) {
       player.loop = val
     },
-    play: player.play.bind(player),
-    pause: player.pause.bind(player),
-    jumpTo: player.putFrame.bind(player),
+    play: player.play.bind(player) as typeof player.play,
+    pause: player.pause.bind(player) as typeof player.pause,
+    jumpTo: player.putFrame.bind(player) as typeof player.putFrame,
     loadUrl: loadUrl,
     // decodeStore
-    getDecodeData: DecodedStore.getDecodeData.bind(DecodedStore),
+    getDecodeData: DecodedStore.getDecodeData.bind(
+      DecodedStore
+    ) as typeof DecodedStore.getDecodeData,
     // DownloadStore
-    getDownload: DownloadStore.getDownload.bind(DownloadStore),
+    getDownload: DownloadStore.getDownload.bind(
+      DownloadStore
+    ) as typeof DownloadStore.getDownload,
     // emiter
-    on: emitter.on.bind(emitter),
-    off: emitter.off.bind(emitter)
+    on: emitter.on.bind(emitter) as typeof emitter.on,
+    off: emitter.off.bind(emitter) as typeof emitter.off
   }
 
   player.on('play', (e) => emitter.emit('play', e))
@@ -148,7 +152,7 @@ const libgif = (opts: LibgifInitOptions) => {
   DownloadStore.on('progress', (e) => emitter.emit('progress', e))
   ;(gif as any).controller = controller
 
-  currentKey &&  loadUrl(currentKey)
+  currentKey && loadUrl(currentKey)
 
   return controller
 }
