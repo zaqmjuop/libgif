@@ -20,6 +20,7 @@ export default (startNo = 0) => {
   const rateId = `${canvasId}rate`
   const forwordId = `${canvasId}forword`
   const loopId = `${canvasId}loop`
+  const pauseId = `${canvasId}pause`
 
   root.innerHTML = ` 
     <div style="margin: 8px 0">
@@ -42,9 +43,10 @@ export default (startNo = 0) => {
     </label>
     <label>
       <span>rate</span>
-      <input id="${rateId}" type="range" max=20 min=0 step=2 value=${10}/>
+      <input id="${rateId}" type="range" max=20 min=1 step=2 value=${10}/>
     </label>
     <div>
+      <button id=${pauseId}>pause</button>
       <button id=${forwordId}>forword</button>
       <button id=${loopId}>loop</button>
     </div>
@@ -90,11 +92,24 @@ export default (startNo = 0) => {
   const forwordInput = document.getElementById(forwordId)!
   forwordInput.onclick = () => {
     rub.forward = !rub.forward
+    forwordInput.innerText = `forword:${rub.forward}`
   }
 
   const loopInput = document.getElementById(loopId)!
   loopInput.onclick = () => {
-    rub.loop = !rub.loop 
+    rub.loop = !rub.loop
+    loopInput.innerText = `loop:${rub.loop}`
+  }
+
+  const pauseInput = document.getElementById(pauseId)!
+  pauseInput.onclick = () => {
+    if (rub.playing) {
+      rub.pause()
+      pauseInput.innerText = 'play'
+    } else {
+      rub.play()
+      pauseInput.innerText = 'pause'
+    }
   }
 
   root.addEventListener('click', (e) => {
