@@ -1,5 +1,6 @@
 import { Emitter } from './utils/Emitter'
 import { load_url } from './utils/loader'
+import { bindSelf } from './utils/bindSelf'
 import { Player } from './player'
 import { decode } from './decoders/decode'
 import { DownloadRecord, LibgifInitOptions } from './type'
@@ -126,21 +127,17 @@ const libgif = (opts: LibgifInitOptions) => {
     set loop(val: boolean) {
       player.loop = val
     },
-    play: player.play.bind(player) as typeof player.play,
-    pause: player.pause.bind(player) as typeof player.pause,
-    jumpTo: player.putFrame.bind(player) as typeof player.putFrame,
+    play: bindSelf(player, 'play')!,
+    pause: bindSelf(player, 'pause')!,
+    jumpTo: bindSelf(player, 'putFrame')!,
     loadUrl: loadUrl,
     // decodeStore
-    getDecodeData: DecodedStore.getDecodeData.bind(
-      DecodedStore
-    ) as typeof DecodedStore.getDecodeData,
+    getDecodeData: bindSelf(DecodedStore, 'getDecodeData')!,
     // DownloadStore
-    getDownload: DownloadStore.getDownload.bind(
-      DownloadStore
-    ) as typeof DownloadStore.getDownload,
+    getDownload: bindSelf(DownloadStore, 'getDownload')!,
     // emiter
-    on: emitter.on.bind(emitter) as typeof emitter.on,
-    off: emitter.off.bind(emitter) as typeof emitter.off
+    on: bindSelf(emitter, 'on')!,
+    off: bindSelf(emitter, 'off')!
   }
 
   player.on('play', (e) => emitter.emit('play', e))
