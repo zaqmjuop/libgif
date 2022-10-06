@@ -102,15 +102,14 @@ export default (startNo = 0) => {
   }
 
   const pauseInput = document.getElementById(pauseId)!
+  const updatePauseText = () =>
+    (pauseInput.innerText = rub.playing ? 'pause' : 'play')
   pauseInput.onclick = () => {
-    if (rub.playing) {
-      rub.pause()
-      pauseInput.innerText = 'play'
-    } else {
-      rub.play()
-      pauseInput.innerText = 'pause'
-    }
+    rub.playing ? rub.pause() : rub.play()
+    updatePauseText()
   }
+
+  rub.on('playended', updatePauseText)
 
   root.addEventListener('click', (e) => {
     if (e.target instanceof HTMLElement) {
