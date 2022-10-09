@@ -409,7 +409,7 @@ map = function (array, callback) {
       debugPort: DEBUG_PORT_ALLOCATOR.nextAvailableStartingAt(
         this.debugPortStart
       ),
-      workerType: this.workerType
+      workerType: this.workerType as any
     })
   }
 }

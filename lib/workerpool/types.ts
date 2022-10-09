@@ -7,6 +7,7 @@ export interface WorkerPoolOptions {
   forkOpts?: any
   onCreateWorker?: Function
   onTerminateWorker?: Function
+  debugPort: any
 }
 
 export interface ExecOptions {
