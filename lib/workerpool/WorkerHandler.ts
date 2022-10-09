@@ -311,17 +311,16 @@ class WorkerHandler {
     // listen for worker messages error and exit
     this.worker.on('error', onError)
     this.worker.on('exit', function (exitCode, signalCode) {
-      let message = 'Workerpool Worker terminated Unexpectedly\n'
-
-      message += '    exitCode: `' + exitCode + '`\n'
-      message += '    signalCode: `' + signalCode + '`\n'
-
-      message += '    workerpool.script: `' + me.script + '`\n'
-      message += '    spawnArgs: `' + worker.spawnargs + '`\n'
-      message += '    spawnfile: `' + worker.spawnfile + '`\n'
-
-      message += '    stdout: `' + worker.stdout + '`\n'
-      message += '    stderr: `' + worker.stderr + '`\n'
+      const message = [
+        `Workerpool Worker terminated Unexpectedly`,
+        `    exitCode: \`${exitCode}'\``,
+        `    signalCode: \`${signalCode}'\``,
+        `    workerpool.script: \`${me.script}'\``,
+        `    spawnArgs: \`${worker.spawnargs}'\``,
+        `    spawnfile: \`${worker.spawnfile}'\``,
+        `    stdout: \`${worker.stdout}'\``,
+        `    stderr: \`${worker.stderr}'\``
+      ].join('\n')
 
       onError(new Error(message))
     })
