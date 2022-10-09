@@ -165,7 +165,7 @@ worker.on('message', function (request) {
   }
 })
 
-export const register = (funcMap: Record<string, Function>) => {
+const register = (funcMap: Record<string, Function>) => {
   for (const name in funcMap) {
     if (funcMap.hasOwnProperty(name)) {
       methodMap[name] = funcMap[name]
@@ -174,6 +174,8 @@ export const register = (funcMap: Record<string, Function>) => {
 
   worker.send('ready')
 }
+
+export const add = register
 
 export const emit = (payload: any) => {
   if (currentRequestId) {
