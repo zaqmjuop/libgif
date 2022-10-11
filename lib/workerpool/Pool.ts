@@ -2,8 +2,18 @@ import Promis from './Promis'
 import WorkerHandler from './WorkerHandler'
 import { useDebugPortAllocator } from './debug-port-allocator'
 import { ExecOptions, func, WorkerPoolOptions, workerType } from './types'
-import { ensureWorkerThreads, RUNTIME_API, validateWorkers } from './utils'
+import {
+  ensureWorkerThreads,
+  getNumberInRange,
+  RUNTIME_API,
+  validateWorkers
+} from './utils'
 const DEBUG_PORT_ALLOCATOR = useDebugPortAllocator()
+
+const MAX_WORKER_COUNT = (RUNTIME_API.cpus || 4) - 1
+const MIN_WORKER_COUNT = 1
+const DEFAULT_WORKER_COUNT = (RUNTIME_API.cpus || 4) >> 1
+
 /**
  * A pool to manage workers
  * @param {String} [script]   Optional worker script
@@ -22,9 +32,9 @@ class Pool {
   maxQueueSize: number
   onCreateWorker: func
   onTerminateWorker: func
-  maxWorkers: number
-  minWorkers: number
-  constructor(options: WorkerPoolOptions) {
+  readonly maxWorkers: number
+  readonly minWorkers: number
+  constructor(options: WorkerPoolOptions = {}) {
     this.script = options.script
 
     this.forkArgs = options.forkArgs || []
@@ -38,14 +48,26 @@ class Pool {
     this.onTerminateWorker = options.onTerminateWorker || (() => null)
 
     // configuration
-    if (options && 'maxWorkers' in options) {
+    this.maxWorkers = getNumberInRange(
+      Math.trunc(options.maxWorkers || DEFAULT_WORKER_COUNT),
+      MIN_WORKER_COUNT,
+      MAX_WORKER_COUNT
+    )
+
+    this.minWorkers = getNumberInRange(
+      Math.trunc(options.maxWorkers || MIN_WORKER_COUNT),
+      MIN_WORKER_COUNT,
+      this.maxWorkers
+    )
+
+    if ('maxWorkers' in options) {
       validateWorkers(options.maxWorkers, 'maxWorkers')
       this.maxWorkers = options.maxWorkers as number
     } else {
       this.maxWorkers = Math.max((RUNTIME_API.cpus || 4) - 1, 1)
     }
 
-    if (options && 'minWorkers' in options) {
+    if ('minWorkers' in options) {
       if (options.minWorkers === 'max') {
         this.minWorkers = this.maxWorkers
       } else {
@@ -182,8 +204,8 @@ map = function (array, callback) {
     // If minWorkers set, spin up new workers to replace the crashed ones
     this._ensureMinWorkers()
     // terminate the worker (if not already terminated)
-    return new Promis(function (resolve, reject) {
-      worker.terminate(false, function (err) {
+    return new Promis((resolve, reject) => {
+      worker.terminate(false, (err) => {
         me.onTerminateWorker({
           forkArgs: worker.forkArgs,
           forkOpts: worker.forkOpts,
@@ -263,7 +285,7 @@ map = function (array, callback) {
         method: method,
         params: params,
         resolver: resolver,
-        timeout: null,
+        timeout: 100,
         options: options
       }
       tasks.push(task)
@@ -304,7 +326,7 @@ map = function (array, callback) {
     }
 
     const pool = this
-    return this.exec('methods').then(function (methods) {
+    return this.exec('methods').then(  (methods) =>{
       const proxy = {}
 
       methods.forEach(function (method) {

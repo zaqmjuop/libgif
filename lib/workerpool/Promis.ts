@@ -1,3 +1,5 @@
+import { func } from './types'
+
 /**
  * Execute given callback, then call resolve/reject based on the returned result
  * @param {Function} callback
@@ -121,34 +123,24 @@ export default class Promis<T = any> {
   constructor(handler: Function, readonly parent?: Promis) {
     // attach handler passing the resolve and reject functions
     handler(
-      (result) => {
-        this._resolve(result)
-      },
-      (error) => {
-        this._reject(error)
-      }
+      (result) => this._resolve(result),
+      (error) => this._reject(error)
     )
   }
 
   /**
    * Process onSuccess and onFail callbacks: add them to the queue.
    * Once the promise is resolve, the function _promise is replace.
-   * @param {Function} onSuccess
-   * @param {Function} onFail
-   * @private
    */
-  private _process = (onSuccess, onFail) => {
+  private _process = (onSuccess: func, onFail: func) => {
     this._onSuccess.push(onSuccess)
     this._onFail.push(onFail)
   }
 
   /**
    * Add an onSuccess callback and optionally an onFail callback to the Promis
-   * @param {Function} onSuccess
-   * @param {Function} [onFail]
-   * @returns {Promis} promise
    */
-  then = (onSuccess, onFail) => {
+  then = (onSuccess?: func, onFail?: func): Promis => {
     return new Promis((resolve, reject) => {
       const s = onSuccess ? _then(onSuccess, resolve, reject) : resolve
       const f = onFail ? _then(onFail, resolve, reject) : reject
@@ -162,7 +154,7 @@ export default class Promis<T = any> {
    * @param {*} result
    * @type {Function}
    */
-  private _resolve = (result) => {
+  private _resolve = (result: any) => {
     let disposal = (): this | void => {
       // update status
       this.resolved = true
@@ -188,7 +180,7 @@ export default class Promis<T = any> {
    * @param {Error} error
    * @type {Function}
    */
-  private _reject = (error) => {
+  private _reject = (error: Error) => {
     let disposal = (): this | void => {
       // update status
       this.resolved = false
@@ -211,9 +203,8 @@ export default class Promis<T = any> {
 
   /**
    * Cancel te promise. This will reject the promise with a CancellationError
-   * @returns {Promis} self
    */
-  cancel = () => {
+  cancel = (): Promis => {
     if (this.parent) {
       this.parent.cancel()
     } else {
@@ -227,10 +218,8 @@ export default class Promis<T = any> {
    * Set a timeout for the promise. If the promise is not resolved within
    * the time, the promise will be cancelled and a TimeoutError is thrown.
    * If the promise is resolved in time, the timeout is removed.
-   * @param {number} delay     Delay in milliseconds
-   * @returns {Promis} self
    */
-  timeout = (delay) => {
+  timeout = (delay: number): Promis => {
     if (this.parent) {
       this.parent.timeout(delay)
     } else {
@@ -253,19 +242,11 @@ export default class Promis<T = any> {
 
   /**
    * Execute given callback when the promise either resolves or rejects.
-   * @param {Function} fn
-   * @returns {Promis} promise
    */
-  always = (fn) => {
-    return this.then(fn, fn)
-  }
+  always = (fn: func): Promis => this.then(fn, fn)
 
   /**
    * Add an onFail callback to the Promis
-   * @param {Function} onFail
-   * @returns {Promis} promise
    */
-  catch = (onFail) => {
-    return this.then(null, onFail)
-  }
+  catch = (onFail: func): Promis => this.then(void 0, onFail)
 }

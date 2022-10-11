@@ -16,7 +16,7 @@ export interface WorkerPoolOptions {
   forkOpts?: Record<string, any>
   onCreateWorker?: func
   onTerminateWorker?: func
-  debugPort: any
+  debugPort?: any
   debugPortStart?: number
   nodeWorker?: any
 }
