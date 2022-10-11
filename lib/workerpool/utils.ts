@@ -87,3 +87,16 @@ export const getDefaultWorker = () => {
     return __dirname + '/worker.js'
   }
 }
+
+const isInt = (value: unknown): value is number =>
+  Number.isSafeInteger(value) === value
+
+const isPpositiveInt = (value: unknown): value is number =>
+  isInt(value) && value > 0
+
+export const validateWorkers = (value: unknown, key: string): value is number => {
+  if (isPpositiveInt(value)) {
+    return true
+  }
+  throw new TypeError(`Option ${key} must be a positive integer`)
+}

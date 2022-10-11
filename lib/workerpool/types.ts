@@ -1,5 +1,6 @@
 export type workerType = 'auto' | 'web' | 'process' | 'thread'
 export interface WorkerPoolOptions {
+  script?: string
   minWorkers?: number | 'max'
   maxWorkers?: number
   maxQueueSize?: number

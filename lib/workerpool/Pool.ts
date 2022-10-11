@@ -1,8 +1,8 @@
 import Promis from './Promis'
-import WorkerHandler  from './WorkerHandler' 
+import WorkerHandler from './WorkerHandler'
 import { useDebugPortAllocator } from './debug-port-allocator'
 import { WorkerPoolOptions } from './types'
-import { ensureWorkerThreads, RUNTIME_API } from './utils'
+import { ensureWorkerThreads,  RUNTIME_API, validateWorkers } from './utils'
 const DEBUG_PORT_ALLOCATOR = useDebugPortAllocator()
 /**
  * A pool to manage workers
@@ -11,7 +11,7 @@ const DEBUG_PORT_ALLOCATOR = useDebugPortAllocator()
  * @constructor
  */
 class Pool {
-  script: string | null
+  script?: string
   workers: any[] = [] // queue with all workers
   tasks: any[] = [] // queue with tasks awaiting execution
   readonly forkArgs: any[]
@@ -25,15 +25,8 @@ class Pool {
   maxWorkers: number
   minWorkers: number
   _boundNext: () => any
-  constructor(script: string, options: WorkerPoolOptions) {
-    if (typeof script === 'string') {
-      this.script = script || null
-    } else {
-      this.script = null
-      options = script
-    }
-
-    options = options || {}
+  constructor(options: WorkerPoolOptions) {
+    this.script = options.script 
 
     this.forkArgs = Object.freeze(options.forkArgs || [])
     this.forkOpts = Object.freeze(options.forkOpts || {})
@@ -48,7 +41,7 @@ class Pool {
 
     // configuration
     if (options && 'maxWorkers' in options) {
-      validateMaxWorkers(options.maxWorkers)
+      validateWorkers(options.maxWorkers, 'maxWorkers')
       this.maxWorkers = options.maxWorkers as number
     } else {
       this.maxWorkers = Math.max((RUNTIME_API.cpus || 4) - 1, 1)
@@ -58,7 +51,7 @@ class Pool {
       if (options.minWorkers === 'max') {
         this.minWorkers = this.maxWorkers
       } else {
-        validateMinWorkers(options.minWorkers)
+        validateWorkers(options.minWorkers, 'minWorkers')
         this.minWorkers = options.minWorkers as number
         this.maxWorkers = Math.max(this.minWorkers, this.maxWorkers) // in case minWorkers is higher than maxWorkers
       }
@@ -412,44 +405,7 @@ map = function (array, callback) {
   }
 }
 
-/**
- * Ensure that the maxWorkers option is an integer >= 1
- * @param {*} maxWorkers
- * @returns {boolean} returns true maxWorkers has a valid value
- */
-function validateMaxWorkers(maxWorkers) {
-  if (!isNumber(maxWorkers) || !isInteger(maxWorkers) || maxWorkers < 1) {
-    throw new TypeError('Option maxWorkers must be an integer number >= 1')
-  }
-}
 
-/**
- * Ensure that the minWorkers option is an integer >= 0
- * @param {*} minWorkers
- * @returns {boolean} returns true when minWorkers has a valid value
- */
-function validateMinWorkers(minWorkers) {
-  if (!isNumber(minWorkers) || !isInteger(minWorkers) || minWorkers < 0) {
-    throw new TypeError('Option minWorkers must be an integer number >= 0')
-  }
-}
 
-/**
- * Test whether a variable is a number
- * @param {*} value
- * @returns {boolean} returns true when value is a number
- */
-function isNumber(value) {
-  return typeof value === 'number'
-}
-
-/**
- * Test whether a number is an integer
- * @param {number} value
- * @returns {boolean} Returns true if value is an integer
- */
-function isInteger(value) {
-  return Math.round(value) == value
-}
 
 export default Pool
