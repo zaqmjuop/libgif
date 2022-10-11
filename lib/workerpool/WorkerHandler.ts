@@ -1,5 +1,5 @@
 import Promis from './Promis'
-import { func, WorkerPoolOptions, workerType } from './types'
+import { ExecOptions, func, WorkerPoolOptions, workerType } from './types'
 import { CHILD_PROCESS_EXIT_TIMEOUT, TERMINATE_METHOD_ID } from './construct'
 import {
   ensureWebWorker,
@@ -46,7 +46,7 @@ const setupBrowserWorker = (script: string) => {
   return worker
 }
 
-const setupWorkerThreadWorker = (script) => {
+const setupWorkerThreadWorker = (script: string) => {
   ensureWorkerThreads()
   const worker = new global.worker_threads.Worker(script, {
     stdout: false, // automatically pipe worker.STDOUT to process.STDOUT
@@ -157,7 +157,7 @@ class WorkerHandler {
 
     // queue for requests that are received before the worker is ready
 
-    this.worker.on('message', function (response) {
+    this.worker.on('message', (response) => {
       if (me.terminated) {
         return
       }
@@ -195,7 +195,7 @@ class WorkerHandler {
     })
 
     // reject all running tasks on worker error
-    function onError(error) {
+    const onError = (error) => {
       me.terminated = true
 
       for (const id in me.processing) {
@@ -207,7 +207,7 @@ class WorkerHandler {
     }
 
     // send all queued requests to worker
-    function dispatchQueuedRequests() {
+    const dispatchQueuedRequests = () => {
       for (const request of me.requestQueue.splice(0)) {
         me.worker.send(request)
       }
@@ -240,12 +240,9 @@ class WorkerHandler {
   }
 
   /**
-   * Get a list with methods available on the worker.
-   * @return {Promis.<String[], Error>} methods
+   * Get a list with methods available on the worker. 
    */
-  methods() {
-    return this.exec('methods')
-  }
+  methods = (): Promis<String[] | Error> => this.exec('methods')
 
   /**
    * Execute a method with given parameters on the worker
@@ -255,7 +252,12 @@ class WorkerHandler {
    * @param {ExecOptions}  [options]
    * @return {Promis.<*, Error>} result
    */
-  exec(method, params?, resolver?, options?) {
+  exec(
+    method: string,
+    params?: any[],
+    resolver?: { resolve: func; reject: func },
+    options?: ExecOptions
+  ): Promis<any | Error> {
     if (!resolver) {
       resolver = Promis.defer()
     }
@@ -288,7 +290,7 @@ class WorkerHandler {
 
     // on cancellation, force the worker to terminate
     const me = this
-    return resolver.Promis.catch(function (error) {
+    return resolver.Promis.catch((error) => {
       if (
         error instanceof Promis.CancellationError ||
         error instanceof Promis.TimeoutError
@@ -314,21 +316,15 @@ class WorkerHandler {
 
   /**
    * Test whether the worker is working or not
-   * @return {boolean} Returns true if the worker is busy
    */
-  busy() {
+  busy(): boolean {
     return Object.keys(this.processing).length > 0
   }
 
   /**
    * Terminate the worker.
-   * @param {boolean} [force=false]   If false (default), the worker is terminated
-   *                                  after finishing all tasks currently in
-   *                                  progress. If true, the worker will be
-   *                                  terminated immediately.
-   * @param {function} [callback=null] If provided, will be called when process terminates.
    */
-  terminate(force?, callback?) {
+  terminate(force = false, callback: func | null = null) {
     const me = this
     if (force) {
       // cancel all tasks in progress
