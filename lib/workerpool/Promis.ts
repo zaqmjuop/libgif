@@ -60,7 +60,7 @@ class TimeoutError extends Error {
  * @param {Function} handler   Called as handler(resolve: Function, reject: Function)
  * @param {Promis} [parent]   Parent promise for propagation of cancel and timeout
  */
-export default class Promis {
+export default class Promis<T = any> {
   /**
    * Create a promise which resolves when all provided promises are resolved,
    * and fails when any of the promises resolves.
@@ -68,7 +68,7 @@ export default class Promis {
    * @returns {Promis} promise
    */
   static all(promises: Promis[]): Promis {
-    return new Promis(function (resolve, reject) {
+    return new Promis((resolve, reject) => {
       let remaining = promises.length
       const results: any[] = []
 
@@ -102,7 +102,7 @@ export default class Promis {
     let resolve
     let reject
 
-    const promise = new Promis(function (resolve, reject) {
+    const promise = new Promis((resolve, reject) => {
       resolve = resolve
       reject = reject
     })
