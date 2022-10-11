@@ -11,103 +11,62 @@ import {
 } from './utils'
 
 const setupWorker = (script, options: { workerType?: workerType }) => {
-  const workerType: workerType = options.workerType || 'process'
-  const DISPOSE_MAP = {
-    browser: () => {
-      // browser only
-      ensureWebWorker()
-      return setupBrowserWorker(script, Worker)
-    },
-    thread: () => {
-      // node.js only
-      const WorkerThreads = ensureWorkerThreads()
-      return setupWorkerThreadWorker(script, WorkerThreads)
-    },
-    process: () => {
-      // node.js only
+  const workerType: workerType = options.workerType || 'process' 
+  switch (workerType) {
+    case 'web':
+      return setupBrowserWorker(script)
+    case 'thread':
+      return setupWorkerThreadWorker(script)
+    case 'process':
       return setupProcessWorker(
         script,
         resolveForkOptions(options),
         requireFoolWebpack('child_process')
       )
-    },
-    child_process: () => {
-      // RUNTIME_API.platform === 'node'
-      const WorkerThreads = tryRequireWorkerThreads()
-      if (WorkerThreads) {
-        return setupWorkerThreadWorker(script, WorkerThreads)
-      } else {
-        return setupProcessWorker(
-          script,
-          resolveForkOptions(options),
-          requireFoolWebpack('child_process')
-        )
-      }
-    }
-  } as const
-  switch (workerType) {
-    case 'web':
-      return DISPOSE_MAP['browser']()
-    case 'thread':
-      return DISPOSE_MAP['thread']()
-    case 'process':
-      return DISPOSE_MAP['process']()
 
     default:
       return RUNTIME_API.env === 'browser'
-        ? DISPOSE_MAP['browser']()
-        : DISPOSE_MAP['child_process']()
+        ? setupBrowserWorker(script)
+        : ( tryRequireWorkerThreads()
+        ? setupWorkerThreadWorker(script)
+        : setupProcessWorker(
+            script,
+            resolveForkOptions(options),
+            requireFoolWebpack('child_process'))
   }
 }
- const setupBrowserWorker = (
-  script: string,
-  Worker: {
-    new (aURL: string): any & {
-      isBrowserWorker?: boolean
-      on: func
-      send: func
-    }
-  }
-) => {
-  // create the web worker
-  const worker = new Worker(script)
-
-  worker.isBrowserWorker = true
+const setupBrowserWorker = (script: string) => {
+  ensureWebWorker()
+  const worker = new window.Worker(script)
   // add node.js API to the web worker
-  worker.on = (event, callback) =>
+  ;(worker as any).on = (event, callback) =>
     self.addEventListener(event, (message) => callback(message.data))
-  worker.send = (message) => self.postMessage(message)
+  ;(worker as any).send = (message) => self.postMessage(message)
   return worker
 }
 
- const setupWorkerThreadWorker = (script, WorkerThreads) => {
-  const worker = new WorkerThreads.Worker(script, {
+const setupWorkerThreadWorker = (script) => {
+  ensureWorkerThreads()
+  const worker = new global.worker_threads.Worker(script, {
     stdout: false, // automatically pipe worker.STDOUT to process.STDOUT
     stderr: false // automatically pipe worker.STDERR to process.STDERR
   })
-  worker.isWorkerThread = true
   // make the worker mimic a child_process
-  worker.send = function (message) {
-    this.postMessage(message)
-  }
+  worker.send = (message) => global.postMessage(message)
 
-  worker.kill = function () {
-    this.terminate()
+  worker.kill = () => {
+    global.terminate()
     return true
   }
 
-  worker.disconnect = function () {
-    this.terminate()
-  }
+  worker.disconnect = () => global.terminate()
 
   return worker
 }
 
- const setupProcessWorker = (script, options, child_process) => {
+const setupProcessWorker = (script, options, child_process) => {
   // no WorkerThreads, fallback to sub-process based workers
   const worker = child_process.fork(script, options.forkArgs, options.forkOpts)
-
-  worker.isChildProcess = true
   return worker
 }
 
@@ -458,12 +417,15 @@ class WorkerHandler {
    *                                  after timeout if worker process has not been terminated.
    * @return {Promis.<WorkerHandler, Error>}
    */
-  terminateAndNotify(force, timeout?) {
+  terminateAndNotify(
+    force = false,
+    timeout?: number
+  ): Promis<WorkerHandler | Error> {
     const resolver = Promis.defer()
     if (timeout) {
       resolver.promise.timeout = timeout
     }
-    this.terminate(force, function (err, worker) {
+    this.terminate(force, (err, worker) => {
       if (err) {
         resolver.reject(err)
       } else {

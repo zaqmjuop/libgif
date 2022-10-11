@@ -63,6 +63,7 @@ class TimeoutError extends Error {
  * @param {Promis} [parent]   Parent promise for propagation of cancel and timeout
  */
 export default class Promis<T = any> {
+  timeout: number = 100
   /**
    * Create a promise which resolves when all provided promises are resolved,
    * and fails when any of the promises resolves.
