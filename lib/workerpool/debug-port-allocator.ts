@@ -1,27 +1,21 @@
-const MAX_PORTS = 65535
+const MAX_PORTS = 65534
 
-export default class DebugPortAllocator {
-  ports: Record<number, true> = Object.create(null)
-  length = 0
-
-  nextAvailableStartingAt = (starting: number) => {
-    while (this.ports[starting] === true) {
-      starting++
-    }
-
-    if (starting >= MAX_PORTS) {
+export const useDebugPortAllocator = () => {
+  const ports: Array<0 | 1> = []
+  let index = 0
+  const increasePort = () => {
+    index++
+    if (index >= MAX_PORTS) {
       throw new Error(
-        'WorkerPool debug port limit reached: ' + starting + '>= ' + MAX_PORTS
+        'WorkerPool debug port limit reached: ' + index + '>= ' + MAX_PORTS
       )
     }
-
-    this.ports[starting] = true
-    this.length++
-    return starting
+    ports[index] = 1
+    return index
   }
 
-  releasePort = (port: number) => {
-    delete this.ports[port]
-    this.length--
+  const releasePort = (index: number) => {
+    ports[index] = 0
   }
+  return { increasePort, releasePort }
 }

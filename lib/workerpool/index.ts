@@ -1,8 +1,9 @@
-import * as environment from './environment'
+
 import Pool from './Pool'
 import { add, emit } from './worker'
 import Promis from './Promis'
 import { WorkerPoolOptions } from './types'
+import { RUNTIME_API } from './utils'
 
 /**
  * Create a new worker pool
@@ -31,7 +32,7 @@ export default {
   worker,
   workerEmit,
   Promis,
-  platform: environment.platform,
-  isMainThread: environment.isMainThread,
-  cpus: environment.cpus
+  env: RUNTIME_API.env,
+  isMainThread: RUNTIME_API.isMainThread,
+  cpus: RUNTIME_API.cpus
 }

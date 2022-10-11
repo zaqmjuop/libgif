@@ -1,9 +1,9 @@
 import Promis from './Promis'
-import WorkerHandler, { ensureWorkerThreads } from './WorkerHandler'
-import * as environment from './environment'
-import DebugPortAllocator from './debug-port-allocator'
+import WorkerHandler  from './WorkerHandler' 
+import { useDebugPortAllocator } from './debug-port-allocator'
 import { WorkerPoolOptions } from './types'
-const DEBUG_PORT_ALLOCATOR = new DebugPortAllocator()
+import { ensureWorkerThreads, RUNTIME_API } from './utils'
+const DEBUG_PORT_ALLOCATOR = useDebugPortAllocator()
 /**
  * A pool to manage workers
  * @param {String} [script]   Optional worker script
@@ -51,7 +51,7 @@ class Pool {
       validateMaxWorkers(options.maxWorkers)
       this.maxWorkers = options.maxWorkers as number
     } else {
-      this.maxWorkers = Math.max((environment.cpus || 4) - 1, 1)
+      this.maxWorkers = Math.max((RUNTIME_API.cpus || 4) - 1, 1)
     }
 
     if (options && 'minWorkers' in options) {
@@ -406,9 +406,7 @@ map = function (array, callback) {
     return new WorkerHandler(overridenParams.script || this.script, {
       forkArgs: overridenParams.forkArgs || this.forkArgs,
       forkOpts: overridenParams.forkOpts || this.forkOpts,
-      debugPort: DEBUG_PORT_ALLOCATOR.nextAvailableStartingAt(
-        this.debugPortStart
-      ),
+      debugPort: DEBUG_PORT_ALLOCATOR.increasePort(),
       workerType: this.workerType as any
     })
   }

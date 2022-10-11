@@ -1,108 +1,38 @@
 import Promis from './Promis'
-import * as environment from './environment'
-import requireFoolWebpack from './requireFoolWebpack'
-import { WorkerPoolOptions } from './types'
+import { func, WorkerPoolOptions, workerType } from './types'
+import { CHILD_PROCESS_EXIT_TIMEOUT, TERMINATE_METHOD_ID } from './construct'
+import {
+  ensureWebWorker,
+  ensureWorkerThreads,
+  getDefaultWorker,
+  requireFoolWebpack,
+  RUNTIME_API,
+  tryRequireWorkerThreads
+} from './utils'
 
-/**
- * Special message sent by parent which causes a child process worker to terminate itself.
- * Not a "message object"; this string is the entire message.
- */
-const TERMINATE_METHOD_ID = '__workerpool-terminate__'
-
-/**
- * If sending `TERMINATE_METHOD_ID` does not cause the child process to exit in this many milliseconds,
- * force-kill the child process.
- */
-const CHILD_PROCESS_EXIT_TIMEOUT = 1000
-
-export const ensureWorkerThreads = () => {
-  const WorkerThreads = tryRequireWorkerThreads()
-  if (!WorkerThreads) {
-    throw new Error(
-      "WorkerPool: workerType = 'thread' is not supported, Node >= 11.7.0 required"
-    )
-  }
-
-  return WorkerThreads
-}
-
-// check whether Worker is supported by the browser
-function ensureWebWorker() {
-  // Workaround for a bug in PhantomJS (Or QtWebkit): https://github.com/ariya/phantomjs/issues/14534
-  if (typeof Worker === 'function') {
-    return true
-  }
-  if (
-    typeof Worker === 'object' &&
-    typeof (Worker as any).prototype.constructor === 'function'
-  ) {
-    return true
-  }
-  throw new Error('WorkerPool: Web Workers not supported')
-}
-
-function tryRequireWorkerThreads() {
-  try {
-    return requireFoolWebpack('worker_threads')
-  } catch (error) {
-    if (
-      typeof error === 'object' &&
-      error !== null &&
-      error.code === 'MODULE_NOT_FOUND'
-    ) {
-      // no worker_threads available (old version of node.js)
-      return null
-    } else {
-      throw error
-    }
-  }
-}
-
-// get the default worker script
-function getDefaultWorker() {
-  if (environment.platform === 'browser') {
-    // test whether the browser supports all features that we need
-    if (typeof Blob === 'undefined') {
-      throw new Error('Blob not supported by the browser')
-    }
-    if (!window.URL || typeof window.URL.createObjectURL !== 'function') {
-      throw new Error('URL.createObjectURL not supported by the browser')
-    }
-
-    // use embedded worker.js
-    const blob = new Blob([require('./generated/embeddedWorker')], {
-      type: 'text/javascript'
-    })
-    return window.URL.createObjectURL(blob)
-  } else {
-    // use external worker.js in current directory
-    return __dirname + '/worker.js'
-  }
-}
-
-function setupWorker(script, options) {
-  if (options.workerType === 'web') {
-    // browser only
-    ensureWebWorker()
-    return setupBrowserWorker(script, Worker)
-  } else if (options.workerType === 'thread') {
-    // node.js only
-    const WorkerThreads = ensureWorkerThreads()
-    return setupWorkerThreadWorker(script, WorkerThreads)
-  } else if (options.workerType === 'process' || !options.workerType) {
-    // node.js only
-    return setupProcessWorker(
-      script,
-      resolveForkOptions(options),
-      requireFoolWebpack('child_process')
-    )
-  } else {
-    // options.workerType === 'auto' or undefined
-    if (environment.platform === 'browser') {
+const setupWorker = (script, options: { workerType?: workerType }) => {
+  const workerType: workerType = options.workerType || 'process'
+  const DISPOSE_MAP = {
+    browser: () => {
+      // browser only
       ensureWebWorker()
       return setupBrowserWorker(script, Worker)
-    } else {
-      // environment.platform === 'node'
+    },
+    thread: () => {
+      // node.js only
+      const WorkerThreads = ensureWorkerThreads()
+      return setupWorkerThreadWorker(script, WorkerThreads)
+    },
+    process: () => {
+      // node.js only
+      return setupProcessWorker(
+        script,
+        resolveForkOptions(options),
+        requireFoolWebpack('child_process')
+      )
+    },
+    child_process: () => {
+      // RUNTIME_API.platform === 'node'
       const WorkerThreads = tryRequireWorkerThreads()
       if (WorkerThreads) {
         return setupWorkerThreadWorker(script, WorkerThreads)
@@ -114,27 +44,43 @@ function setupWorker(script, options) {
         )
       }
     }
+  } as const
+  switch (workerType) {
+    case 'web':
+      return DISPOSE_MAP['browser']()
+    case 'thread':
+      return DISPOSE_MAP['thread']()
+    case 'process':
+      return DISPOSE_MAP['process']()
+
+    default:
+      return RUNTIME_API.env === 'browser'
+        ? DISPOSE_MAP['browser']()
+        : DISPOSE_MAP['child_process']()
   }
 }
-
-function setupBrowserWorker(script, Worker) {
+ const setupBrowserWorker = (
+  script: string,
+  Worker: {
+    new (aURL: string): any & {
+      isBrowserWorker?: boolean
+      on: func
+      send: func
+    }
+  }
+) => {
   // create the web worker
   const worker = new Worker(script)
 
   worker.isBrowserWorker = true
   // add node.js API to the web worker
-  worker.on = function (event, callback) {
-    this.addEventListener(event, function (message) {
-      callback(message.data)
-    })
-  }
-  worker.send = function (message) {
-    this.postMessage(message)
-  }
+  worker.on = (event, callback) =>
+    self.addEventListener(event, (message) => callback(message.data))
+  worker.send = (message) => self.postMessage(message)
   return worker
 }
 
-function setupWorkerThreadWorker(script, WorkerThreads) {
+ const setupWorkerThreadWorker = (script, WorkerThreads) => {
   const worker = new WorkerThreads.Worker(script, {
     stdout: false, // automatically pipe worker.STDOUT to process.STDOUT
     stderr: false // automatically pipe worker.STDERR to process.STDERR
@@ -157,7 +103,7 @@ function setupWorkerThreadWorker(script, WorkerThreads) {
   return worker
 }
 
-function setupProcessWorker(script, options, child_process) {
+ const setupProcessWorker = (script, options, child_process) => {
   // no WorkerThreads, fallback to sub-process based workers
   const worker = child_process.fork(script, options.forkArgs, options.forkOpts)
 
@@ -166,7 +112,7 @@ function setupProcessWorker(script, options, child_process) {
 }
 
 // add debug flags to child processes if the node inspector is active
-function resolveForkOptions(opts) {
+const resolveForkOptions = (opts) => {
   opts = opts || {}
 
   const processExecArgv = process.execArgv.join(' ')
@@ -203,7 +149,7 @@ function resolveForkOptions(opts) {
  * @param {Object} obj Error that has been serialized and parsed to object
  * @return {Error} The equivalent Error.
  */
-function objectToError(obj) {
+const objectToError = (obj) => {
   const temp = new Error('')
   const props = Object.keys(obj)
 
@@ -529,7 +475,3 @@ class WorkerHandler {
 }
 
 export default WorkerHandler
-export const _tryRequireWorkerThreads = tryRequireWorkerThreads
-export const _setupProcessWorker = setupProcessWorker
-export const _setupBrowserWorker = setupBrowserWorker
-export const _setupWorkerThreadWorker = setupWorkerThreadWorker

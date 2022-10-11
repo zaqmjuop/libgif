@@ -2,89 +2,61 @@
  * worker must be started as a child process or a web worker.
  * It listens for RPC messages from the parent process.
  */
+import { TERMINATE_METHOD_ID } from './construct'  
+import { func } from './types'
+import { requireFoolWebpack, RUNTIME_API } from './utils'
 
-// source of inspiration: https://github.com/sindresorhus/require-fool-webpack
-const requireFoolWebpack = eval(
-  "typeof require !== 'undefined'" +
-    ' ? require' +
-    ' : function (module) { throw new Error(\'Module " + module + " not found.\') }'
-)
+let on: (event: string, listener: func) => any
+let send: func
+let exit = (code?: number) => void 0
 
-/**
- * Special message sent by parent which causes the worker to terminate itself.
- * Not a "message object"; this string is the entire message.
- */
-const TERMINATE_METHOD_ID = '__workerpool-terminate__'
+switch (RUNTIME_API.env) {
+  case 'browser':
+    send = (message) => postMessage(message)
+    on = (event, callback) =>
+      window.addEventListener(event, (message) =>
+        callback((message as any).data)
+      )
+    break
+  case 'nodejs':
+    try {
+      const WorkerThreads = requireFoolWebpack('worker_threads')
+      const parentPort = WorkerThreads.parentPort
 
-// const nodeOSPlatform = require('./environment').nodeOSPlatform;
-// create a worker API for sending and receiving messages which works both on
-// node.js and in the browser
-const worker = {
-  exit: (code?: number | undefined) => void 0,
-  send: void 0 as any,
-  on: void 0 as any
-}
-
-if (
-  typeof self !== 'undefined' &&
-  typeof postMessage === 'function' &&
-  typeof addEventListener === 'function'
-) {
-  // worker in the browser
-  worker.send = (message) => {
-    postMessage(message)
-  }
-  worker.on = (event, callback) => {
-    self.addEventListener(event, (message) => {
-      callback(message.data)
-    })
-  }
-} else if (typeof process !== 'undefined') {
-  // node.js
-
-  let WorkerThreads
-  try {
-    WorkerThreads = requireFoolWebpack('worker_threads')
-  } catch (error) {
-    if (
-      typeof error === 'object' &&
-      error !== null &&
-      error.code === 'MODULE_NOT_FOUND'
-    ) {
+      if (parentPort) {
+        send = parentPort.postMessage.bind(parentPort)
+        on = parentPort.on.bind(parentPort)
+      } else {
+        on = process.on.bind(process)
+        send = process.send!.bind(process)
+        // register disconnect handler only for subprocess worker to exit when parent is killed unexpectedly
+        on('disconnect', () => process.exit(1))
+        exit = process.exit.bind(process)
+      }
+    } catch (error) {
+      const noWorkerThreads =
+        typeof error === 'object' &&
+        error !== null &&
+        error.code === 'MODULE_NOT_FOUND'
+      if (!noWorkerThreads) {
+        throw error
+      }
       // no worker_threads, fallback to sub-process based workers
-    } else {
-      throw error
     }
-  }
-
-  if (
-    WorkerThreads &&
-    /* if there is a parentPort, we are in a WorkerThread */
-    WorkerThreads.parentPort !== null
-  ) {
-    const parentPort = WorkerThreads.parentPort
-    worker.send = parentPort.postMessage.bind(parentPort)
-    worker.on = parentPort.on.bind(parentPort)
-  } else {
-    worker.on = process.on.bind(process)
-    worker.send = process.send!.bind(process)
-    // register disconnect handler only for subprocess worker to exit when parent is killed unexpectedly
-    worker.on('disconnect', () => {
-      process.exit(1)
-    })
-    worker.exit = process.exit.bind(process)
-  }
-} else {
-  throw new Error('Script must be executed as a worker')
+    break
+  default:
+    throw new Error('Script must be executed as a worker')
 }
 
-function convertError(error) {
-  return Object.getOwnPropertyNames(error).reduce(function (product, name) {
-    return Object.defineProperty(product, name, {
-      value: error[name],
+const convertError = <T extends Record<string, any>>(error: T): Partial<T> => {
+  const res = {}
+  Object.getOwnPropertyNames(error).forEach((key) => {
+    Object.defineProperty(res, key, {
+      value: error[key],
       enumerable: true
     })
-  }, {})
+  })
+  return res
 }
 
 /**
@@ -93,17 +65,19 @@ function convertError(error) {
  * @returns {boolean} Returns true when given value is an object
  *                    having functions `then` and `catch`.
  */
-function isPromise(value) {
+const isPromise = (value: unknown) => {
   return (
     value &&
-    typeof value.then === 'function' &&
-    typeof value.catch === 'function'
+    typeof (value as any).then === 'function' &&
+    typeof (value as any).catch === 'function'
   )
 }
 
+type methodMap<F extends (...args: any[]) => any = (...args: any[]) => any> =
+  Record<string, (fn: F, args: Parameters<F>) => ReturnType<F>>
 // functions available externally
-const methodMap = {
-  run: (fn: Function, args: any[]) => {
+const methodMap: methodMap = {
+  run: (fn, args) => {
     const f = new Function('return (' + fn + ').apply(null, arguments);')
     return f.apply(f, args)
   }
@@ -111,9 +85,9 @@ const methodMap = {
 
 let currentRequestId = null
 
-worker.on('message', function (request) {
+on!('message', (request) => {
   if (request === TERMINATE_METHOD_ID) {
-    return worker.exit(0)
+    return exit(0)
   }
   try {
     const method = methodMap[request.method]
@@ -128,7 +102,7 @@ worker.on('message', function (request) {
         // promise returned, resolve this and then return
         result
           .then(function (result) {
-            worker.send({
+            send({
               id: request.id,
               result: result,
               error: null
@@ -136,7 +110,7 @@ worker.on('message', function (request) {
             currentRequestId = null
           })
           .catch(function (err) {
-            worker.send({
+            send({
               id: request.id,
               result: null,
               error: convertError(err)
@@ -145,7 +119,7 @@ worker.on('message', function (request) {
           })
       } else {
         // immediate result
-        worker.send({
+        send({
           id: request.id,
           result: result,
           error: null
@@ -157,7 +131,7 @@ worker.on('message', function (request) {
       throw new Error('Unknown method "' + request.method + '"')
     }
   } catch (err) {
-    worker.send({
+    send({
       id: request.id,
       result: null,
       error: convertError(err)
@@ -165,21 +139,21 @@ worker.on('message', function (request) {
   }
 })
 
-const register = (funcMap: Record<string, Function>) => {
+const register = (funcMap: methodMap) => {
   for (const name in funcMap) {
     if (funcMap.hasOwnProperty(name)) {
       methodMap[name] = funcMap[name]
     }
   }
 
-  worker.send('ready')
+  send('ready')
 }
 
 export const add = register
 
 export const emit = (payload: any) => {
   if (currentRequestId) {
-    worker.send({
+    send({
       id: currentRequestId,
       isEvent: true,
       payload
