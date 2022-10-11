@@ -55,13 +55,13 @@ export const ensureWorkerThreads = () => {
 export const ensureWebWorker = () => {
   // Workaround for a bug in PhantomJS (Or QtWebkit): https://github.com/ariya/phantomjs/issues/14534
   if (typeof Worker === 'function') {
-    return true
+    return Worker
   }
   if (
     typeof Worker === 'object' &&
     typeof (Worker as any).prototype.constructor === 'function'
   ) {
-    return true
+    return Worker
   }
   throw new Error('WorkerPool: Web Workers not supported')
 }
