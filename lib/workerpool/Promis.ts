@@ -118,9 +118,12 @@ export default class Promis<T = any> {
   resolved = false
   rejected = false
   pending = true
-  private _onSuccess: Array<Function> = []
-  private _onFail: Array<Function> = []
-  constructor(handler: Function, readonly parent?: Promis) {
+  private _onSuccess: Array<func> = []
+  private _onFail: Array<func> = []
+  constructor(
+    handler: (resolve: func, reject: func) => any,
+    readonly parent?: Promis
+  ) {
     // attach handler passing the resolve and reject functions
     handler(
       (result) => this._resolve(result),
