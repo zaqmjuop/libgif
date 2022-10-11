@@ -11,7 +11,7 @@ import {
 } from './utils'
 
 const setupWorker = (script, options: { workerType?: workerType }) => {
-  const workerType: workerType = options.workerType || 'process' 
+  const workerType: workerType = options.workerType || 'process'
   switch (workerType) {
     case 'web':
       return setupBrowserWorker(script)
@@ -27,12 +27,13 @@ const setupWorker = (script, options: { workerType?: workerType }) => {
     default:
       return RUNTIME_API.env === 'browser'
         ? setupBrowserWorker(script)
-        : ( tryRequireWorkerThreads()
+        : tryRequireWorkerThreads()
         ? setupWorkerThreadWorker(script)
         : setupProcessWorker(
             script,
             resolveForkOptions(options),
-            requireFoolWebpack('child_process'))
+            requireFoolWebpack('child_process')
+          )
   }
 }
 const setupBrowserWorker = (script: string) => {
