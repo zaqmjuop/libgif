@@ -16,9 +16,9 @@ const DEFAULT_WORKER_COUNT = (RUNTIME_API.cpus || 4) >> 1
  * @constructor
  */
 class Pool {
-  script?: string
-  workers: WorkerHandler[] = [] // queue with all workers
-  tasks: Task[] = [] // queue with tasks awaiting execution
+  readonly script?: string
+  readonly workers: WorkerHandler[] = [] // queue with all workers
+  readonly tasks: Task[] = [] // queue with tasks awaiting execution
   readonly forkArgs: any[]
   readonly forkOpts: Record<string, any>
   readonly workerType: workerType
@@ -223,33 +223,16 @@ map = function (array, callback) {
 
     return resolver.promise
   }
-
-  /**
-   * Close all active workers. Tasks currently being executed will be finished first.
-   * @param {boolean} [force=false]   If false (default), the workers are terminated
-   *                                  after finishing all tasks currently in
-   *                                  progress. If true, the workers will be
-   *                                  terminated immediately.
-   * @param {number} [timeout]        If provided and non-zero, worker termination Promis will be rejected
-   *                                  after timeout if worker process has not been terminated.
  
-   */
   terminate = (force = false, timeout: number): Promis<void | Error> => {
-    // cancel any pending tasks
-    this.tasks.forEach((task) =>
-      task.resolver.reject(new Error('Pool terminated'))
+    this.tasks
+      .splice(0, this.tasks.length)
+      .forEach((task) => task.resolver.reject(new Error('Pool terminated')))
+    return Promis.all(
+      this.workers.map((worker) =>
+        worker.terminateAndNotify(force, timeout).then(this.removeWorker)
+      )
     )
-    this.tasks.length = 0
-
-    const Promiss: Promis[] = []
-    const workers = this.workers.slice()
-    workers.forEach((worker) => {
-      const termPromis = worker
-        .terminateAndNotify(force, timeout)
-        .then(this.removeWorker)
-      Promiss.push(termPromis)
-    })
-    return Promis.all(Promiss)
   }
 }
 

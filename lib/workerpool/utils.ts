@@ -25,7 +25,7 @@ export const requireFoolWebpack = eval(
     ': function (module) { throw new Error(\'Module " + module + " not found.\') }'
 )
 
-export const tryRequireWorkerThreads = () => {
+export const tryRequireWorkerThreads = ()=> {
   try {
     return requireFoolWebpack('worker_threads')
   } catch (error) {
@@ -49,21 +49,6 @@ export const ensureWorkerThreads = () => {
   }
 
   return WorkerThreads
-}
-
-// check whether Worker is supported by the browser
-export const ensureWebWorker = () => {
-  // Workaround for a bug in PhantomJS (Or QtWebkit): https://github.com/ariya/phantomjs/issues/14534
-  if (typeof Worker === 'function') {
-    return Worker
-  }
-  if (
-    typeof Worker === 'object' &&
-    typeof (Worker as any).prototype.constructor === 'function'
-  ) {
-    return Worker
-  }
-  throw new Error('WorkerPool: Web Workers not supported')
 }
 
 // get the default worker script
