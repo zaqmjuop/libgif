@@ -209,10 +209,10 @@ class WorkerHandler {
 
         // terminate worker
         return me.terminateAndNotify(true).then(
-          function () {
+          () => {
             throw error
           },
-          function (err) {
+          (err) => {
             throw err
           }
         )
@@ -249,7 +249,7 @@ class WorkerHandler {
     }
     if (!this.busy()) {
       // all tasks are finished. kill the worker
-      const cleanup = function (err?: Error) {
+      const cleanup = (err?: Error) => {
         me.terminated = true
         if (me.worker != null && me.worker.removeAllListeners) {
           // removeAllListeners is only available for child_process
