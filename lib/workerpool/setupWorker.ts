@@ -49,34 +49,31 @@ const setupWorkerThreadWorker = (script: string) => {
   return worker
 }
 
-const setupProcessWorker = (script, options, child_process) => {
+const setupProcessWorker = (script, options) => {
+  const child_process = requireFoolWebpack('child_process')
   // no WorkerThreads, fallback to sub-process based workers
   const worker = child_process.fork(script, options.forkArgs, options.forkOpts)
   return worker
 }
 
 // add debug flags to child processes if the node inspector is active
-const resolveForkOptions = (opts) => {
-  opts = opts || {}
-
-  const processExecArgv = process.execArgv.join(' ')
-  const inspectorActive = processExecArgv.indexOf('--inspect') !== -1
-  const debugBrk = processExecArgv.indexOf('--debug-brk') !== -1
-
-  const execArgv: string[] = []
-  if (inspectorActive) {
-    execArgv.push('--inspect=' + opts.debugPort)
-
-    if (debugBrk) {
-      execArgv.push('--debug-brk')
-    }
-  }
-
-  process.execArgv.forEach(function (arg) {
-    if (arg.indexOf('--max-old-space-size') > -1) {
-      execArgv.push(arg)
-    }
-  })
+const resolveForkOptions = (opts: {
+  debugPort: number
+  forkArgs: any
+  forkOpts: any
+}) => {
+  const execArgv: string[] = process.execArgv
+    .map((str) => {
+      if (str.indexOf('--inspect') !== -1) {
+        return '--inspect=' + opts.debugPort
+      } else if (str.indexOf('--debug-brk') !== -1) {
+        return '--debug-brk'
+      } else if (str.indexOf('--max-old-space-size') > -1) {
+        return str
+      }
+      return ''
+    })
+    .filter((str) => !!str)
 
   return Object.assign({}, opts, {
     forkArgs: opts.forkArgs,
@@ -96,21 +93,13 @@ export const setupWorker = (script, options: { workerType?: workerType }) => {
     case 'thread':
       return setupWorkerThreadWorker(script)
     case 'process':
-      return setupProcessWorker(
-        script,
-        resolveForkOptions(options),
-        requireFoolWebpack('child_process')
-      )
+      return setupProcessWorker(script, resolveForkOptions(options))
 
     default:
       return RUNTIME_API.env === 'browser'
         ? setupBrowserWorker(script)
         : tryRequireWorkerThreads()
         ? setupWorkerThreadWorker(script)
-        : setupProcessWorker(
-            script,
-            resolveForkOptions(options),
-            requireFoolWebpack('child_process')
-          )
+        : setupProcessWorker(script, resolveForkOptions(options))
   }
 }
