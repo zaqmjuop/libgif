@@ -21,7 +21,7 @@ class Pool {
   tasks: Task[] = [] // queue with tasks awaiting execution
   readonly forkArgs: any[]
   readonly forkOpts: Record<string, any>
-  readonly workerType: workerType 
+  readonly workerType: workerType
   readonly maxWorkers: number
   readonly minWorkers: number
   constructor(options: WorkerPoolOptions = {}) {
@@ -29,7 +29,7 @@ class Pool {
 
     this.forkArgs = options.forkArgs || []
     this.forkOpts = options.forkOpts || {}
-    this.workerType = options.workerType || 'auto' 
+    this.workerType = options.workerType || 'auto'
 
     // configuration
     this.maxWorkers = getNumberInRange(
@@ -187,49 +187,41 @@ map = function (array, callback) {
     params?: any[],
     options?: ExecOptions
   ): Promis<any | Error> {
-    // validate type of arguments
-    if (params && !Array.isArray(params)) {
-      throw new TypeError('Array expected as argument "params"')
-    }
-
-    if (typeof method === 'string') {
-      const resolver = Promis.defer() 
-
-      // add a new task to the queue
-      const tasks = this.tasks
-      const task = {
-        method: method,
-        params: params,
-        resolver: resolver,
-        timeout: 100,
-        options: options
-      }
-      tasks.push(task)
-
-      // replace the timeout method of the Promis with our own,
-      // which starts the timer as soon as the task is actually started
-      const originalTimeout = resolver.promise.timeout
-      resolver.promise.timeout = function timeout(delay) {
-        if (tasks.indexOf(task) !== -1) {
-          // task is still queued -> start the timer later on
-          task.timeout = delay
-          return resolver.promise
-        } else {
-          // task is already being executed -> start timer immediately
-          return originalTimeout.call(resolver.promise, delay)
-        }
-      }
-
-      // trigger task execution
-      this._next()
-
-      return resolver.promise
-    } else if (typeof method === 'function') {
+    if (typeof method === 'function') {
       // send stringified function and function arguments to worker
       return this.exec('run', [String(method), params])
-    } else {
-      throw new TypeError('Function or string expected as argument "method"')
     }
+
+    const resolver = Promis.defer()
+
+    // add a new task to the queue
+    const task = {
+      method: method,
+      params: params,
+      resolver: resolver,
+      timeout: 100,
+      options: options
+    }
+    this.tasks.push(task)
+
+    // replace the timeout method of the Promis with our own,
+    // which starts the timer as soon as the task is actually started
+    const originalTimeout = resolver.promise.timeout
+    resolver.promise.timeout = (delay: number) => {
+      if (this.tasks.indexOf(task) !== -1) {
+        // task is still queued -> start the timer later on
+        task.timeout = delay
+        return resolver.promise
+      } else {
+        // task is already being executed -> start timer immediately
+        return originalTimeout.call(resolver.promise, delay)
+      }
+    }
+
+    // trigger task execution
+    this._next()
+
+    return resolver.promise
   }
 
   /**
