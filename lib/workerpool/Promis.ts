@@ -1,4 +1,4 @@
-import { func, rejecter, resolver } from './types'
+import { func, reject, resolve } from './types'
 
 const isPromis = (value): value is Promis =>
   value &&
@@ -7,8 +7,8 @@ const isPromis = (value): value is Promis =>
 
 const _then = (
   callback: (value) => any,
-  resolve: resolver,
-  reject: rejecter
+  resolve: resolve,
+  reject: reject
 ): func => {
   return (result) => {
     try {

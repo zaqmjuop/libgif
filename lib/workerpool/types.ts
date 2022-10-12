@@ -1,3 +1,4 @@
+import Promis from './Promis'
 export type workerType = 'auto' | 'web' | 'process' | 'thread'
 
 export interface ExecOptions {
@@ -21,5 +22,19 @@ export interface WorkerPoolOptions {
   nodeWorker?: any
 }
  
-export type resolver = (value) => void
-export type rejecter = (err: Error) => void
+export type resolve = (value) => void
+export type reject = (err: Error) => void
+
+export type resolver ={
+  resolve: resolve
+  reject: reject
+  promise: Promis<any>;
+}
+
+export interface Task {
+  method: string,
+  params?: any[],
+  resolver: resolver,
+  timeout: number,
+  options?: ExecOptions
+}

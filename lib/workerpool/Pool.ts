@@ -1,7 +1,7 @@
 import Promis from './Promis'
 import WorkerHandler from './WorkerHandler'
 import { useDebugPortAllocator } from './debug-port-allocator'
-import { ExecOptions, func, WorkerPoolOptions, workerType } from './types'
+import { ExecOptions, func, Task, WorkerPoolOptions, workerType } from './types'
 import { ensureWorkerThreads, getNumberInRange, RUNTIME_API } from './utils'
 const DEBUG_PORT_ALLOCATOR = useDebugPortAllocator()
 
@@ -18,13 +18,10 @@ const DEFAULT_WORKER_COUNT = (RUNTIME_API.cpus || 4) >> 1
 class Pool {
   script?: string
   workers: WorkerHandler[] = [] // queue with all workers
-  tasks: any[] = [] // queue with tasks awaiting execution
+  tasks: Task[] = [] // queue with tasks awaiting execution
   readonly forkArgs: any[]
   readonly forkOpts: Record<string, any>
-  debugPortStart: number
-  nodeWorker: any
-  workerType: workerType
-  maxQueueSize: number
+  readonly workerType: workerType 
   readonly maxWorkers: number
   readonly minWorkers: number
   constructor(options: WorkerPoolOptions = {}) {
@@ -32,10 +29,7 @@ class Pool {
 
     this.forkArgs = options.forkArgs || []
     this.forkOpts = options.forkOpts || {}
-    this.debugPortStart = options.debugPortStart || 43210
-    this.nodeWorker = options.nodeWorker
-    this.workerType = options.workerType || options.nodeWorker || 'auto'
-    this.maxQueueSize = options.maxQueueSize || Infinity
+    this.workerType = options.workerType || 'auto' 
 
     // configuration
     this.maxWorkers = getNumberInRange(
@@ -199,11 +193,7 @@ map = function (array, callback) {
     }
 
     if (typeof method === 'string') {
-      const resolver = Promis.defer()
-
-      if (this.tasks.length >= this.maxQueueSize) {
-        throw new Error('Max queue size of ' + this.maxQueueSize + ' reached')
-      }
+      const resolver = Promis.defer() 
 
       // add a new task to the queue
       const tasks = this.tasks
