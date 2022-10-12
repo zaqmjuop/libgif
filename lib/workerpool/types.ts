@@ -20,3 +20,6 @@ export interface WorkerPoolOptions {
   debugPortStart?: number
   nodeWorker?: any
 }
+ 
+export type resolver = (value) => void
+export type rejecter = (err: Error) => void

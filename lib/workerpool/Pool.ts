@@ -2,16 +2,11 @@ import Promis from './Promis'
 import WorkerHandler from './WorkerHandler'
 import { useDebugPortAllocator } from './debug-port-allocator'
 import { ExecOptions, func, WorkerPoolOptions, workerType } from './types'
-import {
-  ensureWorkerThreads,
-  getNumberInRange,
-  RUNTIME_API,
-  validateWorkers
-} from './utils'
+import { ensureWorkerThreads, getNumberInRange, RUNTIME_API } from './utils'
 const DEBUG_PORT_ALLOCATOR = useDebugPortAllocator()
 
 const MAX_WORKER_COUNT = (RUNTIME_API.cpus || 4) - 1
-const MIN_WORKER_COUNT = 1
+const MIN_WORKER_COUNT = 0
 const DEFAULT_WORKER_COUNT = (RUNTIME_API.cpus || 4) >> 1
 
 /**
@@ -22,7 +17,7 @@ const DEFAULT_WORKER_COUNT = (RUNTIME_API.cpus || 4) >> 1
  */
 class Pool {
   script?: string
-  workers: any[] = [] // queue with all workers
+  workers: WorkerHandler[] = [] // queue with all workers
   tasks: any[] = [] // queue with tasks awaiting execution
   readonly forkArgs: any[]
   readonly forkOpts: Record<string, any>
@@ -30,8 +25,6 @@ class Pool {
   nodeWorker: any
   workerType: workerType
   maxQueueSize: number
-  onCreateWorker: func
-  onTerminateWorker: func
   readonly maxWorkers: number
   readonly minWorkers: number
   constructor(options: WorkerPoolOptions = {}) {
@@ -43,9 +36,6 @@ class Pool {
     this.nodeWorker = options.nodeWorker
     this.workerType = options.workerType || options.nodeWorker || 'auto'
     this.maxQueueSize = options.maxQueueSize || Infinity
-
-    this.onCreateWorker = options.onCreateWorker || (() => null)
-    this.onTerminateWorker = options.onTerminateWorker || (() => null)
 
     // configuration
     this.maxWorkers = getNumberInRange(
@@ -60,54 +50,26 @@ class Pool {
       this.maxWorkers
     )
 
-    if ('maxWorkers' in options) {
-      validateWorkers(options.maxWorkers, 'maxWorkers')
-      this.maxWorkers = options.maxWorkers as number
-    } else {
-      this.maxWorkers = Math.max((RUNTIME_API.cpus || 4) - 1, 1)
-    }
-
-    if ('minWorkers' in options) {
-      if (options.minWorkers === 'max') {
-        this.minWorkers = this.maxWorkers
-      } else {
-        validateWorkers(options.minWorkers, 'minWorkers')
-        this.minWorkers = options.minWorkers as number
-        this.maxWorkers = Math.max(this.minWorkers, this.maxWorkers) // in case minWorkers is higher than maxWorkers
-      }
-      this._ensureMinWorkers()
-    }
-
+    this._ensureMinWorkers()
     if (this.workerType === 'thread') {
       ensureWorkerThreads()
     }
   }
 
-  /**
-   * Ensures that a minimum of minWorkers is up and running
-   */
   private _ensureMinWorkers() {
-    if (this.minWorkers) {
-      for (let i = this.workers.length; i < this.minWorkers; i++) {
-        this.workers.push(this._createWorkerHandler())
-      }
+    const needCount = Math.max(
+      Math.trunc(this.minWorkers - this.workers.length),
+      0
+    )
+    for (let i = 0; i < needCount; i++) {
+      this.workers.push(this.createWorker())
     }
   }
 
-  /**
-   * Helper function to create a new WorkerHandler and pass all options.
-   */
-  private _createWorkerHandler(): WorkerHandler {
-    const overridenParams =
-      this.onCreateWorker({
-        forkArgs: this.forkArgs,
-        forkOpts: this.forkOpts,
-        script: this.script
-      }) || {}
-
-    return new WorkerHandler(overridenParams.script || this.script, {
-      forkArgs: overridenParams.forkArgs || this.forkArgs,
-      forkOpts: overridenParams.forkOpts || this.forkOpts,
+  private createWorker(): WorkerHandler {
+    return new WorkerHandler(this.script || '', {
+      forkArgs: this.forkArgs,
+      forkOpts: this.forkOpts,
       debugPort: DEBUG_PORT_ALLOCATOR.increasePort(),
       workerType: this.workerType as any
     })
@@ -138,7 +100,7 @@ map = function (array, callback) {
     }
     // there are tasks in the queue
     // find an available worker
-    const worker = this._getWorker()
+    const worker = this.takeAvailableWorker()
     if (!worker) {
       return
     }
@@ -164,71 +126,35 @@ map = function (array, callback) {
     }
   }
 
-  /**
-   * Get an available worker. If no worker is available and the maximum number
-   * of workers isn't yet reached, a new worker will be created and returned.
-   * If no worker is available and the maximum number of workers is reached,
-   * null will be returned.
-   */
-  private _getWorker(): WorkerHandler | null {
-    // find a non-busy worker
-    const workers = this.workers
-    for (let i = 0; i < workers.length; i++) {
-      const worker = workers[i]
-      if (worker.busy() === false) {
-        return worker
-      }
-    }
-
-    if (workers.length < this.maxWorkers) {
-      // create a new worker
-      const worker = this._createWorkerHandler()
-      workers.push(worker)
+  private takeAvailableWorker(): WorkerHandler | void {
+    const availableWorkerIndex = this.workers.findIndex(
+      (worker) => worker.busy() === false
+    )
+    if (availableWorkerIndex > -1) {
+      const worker = this.workers.splice(availableWorkerIndex, 1)[0]
+      this.workers.push(worker)
+      return worker
+    } else if (this.workers.length < this.maxWorkers) {
+      const worker = this.createWorker()
+      this.workers.push(worker)
       return worker
     }
-
-    return null
   }
 
-  /**
-   * Remove a worker from the pool.
-   * Attempts to terminate worker if not already terminated, and ensures the minimum
-   * pool size is met.
-   */
   private _removeWorker(worker: WorkerHandler): Promis<WorkerHandler> {
-    const me = this
-
     DEBUG_PORT_ALLOCATOR.releasePort(worker.debugPort)
-    // _removeWorker will call this, but we need it to be removed synchronously
-    this._removeWorkerFromList(worker)
-    // If minWorkers set, spin up new workers to replace the crashed ones
+    this.removeWorker(worker)
     this._ensureMinWorkers()
-    // terminate the worker (if not already terminated)
     return new Promis((resolve, reject) => {
       worker.terminate(false, (err) => {
-        me.onTerminateWorker({
-          forkArgs: worker.forkArgs,
-          forkOpts: worker.forkOpts,
-          script: worker.script
-        })
-        if (err) {
-          reject(err)
-        } else {
-          resolve(worker)
-        }
+        err ? reject(err) : resolve(worker)
       })
     })
   }
 
-  /**
-   * Remove a worker from the pool list.
-   */
-  private _removeWorkerFromList(worker: WorkerHandler) {
-    // remove from the list with workers
+  private removeWorker = (worker: WorkerHandler) => {
     const index = this.workers.indexOf(worker)
-    if (index !== -1) {
-      this.workers.splice(index, 1)
-    }
+    index !== -1 && this.workers.splice(index, 1)
   }
   /**
    * Execute a function on a worker.
@@ -317,29 +243,6 @@ map = function (array, callback) {
   }
 
   /**
-   * Create a proxy for current worker. Returns an object containing all
-   * methods available on the worker. The methods always return a Promis.
-   */
-  proxy(): Promis<object | Error> {
-    if (arguments.length > 0) {
-      throw new Error('No arguments expected')
-    }
-
-    const pool = this
-    return this.exec('methods').then(  (methods) =>{
-      const proxy = {}
-
-      methods.forEach(function (method) {
-        proxy[method] = function () {
-          return pool.exec(method, Array.prototype.slice.call(arguments))
-        }
-      })
-
-      return proxy
-    })
-  }
-
-  /**
    * Close all active workers. Tasks currently being executed will be finished first.
    * @param {boolean} [force=false]   If false (default), the workers are terminated
    *                                  after finishing all tasks currently in
@@ -350,58 +253,21 @@ map = function (array, callback) {
  
    */
   terminate = (force = false, timeout: number): Promis<void | Error> => {
-    const me = this
-
     // cancel any pending tasks
-    this.tasks.forEach(function (task) {
+    this.tasks.forEach((task) =>
       task.resolver.reject(new Error('Pool terminated'))
-    })
+    )
     this.tasks.length = 0
-
-    const removeWorker = ((worker: WorkerHandler) =>
-      this._removeWorkerFromList(worker)).bind(this)
 
     const Promiss: Promis[] = []
     const workers = this.workers.slice()
-    workers.forEach(function (worker) {
+    workers.forEach((worker) => {
       const termPromis = worker
         .terminateAndNotify(force, timeout)
-        .then(removeWorker)
-        .always(function () {
-          me.onTerminateWorker({
-            forkArgs: worker.forkArgs,
-            forkOpts: worker.forkOpts,
-            script: worker.script
-          })
-        })
+        .then(this.removeWorker)
       Promiss.push(termPromis)
     })
     return Promis.all(Promiss)
-  }
-
-  /**
-   * Retrieve statistics on tasks and workers.
-   */
-  stats(): {
-    totalWorkers: number
-    busyWorkers: number
-    idleWorkers: number
-    pendingTasks: number
-    activeTasks: number
-  } {
-    const totalWorkers = this.workers.length
-    const busyWorkers = this.workers.filter(function (worker) {
-      return worker.busy()
-    }).length
-
-    return {
-      totalWorkers: totalWorkers,
-      busyWorkers: busyWorkers,
-      idleWorkers: totalWorkers - busyWorkers,
-
-      pendingTasks: this.tasks.length,
-      activeTasks: busyWorkers
-    }
   }
 }
 

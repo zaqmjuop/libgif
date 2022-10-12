@@ -240,7 +240,7 @@ class WorkerHandler {
   }
 
   /**
-   * Get a list with methods available on the worker. 
+   * Get a list with methods available on the worker.
    */
   methods = (): Promis<String[] | Error> => this.exec('methods')
 
@@ -418,18 +418,14 @@ class WorkerHandler {
     force = false,
     timeout?: number
   ): Promis<WorkerHandler | Error> {
-    const resolver = Promis.defer()
+    const { promise, resolve, reject } = Promis.defer()
     if (timeout) {
-      resolver.promise.timeout = timeout
+      promise.timeout = timeout
     }
     this.terminate(force, (err, worker) => {
-      if (err) {
-        resolver.reject(err)
-      } else {
-        resolver.resolve(worker)
-      }
+      err ? reject(err) : resolve(worker)
     })
-    return resolver.promise
+    return promise
   }
 }
 

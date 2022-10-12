@@ -1,38 +1,25 @@
-import { func } from './types'
+import { func, rejecter, resolver } from './types'
 
-/**
- * Execute given callback, then call resolve/reject based on the returned result
- * @param {Function} callback
- * @param {Function} resolve
- * @param {Function} reject
- * @returns {Function}
- * @private
- */
-function _then(callback, resolve, reject) {
-  return function (result) {
+const isPromis = (value): value is Promis =>
+  value &&
+  typeof value['then'] === 'function' &&
+  typeof value['catch'] === 'function'
+
+const _then = (
+  callback: (value) => any,
+  resolve: resolver,
+  reject: rejecter
+): func => {
+  return (result) => {
     try {
-      var res = callback(result)
-      if (
-        res &&
-        typeof res.then === 'function' &&
-        typeof res['catch'] === 'function'
-      ) {
-        // method returned a promise
-        res.then(resolve, reject)
-      } else {
-        resolve(res)
-      }
+      const res = callback(result)
+      isPromis(res) ? res.then(resolve, reject) : resolve(res)
     } catch (error) {
       reject(error)
     }
   }
 }
 
-/**
- * Create a cancellation error
- * @param {String} [message]
- * @extends Error
- */
 class CancellationError extends Error {
   readonly name = 'CancellationError'
   constructor(message?: string) {
@@ -41,11 +28,6 @@ class CancellationError extends Error {
   }
 }
 
-/**
- * Create a timeout error
- * @param {String} [message]
- * @extends Error
- */
 class TimeoutError extends Error {
   readonly name = 'TimeoutError'
   constructor(message?: string) {
@@ -122,7 +104,7 @@ export default class Promis<T = any> {
   private _onSuccess: Array<func> = []
   private _onFail: Array<func> = []
   constructor(
-    handler: (resolve: func, reject: func) => any,
+    handler: (resolve: resolver, reject: rejecter) => any,
     readonly parent?: Promis
   ) {
     // attach handler passing the resolve and reject functions
@@ -153,68 +135,46 @@ export default class Promis<T = any> {
     }, this)
   }
 
-  /**
-   * Resolve the promise
-   * @param {*} result
-   * @type {Function}
-   */
   private _resolve = (result: any) => {
-    let disposal = (): this | void => {
-      // update status
-      this.resolved = true
-      this.rejected = false
-      this.pending = false
-
-      this._onSuccess.forEach(function (fn) {
-        fn(result)
-      })
-
-      this._process = function (onSuccess, onFail) {
-        onSuccess(result)
-      }
-      disposal = () => {}
-      return this
+    if (!this.pending) {
+      return
     }
+    // update status
+    this.resolved = true
+    this.rejected = false
+    this.pending = false
 
-    return disposal()
+    this._onSuccess.forEach((fn) => {
+      fn(result)
+    })
+
+    this._process = (onSuccess, onFail) => {
+      onSuccess(result)
+    }
+    return this
   }
 
-  /**
-   * Reject the promise
-   * @param {Error} error
-   * @type {Function}
-   */
   private _reject = (error: Error) => {
-    let disposal = (): this | void => {
-      // update status
-      this.resolved = false
-      this.rejected = true
-      this.pending = false
-
-      this._onFail.forEach(function (fn) {
-        fn(error)
-      })
-
-      this._process = function (onSuccess, onFail) {
-        onFail(error)
-      }
-      disposal = () => {}
-      return this
+    if (!this.pending) {
+      return
     }
+    // update status
+    this.resolved = false
+    this.rejected = true
+    this.pending = false
 
-    return disposal()
+    this._onFail.forEach((fn) => {
+      fn(error)
+    })
+
+    this._process = (onSuccess, onFail) => {
+      onFail(error)
+    }
+    return this
   }
 
-  /**
-   * Cancel te promise. This will reject the promise with a CancellationError
-   */
   cancel = (): Promis => {
-    if (this.parent) {
-      this.parent.cancel()
-    } else {
-      this._reject(new CancellationError())
-    }
-
+    this.parent ? this.parent.cancel() : this._reject(new CancellationError())
     return this
   }
 
