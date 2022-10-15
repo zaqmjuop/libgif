@@ -34,7 +34,6 @@ const download = async (url: string) => {
       resolve(data)
     }
     h.onprogress = (e) => {
-      console.log(e)
       const data: gifData = e.currentTarget
         ? (e.currentTarget as any).response
         : ''
