@@ -27,7 +27,7 @@ const addRecord = (key: string) => {
 const setDownload = (key: string, data: gifData) => {
   cache[key] = cache[key] || defaultRecord()
   cache[key].data = data
-  cache[key]
+  cache[key].progress = 100
   const eventData = { ...cache[key], key }
   emitter.emit('downloaded', eventData)
 }
