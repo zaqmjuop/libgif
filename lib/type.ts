@@ -130,7 +130,6 @@ export interface DecodedData {
 
 export interface DownloadProgressEvent {
   key: string
-  data: gifData  
+  data: gifData
   progress: number
-  error?: string | undefined
 }

@@ -32,8 +32,9 @@ const addRecord = (key: string) => {
 const setDownload = (key: string, data: gifData) => {
   cache[key] = cache[key] || defaultRecord()
   cache[key].data = data
-  cache[key].progress = 100
-  const eventData = { ...cache[key], key }
+  const progress = 100
+  cache[key].progress = progress
+  const eventData: DownloadProgressEvent = { key, data, progress }
   emitter.emit('downloaded', eventData)
 }
 
@@ -41,7 +42,7 @@ const setProgress = (key: string, progress: number, data: gifData) => {
   cache[key] = cache[key] || defaultRecord()
   cache[key].progress = progress
   cache[key].data = data
-  const eventData = { ...cache[key], key } as DownloadProgressEvent
+  const eventData: DownloadProgressEvent = { key, data, progress }
   emitter.emit('progress', eventData)
 }
 

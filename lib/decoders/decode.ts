@@ -1,16 +1,29 @@
 import { DecodedStore } from '../store/decoded'
 import { Stream } from './stream'
 import { Gif89aDecoder } from './gif89aDecoder'
-import { DecodedData, DownloadProgressEvent, gifData } from '../type'
+import { DecodedData, DownloadProgressEvent } from '../type'
 import { DownloadStore } from '../store/downloaded'
 
 const setupDecode = async (key: string, config: { opacity: number }) => {
   DecodedStore.addRecord(key)
   const downloadRecord = DownloadStore.getDownload(key)
   const stream = new Stream(downloadRecord.data || '')
-  DownloadStore.on('progress', (e: DownloadProgressEvent) => {
-    e.key === key && stream.setData(e.data)
-  })
+
+  if (downloadRecord.progress < 100) {
+    const onProgress = (e: DownloadProgressEvent) => {
+      e.key === key && stream.setData(e.data)
+    }
+    const onDownloaded = (e: DownloadProgressEvent) => {
+      if (e.key !== key) {
+        return
+      }
+      stream.setData(e.data)
+      DownloadStore.off('progress', onProgress)
+      DownloadStore.off('downloaded', onDownloaded)
+    }
+    DownloadStore.on('progress', onProgress)
+    DownloadStore.on('downloaded', onDownloaded)
+  }
 
   const deocder = new Gif89aDecoder()
   const res = await deocder.parse(stream, key, config)
