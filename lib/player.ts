@@ -29,6 +29,7 @@ export class Player extends Emitter<
   readonly viewer: Viewer
   readonly beginFrameNo: number
   readonly autoplay: initialPlay
+  readonly playedFrameNos = new Set<number>()
   loopCount = 0
   playing = false
   currentKey?: string = void 0
@@ -37,7 +38,7 @@ export class Player extends Emitter<
     super()
     this.viewer = option.viewer
     this.beginFrameNo =
-      typeof option.beginFrameNo === 'number' ? option.beginFrameNo : 1
+      typeof option.beginFrameNo === 'number' ? option.beginFrameNo : 0
     this._forward = typeof option.forword === 'boolean' ? option.forword : true
     this._rate = typeof option.rate === 'number' ? option.rate : 1
     this._loop = typeof option.loop === 'boolean' ? option.loop : true
@@ -137,9 +138,14 @@ export class Player extends Emitter<
   private goOn = () => {
     if (!this.playing) return
     clearTimeout(this.t)
-    const currentFrame = this.putFrame(this.getNextFrameNo())
-    const isComplete = this.getNextFrameNo() === 0 && this.framsComplete
-    const delay = currentFrame?.delay || 17
+
+    const willPutNo = this.getNextFrameNo()
+    const shouldPut = !(!this.framsComplete && willPutNo === 0)
+    const currentFrame = shouldPut
+      ? this.putFrame(willPutNo)
+      : this.currentFrame
+    const delay = currentFrame ? currentFrame.delay : 17
+    const isComplete = this.framsComplete && this.getNextFrameNo() === 0
     this.t = window.setTimeout(
       isComplete ? this.finish : this.goOn,
       delay / this.rate
@@ -151,6 +157,7 @@ export class Player extends Emitter<
     this.i = this.beginFrameNo
     this.loopCount = 0
     this.playing = false
+    this.playedFrameNos.clear()
   }
 
   putFrame(flag: number) {
@@ -159,6 +166,7 @@ export class Player extends Emitter<
       this.i = flag
       this.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
       this.viewer.drawDraft()
+      this.playedFrameNos.add(this.i)
       this.emit('frameChange')
     }
     return frame
@@ -199,6 +207,7 @@ export class Player extends Emitter<
     this.resetState()
     this.currentKey = key
     await this.prepare()
+    this.putFrame(0) // 封面
     this.play()
   }
 

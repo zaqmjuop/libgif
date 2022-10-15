@@ -1,4 +1,4 @@
-// Generic functions
+import { Emitter } from '../utils/Emitter'
 export const bitsToNum = (ba: boolean[]) =>
   ba.reduce((total, current) => total * 2 + Number(current), 0)
 
@@ -10,22 +10,25 @@ export const byteToBitArr = (bite: number) => {
   return arr
 }
 
-// Stream
-/**
- * @constructor
- */
-// Make compiler happy.
-export class Stream {
-  readonly data: string | Uint8Array
-  readonly len: number
-  pos = 0
+const EMITS = ['data'] as const
 
-  constructor(data: string | Uint8Array) {
-    this.data = data
-    this.len = this.data.length
+export class Stream {
+  data: string | Uint8Array = ''
+  len: number = 0
+  pos = 0
+  private readonly emitter = new Emitter<typeof EMITS>()
+
+  constructor(data: string | Uint8Array = '') {
+    this.setData(data)
   }
 
-  readByte() :number{
+  setData(data: string | Uint8Array) {
+    this.data = data
+    this.len = this.data.length
+    this.emitter.emit('data')
+  }
+
+  readByteSync(): number {
     if (this.pos >= this.data.length) {
       throw new Error('Attempted to read past end of stream.')
     }
@@ -33,23 +36,38 @@ export class Stream {
       ? this.data[this.pos++]
       : this.data.charCodeAt(this.pos++) & 0xff
   }
-  readBytes(n: number): number[] {
+  readByte = async (): Promise<number> => {
+    const promise = new Promise<number>((resolve) => {
+      const onData = () => {
+        try {
+          const res = this.readByteSync()
+          this.emitter.off('data', onData)
+          resolve(res)
+        } catch {}
+      }
+      this.emitter.on('data', onData)
+      onData()
+    })
+    return promise
+  }
+  readBytes = async (n: number): Promise<number[]> => {
     const bytes: number[] = []
     for (let i = 0; i < n; i++) {
-      bytes.push(this.readByte())
+      const byte = await this.readByte()
+      bytes.push(byte)
     }
     return bytes
   }
-  read(n: number) {
+  read = async (n: number) => {
     let s = ''
     for (let i = 0; i < n; i++) {
-      s += String.fromCharCode(this.readByte())
+      const byte = await this.readByte()
+      s += String.fromCharCode(byte)
     }
     return s
   }
-  readUnsigned() {
-    // Little-endian.
-    const [n0, n1] = this.readBytes(2)
+  readUnsigned = async () => {
+    const [n0, n1] = await this.readBytes(2)
     return (n1 << 8) + n0
   }
 }

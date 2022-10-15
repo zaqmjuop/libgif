@@ -1,4 +1,9 @@
-import { ArrayElement, DownloadRecord, gifData } from '../type'
+import {
+  ArrayElement,
+  DownloadProgressEvent,
+  DownloadRecord,
+  gifData
+} from '../type'
 import { Emitter } from '../utils/Emitter'
 
 const EMITS = ['record', 'error', 'progress', 'downloaded'] as const
@@ -27,18 +32,17 @@ const addRecord = (key: string) => {
 const setDownload = (key: string, data: gifData) => {
   cache[key] = cache[key] || defaultRecord()
   cache[key].data = data
-  cache[key]
-  const eventData = { ...cache[key], key }
+  const progress = 100
+  cache[key].progress = progress
+  const eventData: DownloadProgressEvent = { key, data, progress }
   emitter.emit('downloaded', eventData)
 }
 
-const setProgress = (key: string, progress: number, data?: gifData) => {
+const setProgress = (key: string, progress: number, data: gifData) => {
   cache[key] = cache[key] || defaultRecord()
   cache[key].progress = progress
-  if (data) {
-    cache[key].data = data
-  }
-  const eventData = { ...cache[key], key }
+  cache[key].data = data
+  const eventData: DownloadProgressEvent = { key, data, progress }
   emitter.emit('progress', eventData)
 }
 

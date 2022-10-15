@@ -1,12 +1,12 @@
 import { Emitter } from './utils/Emitter'
 import { load_url } from './utils/loader'
+import { bindSelf } from './utils/bindSelf'
 import { Player } from './player'
 import { decode } from './decoders/decode'
 import { DownloadRecord, LibgifInitOptions } from './type'
 import { Viewer } from './viewer'
 import { DownloadStore } from './store/downloaded'
 import { DecodedStore } from './store/decoded'
-import { READY_STATE } from './utils/metaData'
 
 const OPACITY = 255
 
@@ -24,7 +24,6 @@ const libgif = (opts: LibgifInitOptions) => {
   const emitter = new Emitter<typeof EMITS>()
   const gif = opts.gif
 
-  let status: number
   let currentKey = opts.src || ''
   // global func
   // global func
@@ -57,36 +56,14 @@ const libgif = (opts: LibgifInitOptions) => {
 
   const loadUrl = async (url: string) => {
     currentKey = url
-    const hasDecoded = DecodedStore.getDecodeStatus(url)
-    const hasDownloaded = DownloadStore.getDownloadStatus(url)
     try {
-      if (hasDecoded === 'decoded') {
-        status = READY_STATE.DECODED
-        player.switch(url)
-      } else if (hasDecoded !== 'none') {
-        status = READY_STATE.DECODING
-        player.switch(url)
-      } else if (hasDownloaded === 'downloaded') {
-        status = READY_STATE.DOWNLOADED
-        const downloadData = await DownloadStore.getDownload(url)
-        player.switch(url)
-        await decode(downloadData.data!, url, { opacity: OPACITY })
-        status = READY_STATE.DECODED
-      } else if (hasDownloaded !== 'none') {
-        status = READY_STATE.DOWNLOADING
-        const downloadData = await load_url(url)
-        status = READY_STATE.DOWNLOADED
-        player.switch(url)
-        await decode(downloadData.data, url, { opacity: OPACITY })
-        status = READY_STATE.DECODED
-      } else {
-        status = READY_STATE.UNDOWNLOAD
-        const downloadData = await load_url(url)
-        status = READY_STATE.DOWNLOADED
-        player.switch(url)
-        await decode(downloadData.data, url, { opacity: OPACITY })
-        status = READY_STATE.DECODED
+      if (DownloadStore.getDownloadStatus(url) === 'none') {
+        load_url(url)
       }
+      if (DecodedStore.getDecodeStatus(url) === 'none') {
+        decode(url, { opacity: OPACITY })
+      }
+      player.switch(url)
     } catch {
       const event = { error: `load url error with【${url}】` }
       viewer.drawError(event.error)
@@ -126,17 +103,17 @@ const libgif = (opts: LibgifInitOptions) => {
     set loop(val: boolean) {
       player.loop = val
     },
-    play: player.play.bind(player),
-    pause: player.pause.bind(player),
-    jumpTo: player.putFrame.bind(player),
+    play: bindSelf(player, 'play')!,
+    pause: bindSelf(player, 'pause')!,
+    jumpTo: bindSelf(player, 'putFrame')!,
     loadUrl: loadUrl,
     // decodeStore
-    getDecodeData: DecodedStore.getDecodeData.bind(DecodedStore),
+    getDecodeData: bindSelf(DecodedStore, 'getDecodeData')!,
     // DownloadStore
-    getDownload: DownloadStore.getDownload.bind(DownloadStore),
+    getDownload: bindSelf(DownloadStore, 'getDownload')!,
     // emiter
-    on: emitter.on.bind(emitter),
-    off: emitter.off.bind(emitter)
+    on: bindSelf(emitter, 'on')!,
+    off: bindSelf(emitter, 'off')!
   }
 
   player.on('play', (e) => emitter.emit('play', e))
@@ -148,7 +125,7 @@ const libgif = (opts: LibgifInitOptions) => {
   DownloadStore.on('progress', (e) => emitter.emit('progress', e))
   ;(gif as any).controller = controller
 
-  currentKey &&  loadUrl(currentKey)
+  currentKey && loadUrl(currentKey)
 
   return controller
 }

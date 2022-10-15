@@ -127,3 +127,9 @@ export interface DecodedData {
   frames: frame[]
   complete: boolean
 }
+
+export interface DownloadProgressEvent {
+  key: string
+  data: gifData
+  progress: number
+}
