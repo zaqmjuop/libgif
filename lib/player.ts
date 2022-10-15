@@ -29,6 +29,7 @@ export class Player extends Emitter<
   readonly viewer: Viewer
   readonly beginFrameNo: number
   readonly autoplay: initialPlay
+  readonly playedFrameNos = new Set<number>()
   loopCount = 0
   playing = false
   currentKey?: string = void 0
@@ -151,6 +152,7 @@ export class Player extends Emitter<
     this.i = this.beginFrameNo
     this.loopCount = 0
     this.playing = false
+    this.playedFrameNos.clear()
   }
 
   putFrame(flag: number) {
@@ -159,6 +161,7 @@ export class Player extends Emitter<
       this.i = flag
       this.viewer.putDraft(frame.data, frame.leftPos, frame.topPos)
       this.viewer.drawDraft()
+      this.playedFrameNos.add(this.i)
       this.emit('frameChange')
     }
     return frame
