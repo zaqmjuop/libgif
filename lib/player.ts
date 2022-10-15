@@ -144,7 +144,7 @@ export class Player extends Emitter<
     const currentFrame = shouldPut
       ? this.putFrame(willPutNo)
       : this.currentFrame
-    const delay = currentFrame?.delay || 17
+    const delay = currentFrame ? currentFrame.delay : 17
     const isComplete = this.framsComplete && this.getNextFrameNo() === 0
     this.t = window.setTimeout(
       isComplete ? this.finish : this.goOn,
