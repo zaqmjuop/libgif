@@ -38,7 +38,7 @@ export class Player extends Emitter<
     super()
     this.viewer = option.viewer
     this.beginFrameNo =
-      typeof option.beginFrameNo === 'number' ? option.beginFrameNo : 1
+      typeof option.beginFrameNo === 'number' ? option.beginFrameNo : 0
     this._forward = typeof option.forword === 'boolean' ? option.forword : true
     this._rate = typeof option.rate === 'number' ? option.rate : 1
     this._loop = typeof option.loop === 'boolean' ? option.loop : true
@@ -202,6 +202,7 @@ export class Player extends Emitter<
     this.resetState()
     this.currentKey = key
     await this.prepare()
+    this.putFrame(0) // 封面
     this.play()
   }
 
