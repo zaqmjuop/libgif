@@ -7,7 +7,6 @@ import { DownloadRecord, LibgifInitOptions } from './type'
 import { Viewer } from './viewer'
 import { DownloadStore } from './store/downloaded'
 import { DecodedStore } from './store/decoded'
-import { READY_STATE } from './utils/metaData'
 
 const OPACITY = 255
 
@@ -25,7 +24,6 @@ const libgif = (opts: LibgifInitOptions) => {
   const emitter = new Emitter<typeof EMITS>()
   const gif = opts.gif
 
-  let status: number
   let currentKey = opts.src || ''
   // global func
   // global func
@@ -58,36 +56,14 @@ const libgif = (opts: LibgifInitOptions) => {
 
   const loadUrl = async (url: string) => {
     currentKey = url
-    const hasDecoded = DecodedStore.getDecodeStatus(url)
-    const hasDownloaded = DownloadStore.getDownloadStatus(url)
     try {
-      if (hasDecoded === 'decoded') {
-        status = READY_STATE.DECODED
-        player.switch(url)
-      } else if (hasDecoded !== 'none') {
-        status = READY_STATE.DECODING
-        player.switch(url)
-      } else if (hasDownloaded === 'downloaded') {
-        status = READY_STATE.DOWNLOADED
-        const downloadData = await DownloadStore.getDownload(url)
-        player.switch(url)
-        await decode(downloadData.data!, url, { opacity: OPACITY })
-        status = READY_STATE.DECODED
-      } else if (hasDownloaded !== 'none') {
-        status = READY_STATE.DOWNLOADING
-        const downloadData = await load_url(url)
-        status = READY_STATE.DOWNLOADED
-        player.switch(url)
-        await decode(downloadData.data, url, { opacity: OPACITY })
-        status = READY_STATE.DECODED
-      } else {
-        status = READY_STATE.UNDOWNLOAD
-        const downloadData = await load_url(url)
-        status = READY_STATE.DOWNLOADED
-        player.switch(url)
-        await decode(downloadData.data, url, { opacity: OPACITY })
-        status = READY_STATE.DECODED
+      if (DownloadStore.getDownloadStatus(url) === 'none') {
+        load_url(url)
       }
+      if (DecodedStore.getDecodeStatus(url) === 'none') {
+        decode(url, { opacity: OPACITY })
+      }
+      player.switch(url)
     } catch {
       const event = { error: `load url error with【${url}】` }
       viewer.drawError(event.error)

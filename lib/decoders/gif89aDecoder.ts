@@ -54,46 +54,46 @@ export class Gif89aDecoder {
   }
 
   // LZW (GIF-specific)
-  private parseColorTable = (entries: number) => {
+  private parseColorTable = async (entries: number) => {
     if (!this.st) return
     // Each entry is 3 bytes, for RGB.
     const colorTable: rgb[] = []
     for (let i = 0; i < entries; i++) {
-      colorTable.push(this.st.readBytes(3) as rgb)
+      colorTable.push((await this.st.readBytes(3)) as rgb)
     }
     return colorTable
   }
 
-  private readSubBlocks = () => {
+  private readSubBlocks = async () => {
     if (!this.st) return
     let size: number
     let data: string
     data = ''
     do {
-      size = this.st.readByte()
-      data += this.st.read(size)
+      size = await this.st.readByte()
+      data += await this.st.read(size)
     } while (size !== 0)
     return data
   }
 
-  private parseHeader = () => {
+  private parseHeader = async () => {
     if (!this.st) return
-    const signature = this.st.read(3)
-    const version = this.st.read(3)
+    const signature = await this.st.read(3)
+    const version = await this.st.read(3)
     if (signature !== 'GIF') throw new Error('Not a GIF file.') // XXX: This should probably be handled more nicely.
-    const logicalScreenWidth = this.st.readUnsigned()
-    const logicalScreenHeight = this.st.readUnsigned()
+    const logicalScreenWidth = await this.st.readUnsigned()
+    const logicalScreenHeight = await this.st.readUnsigned()
 
-    const bits = byteToBitArr(this.st.readByte())
+    const bits = byteToBitArr(await this.st.readByte())
     const globalColorTableFlag = !!bits.shift()
     const ColorResolution = bitsToNum(bits.splice(0, 3))
     const sortFlag = !!bits.shift()
     const ColorTableSize = bitsToNum(bits.splice(0, 3))
 
-    const backgroundColorIndex = this.st.readByte()
-    const pixelAspectRatio = this.st.readByte() // if not 0, aspectRatio = (pixelAspectRatio + 15) / 64
+    const backgroundColorIndex = await this.st.readByte()
+    const pixelAspectRatio = await this.st.readByte() // if not 0, aspectRatio = (pixelAspectRatio + 15) / 64
     const globalColorTable = globalColorTableFlag
-      ? this.parseColorTable(1 << (ColorTableSize + 1))
+      ? await this.parseColorTable(1 << (ColorTableSize + 1))
       : undefined
     const backgroundColor = globalColorTable
       ? globalColorTable[backgroundColorIndex]
@@ -126,9 +126,9 @@ export class Gif89aDecoder {
     this.ctx.setTransform(1, 0, 0, 1, 0, 0)
   }
 
-  private parseExt = (block: Block) => {
+  private parseExt = async (block: Block) => {
     if (!this.st) return
-    const parseGCExt = (block: ExtBlock) => {
+    const parseGCExt = async (block: ExtBlock) => {
       /**
        * Graphic Control Extension 可选，作用范围是紧跟其后的一个img
        *   透明度: transparencyGiven && colorTable[transparencyIndex]
@@ -137,18 +137,18 @@ export class Gif89aDecoder {
        *
        */
       if (!this.st) return
-      const blockSize = this.st.readByte() // Always 4
-      const bits = byteToBitArr(this.st.readByte())
+      const blockSize = await this.st.readByte() // Always 4
+      const bits = byteToBitArr(await this.st.readByte())
       const reserved = bits.splice(0, 3) // Reserved; should be 000.
       const disposalMethod = bitsToNum(bits.splice(0, 3))
       const userInput = !!bits.shift()
       const transparencyGiven = !!bits.shift()
 
-      const delayTime = this.st.readUnsigned() * 10
+      const delayTime = (await this.st.readUnsigned()) * 10
 
-      const transparencyIndex = this.st.readByte()
+      const transparencyIndex = await this.st.readByte()
 
-      const terminator = this.st.readByte()
+      const terminator = await this.st.readByte()
       const graphControllExt = {
         ...block,
         reserved,
@@ -162,35 +162,35 @@ export class Gif89aDecoder {
       this.graphControll = graphControllExt
     }
 
-    const parseComExt = (block: ExtBlock) => {
+    const parseComExt = async (block: ExtBlock) => {
       if (!this.st) return
-      const comment = this.readSubBlocks()
+      const comment = await this.readSubBlocks()
       const comExt = { ...block, comment }
       this.exts.push(comExt)
       DecodedStore.pushBlocks(this.key, [comExt])
       return comExt
     }
 
-    const parsePTExt = (block: ExtBlock) => {
+    const parsePTExt = async (block: ExtBlock) => {
       if (!this.st) return
       // No one *ever* uses this. If you use it, deal with parsing it yourself.
-      const blockSize = this.st.readByte() // Always 12
-      const ptHeader = this.st.readBytes(12)
-      const ptData = this.readSubBlocks()
+      const blockSize = await this.st.readByte() // Always 12
+      const ptHeader = await this.st.readBytes(12)
+      const ptData = await this.readSubBlocks()
       const pteExt = { ...block, ptHeader, ptData }
       this.exts.push(pteExt)
       DecodedStore.pushBlocks(this.key, [pteExt])
       return pteExt
     }
 
-    const parseAppExt = (block: ExtBlock) => {
+    const parseAppExt = async (block: ExtBlock) => {
       if (!this.st) return
-      const parseNetscapeExt = (block: AppExtBlock) => {
+      const parseNetscapeExt = async (block: AppExtBlock) => {
         if (!this.st) return
-        const blockSize = this.st.readByte() // Always 3
-        const unknown = this.st.readByte() // ??? Always 1? What is this?
-        const iterations = this.st.readUnsigned()
-        const terminator = this.st.readByte()
+        const blockSize = await this.st.readByte() // Always 3
+        const unknown = await this.st.readByte() // ??? Always 1? What is this?
+        const iterations = await this.st.readUnsigned()
+        const terminator = await this.st.readByte()
         const appExt = {
           ...block,
           unknown,
@@ -203,8 +203,8 @@ export class Gif89aDecoder {
         return appExt
       }
 
-      const parseUnknownAppExt = (block: AppExtBlock) => {
-        const appData = this.readSubBlocks()
+      const parseUnknownAppExt = async (block: AppExtBlock) => {
+        const appData = await this.readSubBlocks()
         const appExt = { ...block, appData, identifier: block.identifier }
         this.app = appExt
         // FIXME: This won't work if a handler wants to match on any identifier.
@@ -212,30 +212,30 @@ export class Gif89aDecoder {
         return appExt
       }
 
-      const blockSize = this.st.readByte() // Always 11
-      const identifier = this.st.read(8)
-      const authCode = this.st.read(3)
+      const blockSize = await this.st.readByte() // Always 11
+      const identifier = await this.st.read(8)
+      const authCode = await this.st.read(3)
       const appBlock: AppExtBlock = { ...block, identifier, authCode }
       switch (appBlock.identifier) {
         case 'NETSCAPE':
-          parseNetscapeExt(appBlock)
+          await parseNetscapeExt(appBlock)
           break
         default:
-          parseUnknownAppExt(appBlock)
+          await parseUnknownAppExt(appBlock)
           break
       }
       return appBlock
     }
 
-    const parseUnknownExt = (block: ExtBlock) => {
-      const data = this.readSubBlocks()
+    const parseUnknownExt = async (block: ExtBlock) => {
+      const data = await this.readSubBlocks()
       const unknownExt = { ...block, data }
       this.exts.push(unknownExt)
       DecodedStore.pushBlocks(this.key, [unknownExt])
       return unknownExt
     }
 
-    const label = this.st.readByte()
+    const label = await this.st.readByte()
     const extBlock: ExtBlock = {
       ...block,
       label,
@@ -295,23 +295,25 @@ export class Gif89aDecoder {
      * sorted 如果是排序的，那么lct是按重要性递减排序
      * pixels
      */
-    const leftPos = this.st.readUnsigned()
-    const topPos = this.st.readUnsigned()
-    const width = this.st.readUnsigned()
-    const height = this.st.readUnsigned()
+    const leftPos = await this.st.readUnsigned()
+    const topPos = await this.st.readUnsigned()
+    const width = await this.st.readUnsigned()
+    const height = await this.st.readUnsigned()
 
-    const bits = byteToBitArr(this.st.readByte())
+    const bits = byteToBitArr(await this.st.readByte())
     const lctFlag = bits.shift()
     const interlaced = bits.shift()
     const sorted = bits.shift()
     const reserved = bits.splice(0, 2)
     const lctSize = bitsToNum(bits.splice(0, 3))
 
-    const lct = lctFlag ? this.parseColorTable(1 << (lctSize + 1)) : undefined
+    const lct = lctFlag
+      ? await this.parseColorTable(1 << (lctSize + 1))
+      : undefined
 
-    const lzwMinCodeSize = this.st.readByte()
+    const lzwMinCodeSize = await this.st.readByte()
 
-    const lzwData: string = this.readSubBlocks() as string
+    const lzwData: string = (await this.readSubBlocks()) as string
 
     let pixels: number[] = await workerLzwDecode(lzwMinCodeSize, lzwData)
     // Move
@@ -432,7 +434,7 @@ export class Gif89aDecoder {
 
   private parseBlock = async () => {
     if (!this.st) return
-    const sentinel = this.st.readByte()
+    const sentinel = await this.st.readByte()
     const block: Block = {
       sentinel,
       type: ''
@@ -475,7 +477,7 @@ export class Gif89aDecoder {
       this.opacity = config.opacity
     }
     const blocks: Block[] = []
-    const header = this.parseHeader()
+    const header = await this.parseHeader()
     while (this.st) {
       const block = await this.parseBlock()
       block && blocks.push(block)
