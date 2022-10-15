@@ -32,7 +32,7 @@ const setDownload = (key: string, data: gifData) => {
   emitter.emit('downloaded', eventData)
 }
 
-const setProgress = (key: string, progress: number, data?: gifData) => {
+const setProgress = (key: string, progress: number, data: gifData) => {
   cache[key] = cache[key] || defaultRecord()
   cache[key].progress = progress
   if (data) {

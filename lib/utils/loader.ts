@@ -30,11 +30,16 @@ const download = async (url: string) => {
       } else if (h.response.toString().indexOf('ArrayBuffer') > 0) {
         data = new Uint8Array(h.response)
       }
-      DownloadStore.setProgress(url, 100)
+      DownloadStore.setProgress(url, 100, data)
       resolve(data)
     }
     h.onprogress = (e) => {
-      e.lengthComputable && DownloadStore.setProgress(url, e.loaded / e.total)
+      console.log(e)
+      const data: gifData = e.currentTarget
+        ? (e.currentTarget as any).response
+        : ''
+      e.lengthComputable &&
+        DownloadStore.setProgress(url, e.loaded / e.total, data)
     }
     h.onerror = () => {
       DownloadStore.setError(url, 'xhr')
@@ -46,7 +51,9 @@ const download = async (url: string) => {
   return data
 }
 
-export const load_url = async (url: string):Promise<Required<DownloadRecord>> => {
+export const load_url = async (
+  url: string
+): Promise<Required<DownloadRecord>> => {
   const downloadStatus = DownloadStore.getDownloadStatus(url)
   if (downloadStatus === 'downloaded') {
     return DownloadStore.getDownload(url) as Required<DownloadRecord>
