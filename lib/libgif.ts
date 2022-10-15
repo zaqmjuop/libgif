@@ -69,20 +69,19 @@ const libgif = (opts: LibgifInitOptions) => {
         player.switch(url)
       } else if (hasDownloaded === 'downloaded') {
         status = READY_STATE.DOWNLOADED
-        const downloadData = await DownloadStore.getDownload(url)
         player.switch(url)
         await decode(url, { opacity: OPACITY })
         status = READY_STATE.DECODED
       } else if (hasDownloaded !== 'none') {
         status = READY_STATE.DOWNLOADING
-        const downloadData = await load_url(url)
+        load_url(url)
         status = READY_STATE.DOWNLOADED
         player.switch(url)
         await decode(url, { opacity: OPACITY })
         status = READY_STATE.DECODED
       } else {
         status = READY_STATE.UNDOWNLOAD
-        const downloadData = await load_url(url)
+        load_url(url)
         status = READY_STATE.DOWNLOADED
         player.switch(url)
         await decode(url, { opacity: OPACITY })
