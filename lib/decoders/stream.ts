@@ -16,7 +16,7 @@ export const byteToBitArr = (bite: number) => {
  */
 // Make compiler happy.
 export class Stream {
-  readonly data: string | Uint8Array
+  data: string | Uint8Array
   readonly len: number
   pos = 0
 
@@ -25,7 +25,11 @@ export class Stream {
     this.len = this.data.length
   }
 
-  readByte() :number{
+  setData(data: string | Uint8Array) {
+    this.data = data
+  }
+
+  readByte(): number {
     if (this.pos >= this.data.length) {
       throw new Error('Attempted to read past end of stream.')
     }
