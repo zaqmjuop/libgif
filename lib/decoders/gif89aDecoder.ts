@@ -173,7 +173,6 @@ export class Gif89aDecoder {
 
     const parsePTExt = async (block: ExtBlock) => {
       if (!this.st) return
-      console.log(this.st.pos)
       // No one *ever* uses this. If you use it, deal with parsing it yourself.
       const blockSize = await this.st.readByte() // Always 12
       const ptHeader = await this.st.readBytes(12)
@@ -181,8 +180,6 @@ export class Gif89aDecoder {
       const pteExt = { ...block, ptHeader, ptData }
       this.exts.push(pteExt)
       DecodedStore.pushBlocks(this.key, [pteExt])
-      console.log(this.st.pos, pteExt)
-      debugger
       return pteExt
     }
 
@@ -191,13 +188,13 @@ export class Gif89aDecoder {
       const parseNetscapeExt = async (block: AppExtBlock) => {
         if (!this.st) return
         const blockSize = await this.st.readByte() // Always 3
-        const unknown = await this.st.readByte() // ??? Always 1? What is this?
-        const iterations = await this.st.readUnsigned()
+        const subBlockID = await this.st.readByte() // ??? Always 1? What is this?
+        const bufferSize = await this.st.readUnsigned()
         const terminator = await this.st.readByte()
         const appExt = {
           ...block,
-          unknown,
-          iterations,
+          subBlockID,
+          bufferSize,
           terminator,
           identifier: 'NETSCAPE'
         }

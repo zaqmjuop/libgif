@@ -16,7 +16,6 @@ export class Stream {
   data: string | Uint8Array = ''
   len: number = 0
   pos = 0
-  numArray: number[] = []
   private readonly emitter = new Emitter<typeof EMITS>()
 
   constructor(data: string | Uint8Array = '') {
@@ -39,9 +38,6 @@ export class Stream {
       res = this.data[this.pos++]
     } else {
       res = this.data.charCodeAt(this.pos++) & 0xff
-    }
-    if (this.pos >= 802 && this.pos <= 808) {
-      this.numArray.push(res)
     }
 
     return res
