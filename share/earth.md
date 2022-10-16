@@ -81,3 +81,4 @@ type colorTable = Array<rgb> // [ [0, 0, 0], [0, 0, 57] ]
 ```
 TODO 插行的算法解释
 TODO LZW算法解释
+TODO 各种块的省略解释
