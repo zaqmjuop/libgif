@@ -164,18 +164,16 @@ export class Gif89aDecoder {
 
     const parseComExt = async (block: ExtBlock) => {
       if (!this.st) return
-      console.log(this.st.pos)
       const comment = await this.readSubBlocks()
       const comExt = { ...block, comment }
       this.exts.push(comExt)
       DecodedStore.pushBlocks(this.key, [comExt])
-      console.log(this.st.pos, comExt)
-      debugger
       return comExt
     }
 
     const parsePTExt = async (block: ExtBlock) => {
       if (!this.st) return
+      console.log(this.st.pos)
       // No one *ever* uses this. If you use it, deal with parsing it yourself.
       const blockSize = await this.st.readByte() // Always 12
       const ptHeader = await this.st.readBytes(12)
@@ -183,6 +181,8 @@ export class Gif89aDecoder {
       const pteExt = { ...block, ptHeader, ptData }
       this.exts.push(pteExt)
       DecodedStore.pushBlocks(this.key, [pteExt])
+      console.log(this.st.pos, pteExt)
+      debugger
       return pteExt
     }
 
