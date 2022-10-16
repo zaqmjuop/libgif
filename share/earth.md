@@ -120,4 +120,5 @@ GIF89a的插行是分4步
 
 #####
 TODO LZW算法解释
-TODO 各种块的省略解释
+TODO pte块和app块解释
+TODO GIF文件类型元组 [header, 帧图像块|图像扩展块|注释扩展块|pte扩展块|app扩展块 ,结束符号]
