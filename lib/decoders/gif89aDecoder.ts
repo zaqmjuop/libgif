@@ -82,6 +82,7 @@ export class Gif89aDecoder {
     const version = await this.st.read(3)
     if (signature !== 'GIF') throw new Error('Not a GIF file.') // XXX: This should probably be handled more nicely.
     const logicalScreenWidth = await this.st.readUnsigned()
+    // debugger
     const logicalScreenHeight = await this.st.readUnsigned()
 
     const bits = byteToBitArr(await this.st.readByte())
@@ -112,9 +113,11 @@ export class Gif89aDecoder {
       pixelAspectRatio,
       globalColorTable
     }
+    console.log(header)
     this.header = header
     this.setCanvasSize(header.logicalScreenWidth, header.logicalScreenHeight)
     DecodedStore.setHeader(this.key, header)
+    debugger
     return header
   }
 
@@ -477,6 +480,7 @@ export class Gif89aDecoder {
       this.opacity = config.opacity
     }
     const blocks: Block[] = []
+    ;(window as any).st = this.st
     const header = await this.parseHeader()
     while (this.st) {
       const block = await this.parseBlock()

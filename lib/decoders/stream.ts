@@ -16,6 +16,7 @@ export class Stream {
   data: string | Uint8Array = ''
   len: number = 0
   pos = 0
+  numArray: number[] = []
   private readonly emitter = new Emitter<typeof EMITS>()
 
   constructor(data: string | Uint8Array = '') {
@@ -32,9 +33,15 @@ export class Stream {
     if (this.pos >= this.data.length) {
       throw new Error('Attempted to read past end of stream.')
     }
-    return this.data instanceof Uint8Array
-      ? this.data[this.pos++]
-      : this.data.charCodeAt(this.pos++) & 0xff
+
+    let res = 0
+    if (this.data instanceof Uint8Array) {
+      res = this.data[this.pos++]
+    } else {
+      res = this.data.charCodeAt(this.pos++) & 0xff
+    }
+    this.numArray.push(res)
+    return res
   }
   readByte = async (): Promise<number> => {
     const promise = new Promise<number>((resolve) => {
@@ -68,6 +75,7 @@ export class Stream {
   }
   readUnsigned = async () => {
     const [n0, n1] = await this.readBytes(2)
+    console.log(n0, n1)
     return (n1 << 8) + n0
   }
 }
