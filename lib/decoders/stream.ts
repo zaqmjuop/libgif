@@ -40,7 +40,10 @@ export class Stream {
     } else {
       res = this.data.charCodeAt(this.pos++) & 0xff
     }
-    this.numArray.push(res)
+    if (this.pos >= 809 && this.pos <= 37569) {
+      this.numArray.push(res)
+    }
+
     return res
   }
   readByte = async (): Promise<number> => {
@@ -75,7 +78,6 @@ export class Stream {
   }
   readUnsigned = async () => {
     const [n0, n1] = await this.readBytes(2)
-    console.log(n0, n1)
     return (n1 << 8) + n0
   }
 }

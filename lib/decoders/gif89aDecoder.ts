@@ -82,7 +82,6 @@ export class Gif89aDecoder {
     const version = await this.st.read(3)
     if (signature !== 'GIF') throw new Error('Not a GIF file.') // XXX: This should probably be handled more nicely.
     const logicalScreenWidth = await this.st.readUnsigned()
-    // debugger
     const logicalScreenHeight = await this.st.readUnsigned()
 
     const bits = byteToBitArr(await this.st.readByte())
@@ -113,11 +112,9 @@ export class Gif89aDecoder {
       pixelAspectRatio,
       globalColorTable
     }
-    console.log(header)
     this.header = header
     this.setCanvasSize(header.logicalScreenWidth, header.logicalScreenHeight)
     DecodedStore.setHeader(this.key, header)
-    debugger
     return header
   }
 
@@ -267,6 +264,7 @@ export class Gif89aDecoder {
     block: Block
   ): Promise<void | (ImgBlock & { frame: Frame & Rect })> => {
     if (!this.st) return
+    console.log(this.st.pos)
     const deinterlace = (pixels: number[], width: number) => {
       // Of course this defeats the purpose of interlacing. And it's *probably*
       // the least efficient way it's ever been implemented. But nevertheless...
@@ -288,7 +286,6 @@ export class Gif89aDecoder {
           fromRow++
         }
       }
-
       return newPixels
     }
     /**
@@ -303,7 +300,8 @@ export class Gif89aDecoder {
     const width = await this.st.readUnsigned()
     const height = await this.st.readUnsigned()
 
-    const bits = byteToBitArr(await this.st.readByte())
+    const pg = await this.st.readByte()
+    const bits = byteToBitArr(pg)
     const lctFlag = bits.shift()
     const interlaced = bits.shift()
     const sorted = bits.shift()
@@ -340,6 +338,9 @@ export class Gif89aDecoder {
       pixels
     }
     const frame = this.parseFrame(img)
+
+    console.log(this.st.pos, img)
+    debugger
     return { ...img, frame }
   }
 
