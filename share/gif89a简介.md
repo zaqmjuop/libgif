@@ -33,6 +33,16 @@ type rgb = [red, green, blue]
 type colorTable = Array<rgb> // [ [0, 0, 0], [0, 0, 57] ]
 ```
 
+## GIF89a编码整体结构
+```
+[
+  文件头,
+  应用程序扩展块,
+  帧图像块 | 图像扩展块 | 注释扩展块 | 纯文本扩展块, (多个)
+  文件结束符号 ';'
+]
+``` 
+
 ## Header
 ```ts
 [
@@ -137,5 +147,3 @@ GIF89a的插行是分4步
 
 #####
 TODO LZW算法解释
-TODO pte块和app块解释
-TODO GIF文件类型元组 [header, 帧图像块|图像扩展块|注释扩展块|pte扩展块|app扩展块 ,结束符号]
