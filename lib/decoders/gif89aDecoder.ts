@@ -137,7 +137,6 @@ export class Gif89aDecoder {
        *
        */
       if (!this.st) return
-      console.log(this.st.pos)
       const blockSize = await this.st.readByte() // Always 4
       const bits = byteToBitArr(await this.st.readByte())
       const reserved = bits.splice(0, 3) // Reserved; should be 000.
@@ -161,16 +160,17 @@ export class Gif89aDecoder {
         terminator
       }
       this.graphControll = graphControllExt
-      console.log(this.st.pos, graphControllExt)
-      debugger
     }
 
     const parseComExt = async (block: ExtBlock) => {
       if (!this.st) return
+      console.log(this.st.pos)
       const comment = await this.readSubBlocks()
       const comExt = { ...block, comment }
       this.exts.push(comExt)
       DecodedStore.pushBlocks(this.key, [comExt])
+      console.log(this.st.pos, comExt)
+      debugger
       return comExt
     }
 
