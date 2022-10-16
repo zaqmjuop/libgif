@@ -137,6 +137,7 @@ export class Gif89aDecoder {
        *
        */
       if (!this.st) return
+      console.log(this.st.pos)
       const blockSize = await this.st.readByte() // Always 4
       const bits = byteToBitArr(await this.st.readByte())
       const reserved = bits.splice(0, 3) // Reserved; should be 000.
@@ -160,6 +161,8 @@ export class Gif89aDecoder {
         terminator
       }
       this.graphControll = graphControllExt
+      console.log(this.st.pos, graphControllExt)
+      debugger
     }
 
     const parseComExt = async (block: ExtBlock) => {
@@ -264,7 +267,6 @@ export class Gif89aDecoder {
     block: Block
   ): Promise<void | (ImgBlock & { frame: Frame & Rect })> => {
     if (!this.st) return
-    console.log(this.st.pos)
     const deinterlace = (pixels: number[], width: number) => {
       // Of course this defeats the purpose of interlacing. And it's *probably*
       // the least efficient way it's ever been implemented. But nevertheless...
@@ -338,9 +340,6 @@ export class Gif89aDecoder {
       pixels
     }
     const frame = this.parseFrame(img)
-
-    console.log(this.st.pos, img)
-    debugger
     return { ...img, frame }
   }
 

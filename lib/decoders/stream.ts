@@ -40,7 +40,7 @@ export class Stream {
     } else {
       res = this.data.charCodeAt(this.pos++) & 0xff
     }
-    if (this.pos >= 809 && this.pos <= 37569) {
+    if (this.pos >= 802 && this.pos <= 808) {
       this.numArray.push(res)
     }
 
