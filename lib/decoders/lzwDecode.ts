@@ -39,7 +39,6 @@ export const lzwDecode = (minCodeSize: number, data: string | Uint8Array) => {
 
   let code: number = 0
   let prev: number
-
   while (true) {
     prev = code
     code = readCode(codeSize)
