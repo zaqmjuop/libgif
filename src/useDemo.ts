@@ -1,5 +1,5 @@
 import { GIFS } from './metaData'
-import libDev from '@/../lib/libgif'
+import libDev from '@/../dist/libgif.mjs'
 export default () => {
   const root = document.getElementById('useDemo')!
   const src = GIFS[1]

@@ -1,4 +1,4 @@
-import { lzwDecode } from './lzwDecode'
+import { WORKER_FUNC_MAP } from '../utils/workerFuncMap'
 import { bitsToNum, byteToBitArr, Stream } from './stream'
 import {
   AppExtBlock,
@@ -11,7 +11,6 @@ import {
   Rect,
   rgb
 } from '../type'
-import { createWorkerFunc } from '../utils/createWorkerFunc'
 import { DecodedStore } from '../store/decoded'
 
 // Disposal method indicates the way in which the graphic is to be treated after being displayed.
@@ -22,7 +21,7 @@ enum DisposalMethod {
   previous = 3 // Restore to previous. The decoder is required to restore the area overwritten by the graphic with what was there prior to rendering the graphic.
 } // Importantly, "previous" means the frame state after the last disposal of method 0, 1, or 2.
 
-const workerLzwDecode = createWorkerFunc(lzwDecode)
+const workerLzwDecode = WORKER_FUNC_MAP.lzwDecode
 
 export class Gif89aDecoder {
   private readonly canvas = document.createElement('canvas') // 图片文件原始模样
