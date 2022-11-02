@@ -11,7 +11,7 @@ import {
   Rect,
   rgb
 } from '../type'
-import { createWorkerFunc } from '../utils/createWorkerFunc'
+// import { createWorkerFunc } from '../utils/createWorkerFunc'
 import { DecodedStore } from '../store/decoded'
 
 // Disposal method indicates the way in which the graphic is to be treated after being displayed.
@@ -22,7 +22,7 @@ enum DisposalMethod {
   previous = 3 // Restore to previous. The decoder is required to restore the area overwritten by the graphic with what was there prior to rendering the graphic.
 } // Importantly, "previous" means the frame state after the last disposal of method 0, 1, or 2.
 
-const workerLzwDecode = createWorkerFunc(lzwDecode)
+const workerLzwDecode = lzwDecode
 
 export class Gif89aDecoder {
   private readonly canvas = document.createElement('canvas') // 图片文件原始模样
@@ -479,7 +479,9 @@ export class Gif89aDecoder {
     const blocks: Block[] = []
     const header = await this.parseHeader()
     while (this.st) {
-      const block = await this.parseBlock()
+      const block = await new Promise<Block | void>((resolve) => {
+        setTimeout(() => resolve(this.parseBlock()), 0)
+      })
       block && blocks.push(block)
     }
     const completeData = {
